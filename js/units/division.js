@@ -1,0 +1,193 @@
+/* ===== UNIT 4: DIVISION — Swimming Theme 🏊 ===== */
+
+const Division = {
+    id: 'division',
+    title: 'Division',
+    icon: '🏊',
+    theme: 'swim',
+    description: "Dive into division! Split swimmers into teams, share goggles fairly, and discover how division and multiplication are related!",
+    exerciseCount: 8,
+
+    getExercises() {
+        const R = Engine.Utils.rand;
+        const pick = Engine.Utils.pick;
+
+        return [
+            // 1. Divide Into Teams
+            {
+                skillId: 'div-teams',
+                generate(diff) {
+                    const teams = R(2, diff >= 2 ? 6 : 4);
+                    const perTeam = R(2, diff >= 2 ? 6 : 4);
+                    const total = teams * perTeam;
+                    return {
+                        type: 'input',
+                        questionText: `${total} swimmers need to split into ${teams} equal relay teams.<br>How many swimmers per team?`,
+                        visual: `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
+                            ${Array.from({length: Math.min(total, 20)}, () => '<span style="font-size:1.3rem">🏊</span>').join('')}
+                        </div>`,
+                        answer: perTeam,
+                        hint1: `Divide the total swimmers by the number of teams`,
+                        hint2: `${total} ÷ ${teams} = ?`,
+                        hint3: `${total} ÷ ${teams} = ${perTeam}`
+                    };
+                }
+            },
+            // 2. Fair Share Goggles
+            {
+                skillId: 'div-share',
+                generate(diff) {
+                    const friends = R(2, diff >= 2 ? 6 : 4);
+                    const each = R(2, diff >= 2 ? 8 : 5);
+                    const total = friends * each;
+                    return {
+                        type: 'input',
+                        questionText: `Share ${total} pairs of goggles equally among ${friends} friends.<br>How many does each friend get?`,
+                        visual: `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
+                            ${Array.from({length: Math.min(total, 18)}, () => '<span style="font-size:1.2rem">🥽</span>').join('')}
+                        </div>`,
+                        answer: each,
+                        hint1: `Division means sharing equally!`,
+                        hint2: `${total} goggles ÷ ${friends} friends = ?`,
+                        hint3: `Each friend gets ${each} goggles`
+                    };
+                }
+            },
+            // 3. Division as Unknown Factor
+            {
+                skillId: 'div-unknown',
+                generate(diff) {
+                    const a = R(2, diff >= 2 ? 9 : 6);
+                    const b = R(2, diff >= 2 ? 9 : 6);
+                    const product = a * b;
+                    return {
+                        type: 'input',
+                        questionText: `? × ${b} = ${product}<br>How many laps per set?`,
+                        visual: `<div style="font-size:1.8rem;font-weight:700;color:var(--ocean-glow);">
+                            ❓ × ${b} = ${product}
+                        </div>`,
+                        answer: a,
+                        hint1: `Think: ${product} ÷ ${b} = ?`,
+                        hint2: `What number times ${b} gives you ${product}?`,
+                        hint3: `${a} × ${b} = ${product}, so the answer is ${a}`
+                    };
+                }
+            },
+            // 4. Remainder Splash
+            {
+                skillId: 'div-remainder',
+                generate(diff) {
+                    const divisor = R(2, 6);
+                    const quotient = R(2, diff >= 2 ? 8 : 5);
+                    const remainder = R(1, divisor - 1);
+                    const total = divisor * quotient + remainder;
+                    return {
+                        type: 'input',
+                        questionText: `${total} swimmers divided into groups of ${divisor}.<br>How many are left over?`,
+                        subText: '(the remainder)',
+                        visual: `<div style="text-align:center">
+                            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                                ${Array.from({length: quotient}, (_, g) =>
+                                    `<div class="swimmer-group">${Array(divisor).fill('<span class="swimmer-item">🏊</span>').join('')}</div>`
+                                ).join('')}
+                            </div>
+                            <div style="margin-top:12px;font-size:1.3rem">
+                                ${Array(remainder).fill('🏊').join(' ')} <span style="color:var(--text-muted)">(leftover)</span>
+                            </div>
+                        </div>`,
+                        answer: remainder,
+                        hint1: `How many full groups of ${divisor} can you make, and who's left?`,
+                        hint2: `${total} ÷ ${divisor} = ${quotient} remainder ?`,
+                        hint3: `${total} ÷ ${divisor} = ${quotient} R ${remainder}`
+                    };
+                }
+            },
+            // 5. Division Facts Swim
+            {
+                skillId: 'div-facts',
+                generate(diff) {
+                    const a = R(2, diff >= 2 ? 12 : 9);
+                    const b = R(2, diff >= 2 ? 12 : 9);
+                    const product = a * b;
+                    return {
+                        type: 'multiple-choice',
+                        questionText: `${product} ÷ ${a} = ?`,
+                        visual: `<div style="font-size:2rem;color:var(--ocean-glow);font-weight:800;">${product} ÷ ${a}</div>`,
+                        answer: b,
+                        options: Engine.Utils.multipleChoice(b),
+                        hint1: `What times ${a} equals ${product}?`,
+                        hint2: `Think of your ${a} times table...`,
+                        hint3: `${product} ÷ ${a} = ${b}`
+                    };
+                }
+            },
+            // 6. Word Problem Dive
+            {
+                skillId: 'div-word',
+                generate(diff) {
+                    const scenarios = [
+                        { text: (t, g) => `${t} swim caps shared equally among ${g} swimmers. How many each?`, emoji: '🧢' },
+                        { text: (t, g) => `${t} towels laid out for ${g} lanes. How many towels per lane?`, emoji: '🏖️' },
+                        { text: (t, g) => `Coach has ${t} water bottles for ${g} swimmers. How many each?`, emoji: '🍶' },
+                    ];
+                    const s = pick(scenarios);
+                    const groups = R(2, diff >= 2 ? 8 : 5);
+                    const each = R(2, diff >= 2 ? 8 : 5);
+                    const total = groups * each;
+                    return {
+                        type: 'input',
+                        questionText: s.text(total, groups),
+                        visual: `<div style="font-size:3rem">${s.emoji}</div>`,
+                        answer: each,
+                        hint1: `Divide the total by the number of groups`,
+                        hint2: `${total} ÷ ${groups} = ?`,
+                        hint3: `${total} ÷ ${groups} = ${each}`
+                    };
+                }
+            },
+            // 7. Fact Family Pools
+            {
+                skillId: 'div-fact-family',
+                generate(diff) {
+                    const a = R(2, 9);
+                    const b = R(2, 9);
+                    const p = a * b;
+                    // Which equation is in the fact family?
+                    const correct = `${p} ÷ ${b} = ${a}`;
+                    const wrongs = [
+                        `${p} ÷ ${a + 1} = ${b}`,
+                        `${p + 1} ÷ ${a} = ${b}`,
+                        `${p} ÷ ${R(2, 9)} = ${R(2, 9)}`
+                    ];
+                    return {
+                        type: 'multiple-choice',
+                        questionText: `If ${a} × ${b} = ${p}, which division fact is correct?`,
+                        answer: correct,
+                        options: Engine.Utils.shuffle([correct, ...wrongs.slice(0, 3)]).map(o => ({label: o, value: o})),
+                        hint1: `A fact family uses the same three numbers`,
+                        hint2: `The numbers are ${a}, ${b}, and ${p}`,
+                        hint3: `${p} ÷ ${b} = ${a} ✓`
+                    };
+                }
+            },
+            // 8. Division Derby
+            {
+                skillId: 'div-derby',
+                generate(diff) {
+                    const a = R(3, diff >= 2 ? 12 : 9);
+                    const b = R(2, diff >= 2 ? 12 : 9);
+                    const product = a * b;
+                    return {
+                        type: 'input',
+                        questionText: `🏁 Division Derby! Solve fast!<br>${product} ÷ ${b} = ?`,
+                        visual: `<div style="font-size:2.5rem;animation:swim 1s ease-in-out infinite;">🏊💨</div>`,
+                        answer: a,
+                        hint1: `What times ${b} equals ${product}?`,
+                        hint2: `Skip count by ${b}: ${Array.from({length:Math.min(a, 5)}, (_, i) => b * (i+1)).join(', ')}...`,
+                        hint3: `${product} ÷ ${b} = ${a}`
+                    };
+                }
+            }
+        ];
+    }
+};
