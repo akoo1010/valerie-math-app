@@ -107,7 +107,9 @@ const Animations = (() => {
         confetti: ['#ff2d7b', '#00f0ff', '#39ff14', '#ffe600', '#a855f7', '#ff6f00', '#ff8fab', '#45b7d1'],
         swim: ['#45b7d1', '#2d7dd2', '#a8e6cf', '#ffffff', '#00f0ff'],
         craft: ['#ff8fab', '#cdb4db', '#b8f2e6', '#fde68a', '#ff7f7f', '#fefae0'],
-        gd: ['#ff2d7b', '#00f0ff', '#39ff14', '#ffe600', '#a855f7']
+        gd: ['#ff2d7b', '#00f0ff', '#39ff14', '#ffe600', '#a855f7'],
+        monster: ['#ef4444', '#3b82f6', '#facc15', '#7c3aed', '#22c55e', '#ffffff'],
+        dance: ['#ec4899', '#a855f7', '#fbbf24', '#22d3ee', '#d946ef', '#ffffff']
     };
 
     return {
@@ -243,6 +245,92 @@ const Animations = (() => {
                     gravity: 0.02,
                     rotation: Math.random() * Math.PI * 2,
                     spin: (Math.random() - 0.5) * 0.3
+                });
+            }
+            startLoop();
+        },
+
+        // Monster (Pokemon-inspired) sparkle burst
+        monsterBurst(x, y) {
+            if (!ctxC) init();
+            // Pokeball-style expanding ring + star sparks
+            for (let i = 0; i < 24; i++) {
+                const angle = (Math.PI * 2 * i) / 24;
+                const speed = 3 + Math.random() * 5;
+                particles.push({
+                    type: 'star',
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 5 + Math.random() * 7,
+                    color: COLORS.monster[Math.floor(Math.random() * COLORS.monster.length)],
+                    life: 1,
+                    decay: 0.02,
+                    gravity: 0.04,
+                    rotation: Math.random() * Math.PI * 2,
+                    spin: (Math.random() - 0.5) * 0.2
+                });
+            }
+            // Add creature emojis
+            const creatures = ['⚡', '🔥', '✨', '💥', '🐾'];
+            for (let i = 0; i < 6; i++) {
+                particles.push({
+                    type: 'emoji',
+                    emoji: creatures[Math.floor(Math.random() * creatures.length)],
+                    x: x + (Math.random() - 0.5) * 100,
+                    y: y + (Math.random() - 0.5) * 60,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: -2 - Math.random() * 3,
+                    size: 18 + Math.random() * 10,
+                    color: '',
+                    life: 1,
+                    decay: 0.015,
+                    gravity: 0.06,
+                    rotation: 0,
+                    spin: (Math.random() - 0.5) * 0.1
+                });
+            }
+            startLoop();
+        },
+
+        // Dance / disco burst
+        danceBurst(x, y) {
+            if (!ctxC) init();
+            // Disco sparkle — small confetti in all directions
+            for (let i = 0; i < 30; i++) {
+                const angle = (Math.PI * 2 * i) / 30 + Math.random() * 0.2;
+                const speed = 2 + Math.random() * 4;
+                particles.push({
+                    type: 'confetti',
+                    x, y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    size: 4 + Math.random() * 5,
+                    color: COLORS.dance[Math.floor(Math.random() * COLORS.dance.length)],
+                    life: 1,
+                    decay: 0.018,
+                    gravity: 0.03,
+                    rotation: Math.random() * Math.PI * 2,
+                    spin: (Math.random() - 0.5) * 0.3
+                });
+            }
+            // Music note emojis
+            const notes = ['🎵', '🎶', '💃', '🕺', '✨'];
+            for (let i = 0; i < 5; i++) {
+                particles.push({
+                    type: 'emoji',
+                    emoji: notes[Math.floor(Math.random() * notes.length)],
+                    x: x + (Math.random() - 0.5) * 120,
+                    y: y + (Math.random() - 0.5) * 60,
+                    vx: (Math.random() - 0.5) * 2,
+                    vy: -1.5 - Math.random() * 3,
+                    size: 20 + Math.random() * 10,
+                    color: '',
+                    life: 1,
+                    decay: 0.012,
+                    gravity: 0.04,
+                    rotation: 0,
+                    spin: (Math.random() - 0.5) * 0.08
                 });
             }
             startLoop();

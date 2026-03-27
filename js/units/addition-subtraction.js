@@ -16,12 +16,12 @@ const AdditionSubtraction = {
             // 1. Bead Counter — place value addition
             {
                 skillId: 'add-sub-beads',
-                generate(diff) {
+                generate(diff, modality) {
                     const a = diff >= 2 ? R(100, 500) : R(10, 99);
                     const b = diff >= 2 ? R(100, 500) : R(10, 99);
                     const answer = a + b;
                     const colors = ['#ff8fab', '#cdb4db', '#b8f2e6', '#fde68a', '#ff7f7f'];
-                    return {
+                    const result = {
                         type: 'input',
                         questionText: `You have ${a} beads and get ${b} more.<br>How many beads do you have now?`,
                         visual: `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
@@ -36,8 +36,28 @@ const AdditionSubtraction = {
                         answer,
                         hint1: `Add the ones first, then the tens, then the hundreds`,
                         hint2: `${a} + ${b}: start with ${a} and count up ${b}`,
-                        hint3: `${a} + ${b} = ${answer}`
+                        hint3: `${a} + ${b} = ${answer}`,
+                        diagnose(userAnswer) {
+                            if (userAnswer === Math.abs(a - b)) return 'subtracted-instead-of-added';
+                            if (Math.abs(userAnswer - answer) <= 1) return 'off-by-one';
+                            if (userAnswer === answer - 10 || userAnswer === answer + 10) return 'place-value';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'subtracted-instead-of-added': `Careful! "Get more" means we add, not subtract. Try ${a} + ${b}.`,
+                            'place-value': `Watch your place values! Line up ones, tens, and hundreds carefully.`,
+                            'off-by-one': `So close! Double-check your carrying — did you remember to carry the 1?`
+                        }
                     };
+
+                    if (modality === 'worked-example') {
+                        const weA = R(10, 30), weB = R(10, 30);
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} + ${weB} = ?</p><p>Ones: ${weA % 10} + ${weB % 10} = ${(weA % 10) + (weB % 10)}${(weA % 10) + (weB % 10) >= 10 ? ' (carry the 1!)' : ''}</p><p>Tens: ${Math.floor(weA/10)} + ${Math.floor(weB/10)}${(weA % 10) + (weB % 10) >= 10 ? ' + 1' : ''} = ${Math.floor((weA + weB)/10)}</p><p>Answer: <strong>${weA + weB}</strong></p></div>`;
+                    } else if (modality === 'visual') {
+                        result.visual += `<div class="visual-scaffold"><p>Break it down by place value:</p><div>Ones: ${a % 10} + ${b % 10} = ${(a % 10) + (b % 10)}</div><div>Tens: ${Math.floor((a % 100) / 10)} + ${Math.floor((b % 100) / 10)} = ${Math.floor((a % 100) / 10) + Math.floor((b % 100) / 10)}</div><div><strong>${a} + ${b} = ${answer}</strong></div></div>`;
+                    }
+
+                    return result;
                 }
             },
             // 2. Rounding Paint Buckets
@@ -67,13 +87,13 @@ const AdditionSubtraction = {
             // 3. Craft Store Word Problems
             {
                 skillId: 'add-sub-word',
-                generate(diff) {
+                generate(diff, modality) {
                     const isAdd = Math.random() < 0.5;
                     const items = pick(['sequins', 'buttons', 'stickers', 'beads', 'pom-poms', 'pipe cleaners']);
                     const a = diff >= 2 ? R(200, 900) : R(20, 99);
                     const b = diff >= 2 ? R(100, a - 1) : R(10, a - 1);
                     const answer = isAdd ? a + b : a - b;
-                    return {
+                    const result = {
                         type: 'input',
                         questionText: isAdd
                             ? `You have ${a} ${items} and buy ${b} more. How many do you have now?`
@@ -82,8 +102,27 @@ const AdditionSubtraction = {
                         answer,
                         hint1: isAdd ? `This is an addition problem! Add the two amounts.` : `This is a subtraction problem! Take away from the total.`,
                         hint2: `${a} ${isAdd ? '+' : '−'} ${b} = ?`,
-                        hint3: `${a} ${isAdd ? '+' : '−'} ${b} = ${answer}`
+                        hint3: `${a} ${isAdd ? '+' : '−'} ${b} = ${answer}`,
+                        diagnose(userAnswer) {
+                            const wrongOp = isAdd ? a - b : a + b;
+                            if (userAnswer === wrongOp) return 'wrong-operation';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'wrong-operation': isAdd
+                                ? `"Buy more" means we add, not subtract! Try ${a} + ${b}.`
+                                : `"Use" means we subtract, not add! Try ${a} − ${b}.`
+                        }
                     };
+
+                    if (modality === 'worked-example') {
+                        const weOp = isAdd ? '+' : '−';
+                        const weA = R(10, 30), weB = R(5, 15);
+                        const weAnswer = isAdd ? weA + weB : weA - weB;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${isAdd ? 'You have' : 'You start with'} ${weA} and ${isAdd ? 'get' : 'use'} ${weB}.</p><p>${weA} ${weOp} ${weB} = <strong>${weAnswer}</strong></p></div>`;
+                    }
+
+                    return result;
                 }
             },
             // 4. Regrouping Workshop

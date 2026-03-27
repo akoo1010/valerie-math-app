@@ -17,10 +17,28 @@
             <div class="splash-bubbles" id="splash-bubbles"></div>
             <h1 class="splash-title">Valerie's<br><span class="title-highlight">Math Adventure</span></h1>
             <div class="splash-mascot">🧜‍♀️</div>
-            <p class="splash-subtitle">Dive into 3rd Grade Math!</p>
-            <button class="btn btn-start" id="btn-start" onclick="App.showMap()">
+            <p class="splash-subtitle">Dive into Math!</p>
+            <button class="btn btn-start" id="btn-start" onclick="App.showWorldSelect()">
                 <span class="btn-icon">🚀</span> Let's Go!
             </button>
+        </div>
+    </div>
+
+    <!-- World Select Screen -->
+    <div id="screen-world-select" class="screen">
+        <h2 class="world-select-title">Choose Your World!</h2>
+        <p class="world-select-subtitle">Hi Valerie! Where do you want to explore?</p>
+        <div class="world-cards">
+            <div class="world-card world-card-3rd" onclick="App.showMap('3rd')">
+                <div class="world-card-icon">🧜‍♀️</div>
+                <div class="world-card-title">3rd Grade</div>
+                <div class="world-card-desc">Ocean, Dash & Craft World</div>
+            </div>
+            <div class="world-card world-card-4th" onclick="App.showMap('4th')">
+                <div class="world-card-icon">🐾</div>
+                <div class="world-card-title">4th Grade</div>
+                <div class="world-card-desc">Monster & Dance World</div>
+            </div>
         </div>
     </div>
 
@@ -28,8 +46,9 @@
     <div id="screen-map" class="screen">
         <div class="map-header">
             <div class="map-header-left">
-                <h2 class="map-title">🗺️ Adventure Map</h2>
-                <p class="map-welcome">Hi Valerie! Choose a world to explore!</p>
+                <button class="btn-back" style="position:relative;top:auto;left:auto;margin-bottom:8px;" onclick="App.showWorldSelect()">&#8592; Worlds</button>
+                <h2 class="map-title" id="map-title">🗺️ Adventure Map</h2>
+                <p class="map-welcome" id="map-welcome">Hi Valerie! Choose a world to explore!</p>
             </div>
             <div class="map-header-right">
                 <div class="stats-badge" id="total-stars">⭐ 0</div>
@@ -43,7 +62,7 @@
 
     <!-- Unit Intro Screen -->
     <div id="screen-unit-intro" class="screen">
-        <button class="btn-back" onclick="App.showMap()">← Back to Map</button>
+        <button class="btn-back" onclick="App.showMap()">&#8592; Back to Map</button>
         <div class="unit-intro-content" id="unit-intro-content">
             <!-- Populated by JS -->
         </div>
@@ -106,6 +125,21 @@
     <script src="js/units/time.js"></script>
     <script src="js/units/measurement.js"></script>
     <script src="js/units/data-graphs.js"></script>
+    <!-- 4th Grade Units -->
+    <script src="js/units/4-place-value.js"></script>
+    <script src="js/units/4-add-sub-estimation.js"></script>
+    <script src="js/units/4-multiply-1digit.js"></script>
+    <script src="js/units/4-multiply-2digit.js"></script>
+    <script src="js/units/4-division.js"></script>
+    <script src="js/units/4-factors-multiples.js"></script>
+    <script src="js/units/4-equiv-fractions.js"></script>
+    <script src="js/units/4-add-sub-fractions.js"></script>
+    <script src="js/units/4-multiply-fractions.js"></script>
+    <script src="js/units/4-decimals.js"></script>
+    <script src="js/units/4-angles.js"></script>
+    <script src="js/units/4-area-perimeter.js"></script>
+    <script src="js/units/4-measurement.js"></script>
+    <script src="js/units/4-plane-figures.js"></script>
     <script src="js/app.js"></script>
 </body>
 </html>

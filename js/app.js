@@ -2,8 +2,8 @@
 /* Main app: routing, screen management, map rendering, practice zone */
 
 const App = (() => {
-    // All units in order
-    const ALL_UNITS = [
+    // 3rd grade units
+    const UNITS_3RD = [
         MultiplicationIntro,
         Multiplication1Digit,
         AdditionSubtraction,
@@ -17,6 +17,28 @@ const App = (() => {
         Measurement,
         DataGraphs
     ];
+
+    // 4th grade units
+    const UNITS_4TH = [
+        PlaceValue4,
+        AddSubEstimation4,
+        Multiply1Digit4,
+        Multiply2Digit4,
+        Division4,
+        FactorsMultiples4,
+        EquivFractions4,
+        AddSubFractions4,
+        MultiplyFractions4,
+        Decimals4,
+        Angles4,
+        AreaPerimeter4,
+        Measurement4,
+        PlaneFigures4
+    ];
+
+    const ALL_UNITS = [...UNITS_3RD, ...UNITS_4TH];
+
+    let currentGrade = '3rd';
 
     function init() {
         Adaptive.load();
@@ -47,13 +69,30 @@ const App = (() => {
         }
     }
 
+    function getUnitsForGrade(grade) {
+        return grade === '4th' ? UNITS_4TH : UNITS_3RD;
+    }
+
     function renderMap() {
         const grid = document.getElementById('map-grid');
         grid.innerHTML = '';
 
+        const units = getUnitsForGrade(currentGrade);
+
+        // Update map header
+        const titleEl = document.getElementById('map-title');
+        const welcomeEl = document.getElementById('map-welcome');
+        if (currentGrade === '4th') {
+            titleEl.textContent = '🐾 Monster & Dance World';
+            welcomeEl.textContent = '4th Grade Math — Catch creatures & hit the dance floor!';
+        } else {
+            titleEl.textContent = '🗺️ Adventure Map';
+            welcomeEl.textContent = 'Hi Valerie! Choose a world to explore!';
+        }
+
         Adaptive.checkUnlocks(ALL_UNITS);
 
-        ALL_UNITS.forEach(unit => {
+        units.forEach(unit => {
             const unlocked = Adaptive.isUnitUnlocked(unit.id);
             const progress = Adaptive.getUnitProgress(unit.id, unit.exerciseCount);
 
@@ -119,7 +158,13 @@ const App = (() => {
 
         showScreen,
 
-        showMap() {
+        showWorldSelect() {
+            AudioManager.click();
+            showScreen('screen-world-select');
+        },
+
+        showMap(grade) {
+            if (grade) currentGrade = grade;
             renderMap();
             updateStars();
             showScreen('screen-map');

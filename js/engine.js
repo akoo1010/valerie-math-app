@@ -61,6 +61,17 @@ const Engine = (() => {
         wrongAttempts = 0;
         hintShown = false;
 
+        // Worked example (shown in worked-example modality)
+        if (question.workedExample) {
+            const weDiv = document.createElement('div');
+            weDiv.className = 'worked-example-box';
+            weDiv.innerHTML = `
+                <div class="worked-example-label">📝 Here's a similar problem, solved:</div>
+                <div class="worked-example-content">${question.workedExample}</div>
+            `;
+            body.appendChild(weDiv);
+        }
+
         // Question text
         if (question.questionText) {
             const qDiv = document.createElement('div');
@@ -370,7 +381,7 @@ const Engine = (() => {
         if (isCorrect) {
             handleCorrect(question);
         } else {
-            handleWrong(question);
+            handleWrong(question, userAnswer);
         }
     }
 
@@ -384,16 +395,23 @@ const Engine = (() => {
         // Visual celebration
         const body = document.getElementById('exercise-body');
         const rect = body.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
         if (currentUnit.theme === 'swim') {
-            Animations.bubbleBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            Animations.bubbleBurst(cx, cy);
         } else if (currentUnit.theme === 'gd') {
-            Animations.gdBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            Animations.gdBurst(cx, cy);
+        } else if (currentUnit.theme === 'monster') {
+            Animations.monsterBurst(cx, cy);
+        } else if (currentUnit.theme === 'dance') {
+            Animations.danceBurst(cx, cy);
         } else {
-            Animations.paintSplatter(rect.left + rect.width / 2, rect.top + rect.height / 2);
+            Animations.paintSplatter(cx, cy);
         }
 
-        // Show feedback
-        showFeedback(true, Adaptive.getEncouragement(true), question);
+        // Show feedback (recovery message if student got it after wrong attempts)
+        const isRecovery = wrongAttempts > 0;
+        const encouragement = isRecovery ? Adaptive.getRecoveryMessage() : Adaptive.getEncouragement(true);
+        showFeedback(true, encouragement, question);
 
         // Streak message
         const streakMsg = Adaptive.getStreakMessage();
@@ -404,21 +422,34 @@ const Engine = (() => {
         }
     }
 
-    function handleWrong(question) {
+    function handleWrong(question, userAnswer) {
         wrongAttempts++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
-        const result = Adaptive.recordWrong(skillId, currentUnit.id);
+        const result = Adaptive.recordWrong(skillId, currentUnit.id, userAnswer, question);
 
         AudioManager.incorrect();
 
-        // Show hint based on attempt count
+        // Misconception-aware hint selection
         let hintText = '';
+        const topMisconception = Adaptive.getTopMisconception(skillId);
+
         if (wrongAttempts === 1 && question.hint1) {
-            hintText = question.hint1;
+            // Use targeted hint if available for this misconception
+            if (topMisconception && question.misconceptionHints && question.misconceptionHints[topMisconception]) {
+                hintText = question.misconceptionHints[topMisconception];
+            } else {
+                hintText = question.hint1;
+            }
         } else if (wrongAttempts === 2 && question.hint2) {
             hintText = question.hint2;
         } else if (wrongAttempts >= 3) {
-            hintText = question.hint3 || `The answer is ${question.answer}. Let's remember this for next time!`;
+            hintText = question.hint3 || `You just discovered something new! The answer is ${question.answer} 🌟`;
+        }
+
+        // Add friendly prefixes to hints (not on answer reveal)
+        if (hintText && wrongAttempts < 3) {
+            const prefix = wrongAttempts === 1 ? "Here's a tip: " : "Think about it this way: ";
+            hintText = prefix + hintText;
         }
 
         showFeedback(false, Adaptive.getEncouragement(false), question, hintText);
@@ -441,19 +472,67 @@ const Engine = (() => {
 
         fb.innerHTML = `
             <div class="feedback-content">
-                <span class="feedback-icon">${isCorrect ? '🎉' : '💪'}</span>
+                <span class="feedback-icon">${isCorrect ? '🎉' : (wrongAttempts >= 3 ? '💡' : '💪')}</span>
                 <div>
                     <div class="feedback-text">${message}</div>
                     ${detailHTML}
                 </div>
             </div>
-            <button class="feedback-btn" onclick="Engine.nextAfterFeedback(${isCorrect})">${isCorrect ? 'Continue →' : (wrongAttempts >= 3 ? 'Continue →' : 'Try Again')}</button>
+            <button class="feedback-btn" onclick="Engine.nextAfterFeedback(${isCorrect})">${isCorrect ? 'Continue →' : (wrongAttempts >= 3 ? 'Let\'s Keep Going →' : (wrongAttempts === 1 ? 'Try Again! 💪' : 'One More Try! 🌟'))}</button>
         `;
     }
 
     function hideFeedback() {
         const fb = document.getElementById('exercise-feedback');
         fb.className = 'exercise-feedback';
+    }
+
+    function showSessionBanner(msg) {
+        const existing = document.getElementById('session-banner');
+        if (existing) existing.remove();
+
+        const banner = document.createElement('div');
+        banner.id = 'session-banner';
+        banner.className = `session-banner session-banner-${msg.type}`;
+        banner.innerHTML = `
+            <span class="session-banner-icon">${msg.icon}</span>
+            <span class="session-banner-text">${msg.text}</span>
+            <button class="session-banner-close" onclick="this.parentElement.remove()">✕</button>
+        `;
+
+        const body = document.getElementById('exercise-body');
+        body.parentElement.insertBefore(banner, body);
+
+        // Show break overlay for fatigue
+        if (msg.type === 'fatigued') {
+            showBreakSuggestion();
+        }
+
+        // Auto-dismiss after 6 seconds
+        setTimeout(() => {
+            if (banner.parentElement) {
+                banner.classList.add('session-banner-fade');
+                setTimeout(() => banner.remove(), 500);
+            }
+        }, 6000);
+    }
+
+    function showBreakSuggestion() {
+        const overlay = document.createElement('div');
+        overlay.id = 'break-overlay';
+        overlay.className = 'break-overlay';
+        overlay.innerHTML = `
+            <div class="break-overlay-content">
+                <div class="break-overlay-icon">☕</div>
+                <h3 class="break-overlay-title">Great work today, Valerie!</h3>
+                <p class="break-overlay-text">You've been working hard! A short break helps your brain learn better.</p>
+                <div class="break-overlay-buttons">
+                    <button class="btn btn-primary" onclick="document.getElementById('break-overlay').remove()">Keep Going 💪</button>
+                    <button class="btn btn-success" onclick="document.getElementById('break-overlay').remove(); App.showMap();">Take a Break 🌟</button>
+                </div>
+            </div>
+        `;
+        document.getElementById('screen-exercise').appendChild(overlay);
     }
 
     function updateProgress() {
@@ -497,9 +576,25 @@ const Engine = (() => {
             hideFeedback();
 
             const exercise = currentExercises[index];
-            const difficulty = Adaptive.getDifficulty(exercise.skillId || `${currentUnit.id}_ex${index}`);
-            const question = exercise.generate(difficulty);
-            question.skillId = exercise.skillId || `${currentUnit.id}_ex${index}`;
+            const skillId = exercise.skillId || `${currentUnit.id}_ex${index}`;
+            let difficulty = Adaptive.getDifficulty(skillId);
+            const sessionState = Adaptive.getSessionState();
+            const modality = Adaptive.getModality(skillId);
+
+            // Session adaptation: auto-lower difficulty when struggling
+            if (sessionState === 'struggling' && difficulty > 1) {
+                difficulty--;
+            }
+
+            const question = exercise.generate(difficulty, modality);
+            question.skillId = skillId;
+
+            // Show session notification if state changed
+            const sessionMsg = Adaptive.getSessionMessage();
+            if (sessionMsg) {
+                showSessionBanner(sessionMsg);
+            }
+
             renderQuestion(question);
         },
 
@@ -517,9 +612,18 @@ const Engine = (() => {
             } else {
                 // Try same question again (re-render it)
                 const exercise = currentExercises[currentExIndex];
-                const difficulty = Adaptive.getDifficulty(exercise.skillId || `${currentUnit.id}_ex${currentExIndex}`);
-                const question = exercise.generate(difficulty);
-                question.skillId = exercise.skillId || `${currentUnit.id}_ex${currentExIndex}`;
+                const skillId = exercise.skillId || `${currentUnit.id}_ex${currentExIndex}`;
+                const difficulty = Adaptive.getDifficulty(skillId);
+                const modality = Adaptive.getModality(skillId);
+                const question = exercise.generate(difficulty, modality);
+                question.skillId = skillId;
+
+                // Show session notification if state changed
+                const sessionMsg = Adaptive.getSessionMessage();
+                if (sessionMsg) {
+                    showSessionBanner(sessionMsg);
+                }
+
                 renderQuestion(question);
             }
         },

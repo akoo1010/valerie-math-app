@@ -16,7 +16,7 @@ const Multiplication1Digit = {
             // 1. Obstacle Multiplier
             {
                 skillId: 'mult-1d-obstacles',
-                generate(diff) {
+                generate(diff, modality) {
                     const groups = R(2, diff >= 2 ? 6 : 4);
                     const per = R(2, diff >= 2 ? 9 : 6);
                     const answer = groups * per;
@@ -31,7 +31,7 @@ const Multiplication1Digit = {
                         }
                         visual += '</div>';
                     }
-                    return {
+                    const result = {
                         type: 'multiple-choice',
                         questionText: `${groups} groups of ${per} obstacles. How many obstacles total?`,
                         visual,
@@ -39,18 +39,32 @@ const Multiplication1Digit = {
                         options: Engine.Utils.multipleChoice(answer),
                         hint1: `Count: ${groups} groups × ${per} in each group`,
                         hint2: `${groups} × ${per} = ?`,
-                        hint3: `${groups} × ${per} = ${answer}`
+                        hint3: `${groups} × ${per} = ${answer}`,
+                        diagnose(userAnswer) {
+                            if (userAnswer === groups + per) return 'added-instead-of-multiplied';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'added-instead-of-multiplied': `We need to multiply, not add! ${groups} groups of ${per} = ${groups} × ${per}.`
+                        }
                     };
+
+                    if (modality === 'worked-example') {
+                        const weG = R(2, 3), weP = R(2, 4);
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weG} groups of ${weP} obstacles</p><p>${weG} × ${weP} = <strong>${weG * weP}</strong> total</p></div>`;
+                    }
+
+                    return result;
                 }
             },
             // 2. Times Table Dash — speed challenge
             {
                 skillId: 'mult-1d-times-table',
-                generate(diff) {
+                generate(diff, modality) {
                     const a = R(2, diff >= 3 ? 12 : diff >= 2 ? 9 : 6);
                     const b = R(2, diff >= 3 ? 12 : diff >= 2 ? 9 : 6);
                     const answer = a * b;
-                    return {
+                    const result = {
                         type: 'multiple-choice',
                         questionText: `⚡ Quick! What is ${a} × ${b}?`,
                         subText: 'Dash past this obstacle!',
@@ -59,8 +73,22 @@ const Multiplication1Digit = {
                         options: Engine.Utils.multipleChoice(answer),
                         hint1: `Think about your ${a} times table`,
                         hint2: `${a} × ${b} is the same as adding ${a}, ${b} times`,
-                        hint3: `${a} × ${b} = ${answer}`
+                        hint3: `${a} × ${b} = ${answer}`,
+                        diagnose(userAnswer) {
+                            if (userAnswer === a + b) return 'added-instead-of-multiplied';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'added-instead-of-multiplied': `That's ${a} + ${b}! We need ${a} × ${b}. Multiplication means ${b} groups of ${a}.`
+                        }
                     };
+
+                    if (modality === 'worked-example') {
+                        const weA = R(2, 5), weB = R(2, 5);
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} × ${weB} = ?</p><p>Add ${weA} a total of ${weB} times: ${Array(weB).fill(weA).join(' + ')} = <strong>${weA * weB}</strong></p></div>`;
+                    }
+
+                    return result;
                 }
             },
             // 3. Coin Collector

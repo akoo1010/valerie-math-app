@@ -16,11 +16,11 @@ const Division = {
             // 1. Divide Into Teams
             {
                 skillId: 'div-teams',
-                generate(diff) {
+                generate(diff, modality) {
                     const teams = R(2, diff >= 2 ? 6 : 4);
                     const perTeam = R(2, diff >= 2 ? 6 : 4);
                     const total = teams * perTeam;
-                    return {
+                    const result = {
                         type: 'input',
                         questionText: `${total} swimmers need to split into ${teams} equal relay teams.<br>How many swimmers per team?`,
                         visual: `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
@@ -29,8 +29,26 @@ const Division = {
                         answer: perTeam,
                         hint1: `Divide the total swimmers by the number of teams`,
                         hint2: `${total} ÷ ${teams} = ?`,
-                        hint3: `${total} ÷ ${teams} = ${perTeam}`
+                        hint3: `${total} ÷ ${teams} = ${perTeam}`,
+                        diagnose(userAnswer) {
+                            if (userAnswer === teams) return 'reversed-division';
+                            if (userAnswer === total) return 'gave-total-not-quotient';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'reversed-division': `You found the number of teams, not swimmers per team! Divide ${total} by ${teams}.`,
+                            'gave-total-not-quotient': `That's the total! We need to split ${total} into ${teams} groups.`
+                        }
                     };
+
+                    if (modality === 'worked-example') {
+                        const weT = R(2, 3), wePT = R(2, 3), weTotal = weT * wePT;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weTotal} swimmers ÷ ${weT} teams = ?</p><p>Split them evenly: ${Array(weT).fill(wePT).join(' + ')} = ${weTotal}</p><p>Each team gets <strong>${wePT}</strong> swimmers</p></div>`;
+                    } else if (modality === 'visual') {
+                        result.visual += `<div class="visual-scaffold"><p>Deal swimmers to teams one by one:</p>${Array.from({length: teams}, (_, i) => `<div>Team ${i + 1}: ${Array(perTeam).fill('🏊').join('')} (${perTeam})</div>`).join('')}<div><strong>${total} ÷ ${teams} = ${perTeam}</strong></div></div>`;
+                    }
+
+                    return result;
                 }
             },
             // 2. Fair Share Goggles
@@ -105,11 +123,11 @@ const Division = {
             // 5. Division Facts Swim
             {
                 skillId: 'div-facts',
-                generate(diff) {
+                generate(diff, modality) {
                     const a = R(2, diff >= 2 ? 12 : 9);
                     const b = R(2, diff >= 2 ? 12 : 9);
                     const product = a * b;
-                    return {
+                    const result = {
                         type: 'multiple-choice',
                         questionText: `${product} ÷ ${a} = ?`,
                         visual: `<div style="font-size:2rem;color:var(--ocean-glow);font-weight:800;">${product} ÷ ${a}</div>`,
@@ -117,8 +135,23 @@ const Division = {
                         options: Engine.Utils.multipleChoice(b),
                         hint1: `What times ${a} equals ${product}?`,
                         hint2: `Think of your ${a} times table...`,
-                        hint3: `${product} ÷ ${a} = ${b}`
+                        hint3: `${product} ÷ ${a} = ${b}`,
+                        diagnose(userAnswer) {
+                            if (userAnswer === a) return 'reversed-division';
+                            if (userAnswer === product) return 'gave-total-not-quotient';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'reversed-division': `That's the divisor! We need ${product} ÷ ${a}, not the other way around.`
+                        }
                     };
+
+                    if (modality === 'worked-example') {
+                        const weA = R(2, 5), weB = R(2, 5), weP = weA * weB;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weP} ÷ ${weA} = ?</p><p>Think: ? × ${weA} = ${weP}</p><p><strong>${weB}</strong> × ${weA} = ${weP} ✓</p></div>`;
+                    }
+
+                    return result;
                 }
             },
             // 6. Word Problem Dive
