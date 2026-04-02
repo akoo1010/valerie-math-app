@@ -9,6 +9,7 @@ const Engine = (() => {
     let score = { correct: 0, total: 0, stars: 0 };
     let wrongAttempts = 0;
     let hintShown = false;
+    let answered = false;
 
     // --- Utility functions available to unit files ---
     const Utils = {
@@ -60,6 +61,7 @@ const Engine = (() => {
         currentQuestion = question;
         wrongAttempts = 0;
         hintShown = false;
+        answered = false;
 
         // Worked example (shown in worked-example modality)
         if (question.workedExample) {
@@ -374,14 +376,18 @@ const Engine = (() => {
 
     // --- Answer checking ---
     function checkAnswer(userAnswer, question) {
+        if (answered) return;
+
         const isCorrect = (question.checkAnswer)
             ? question.checkAnswer(userAnswer)
             : userAnswer === question.answer;
 
         if (isCorrect) {
+            answered = true;
             handleCorrect(question);
         } else {
             handleWrong(question, userAnswer);
+            if (wrongAttempts >= 3) answered = true;
         }
     }
 
@@ -602,7 +608,6 @@ const Engine = (() => {
         nextAfterFeedback(wasCorrect) {
             hideFeedback();
             if (wasCorrect || wrongAttempts >= 3) {
-                score.total++;
                 currentExIndex++;
                 if (currentExIndex >= currentExercises.length) {
                     this.showResults();
