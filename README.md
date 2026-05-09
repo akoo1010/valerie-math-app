@@ -2,31 +2,38 @@
 
 A personalized, interactive math learning app for Valerie, built around the **Khan Academy 3rd & 4th Grade Math syllabus**. Designed to make math fun through themes she loves — swimming 🏊‍♀️, Geometry Dash 🎮, and arts & crafts 🎨.
 
+**Live app:** [valerie-math-app.vercel.app](https://valerie-math-app.vercel.app)
+
 ---
 
 ## ✨ Features
 
 - **Two grade worlds** — 3rd Grade (Ocean, Dash & Craft World) and 4th Grade (Monster & Dance World)
 - **26 exercise units** covering the full Khan Academy syllabus for grades 3–4
-- **Adaptive difficulty** — hard questions are flagged and added to the Practice Zone
-- **Star-based progress tracking** — earn stars for each completed unit
-- **Practice Zone** — revisit tricky questions for extra reinforcement
+- **Adaptive difficulty** — questions get harder or easier based on performance
+- **Misconception detection** — identifies specific error patterns and shows targeted hints
+- **Star-based progress tracking** — earn up to 3 stars per run, across 7 runs per unit (21 stars max)
+- **Practice Zone** — missed skills are queued for extra reinforcement
+- **Cross-device persistence** — progress is saved to the cloud via Vercel KV and syncs across any browser or device
 - **Animations & audio** — confetti celebrations, sound effects, and smooth transitions
-- **No build step** — runs directly in the browser with no dependencies to install
 
 ---
 
 ## 🗂️ Project Structure
 
 ```
-math-app/
+valerie-math-app/
 ├── index.html              # Main entry point
+├── vercel.json             # Vercel routing config
+├── package.json            # Dependencies (@vercel/kv)
+├── api/
+│   └── progress.js         # Serverless API: GET/POST progress to Vercel KV
 ├── css/
-│   └── styles.css          # All styling (dark mode, animations, themes)
+│   └── styles.css          # All styling (animations, themes, responsive layout)
 └── js/
-    ├── app.js              # App controller (screen routing, progress state)
+    ├── app.js              # App controller (screen routing, map rendering)
     ├── engine.js           # Exercise rendering engine (all question types)
-    ├── adaptive.js         # Adaptive difficulty & missed-question tracking
+    ├── adaptive.js         # Adaptive difficulty, mastery tracking, cloud sync
     ├── animations.js       # Confetti, particle effects, mascot animations
     ├── audio.js            # Sound effects (correct, wrong, celebration)
     └── units/              # Individual exercise unit files
@@ -62,16 +69,24 @@ math-app/
 
 ## 🚀 Getting Started
 
-No installation or build step required.
+### Running locally
 
-1. Clone or download this repository
-2. Open `index.html` in any modern web browser
-3. Click **Let's Go!** and start exploring!
+```bash
+npm install
+npx vercel dev
+```
 
-> **Tip:** For the best experience (especially audio), open via a local web server rather than directly from the file system. You can use VS Code's Live Server extension or run:
-> ```bash
-> npx serve .
-> ```
+`vercel dev` serves the static files and runs the `/api/progress` serverless function locally, so cloud sync works during development.
+
+> Without `vercel dev`, you can still open `index.html` directly in a browser — progress will fall back to `localStorage` automatically.
+
+### Deploying to Vercel
+
+```bash
+vercel --prod
+```
+
+The `/api/progress` endpoint requires a **Vercel KV (Upstash Redis)** store connected to the project. Add one via the [Vercel Marketplace](https://vercel.com/marketplace?category=storage&search=redis) — the required environment variables are injected automatically.
 
 ---
 
@@ -115,13 +130,18 @@ No installation or build step required.
 
 ## 🛠️ Tech Stack
 
-- **HTML5** — structure and screens
-- **Vanilla CSS** — theming, animations, responsive layout
-- **Vanilla JavaScript** — no frameworks, no dependencies
-- **Google Fonts** — Fredoka One & Nunito for a friendly, kid-friendly feel
+- **HTML5 / Vanilla CSS / Vanilla JavaScript** — no framework, no build step
+- **Vercel** — hosting and serverless functions
+- **Vercel KV (Upstash Redis)** — cloud persistence for cross-device progress sync
+- **Google Fonts** — Fredoka One & Nunito
 
 ---
 
 ## 💾 Progress & Data
 
-Progress (stars earned, missed questions) is saved to **`localStorage`** in the browser. Clearing browser data will reset progress.
+Progress is saved in two places:
+
+1. **Cloud (Vercel KV)** — loaded first on every page visit, synced after every answer. Works across any browser or device.
+2. **localStorage** — used as an offline fallback if the network is unavailable.
+
+No user accounts or personal data are collected. All progress is stored under a single key for Valerie.

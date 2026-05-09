@@ -40,8 +40,8 @@ const App = (() => {
 
     let currentGrade = '3rd';
 
-    function init() {
-        Adaptive.load();
+    async function init() {
+        await Adaptive.load();
         Animations.init();
         Animations.createSplashBubbles();
 
@@ -232,7 +232,7 @@ const App = (() => {
                 if (unit) {
                     const exercises = unit.getExercises();
                     const ex = exercises.find(e => e.skillId === q.skillId);
-                    if (ex) practiceExercises.push(ex);
+                    if (ex) practiceExercises.push({ ...ex, _sourceUnitId: q.unitId });
                 }
             });
             if (practiceExercises.length > 0) {

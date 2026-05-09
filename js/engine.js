@@ -394,7 +394,8 @@ const Engine = (() => {
     function handleCorrect(question) {
         score.correct++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
-        const result = Adaptive.recordCorrect(skillId, currentUnit.id);
+        const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
+        const result = Adaptive.recordCorrect(skillId, unitId);
 
         AudioManager.correct();
 
@@ -431,7 +432,8 @@ const Engine = (() => {
     function handleWrong(question, userAnswer) {
         wrongAttempts++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
-        const result = Adaptive.recordWrong(skillId, currentUnit.id, userAnswer, question);
+        const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
+        const result = Adaptive.recordWrong(skillId, unitId, userAnswer, question);
 
         AudioManager.incorrect();
 
@@ -641,9 +643,13 @@ const Engine = (() => {
             else if (pct >= 0.7) starsEarned = 2;
             else if (pct >= 0.4) starsEarned = 1;
 
-            // Record in adaptive system
-            Adaptive.completeExercise(currentUnit.id, 0, starsEarned);
-            Adaptive.checkUnlocks(App.getAllUnits());
+            // Record in adaptive system (practice mode doesn't track unit-level completion)
+            if (currentUnit.id !== 'practice') {
+                const _unitState = Adaptive.getState().units[currentUnit.id] || { completed: [] };
+                const _nextSlot = Math.min(_unitState.completed.length, currentUnit.exerciseCount - 1);
+                Adaptive.completeExercise(currentUnit.id, _nextSlot, starsEarned);
+                Adaptive.checkUnlocks(App.getAllUnits());
+            }
 
             // Celebration
             if (starsEarned >= 2) {
@@ -687,8 +693,12 @@ const Engine = (() => {
                     </div>
                 </div>
                 <div class="results-buttons">
-                    <button class="btn btn-primary" onclick="Engine.startUnit(Engine.getCurrentUnit(), Engine.getCurrentUnit().getExercises())">🔄 Try Again</button>
-                    <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>
+                    ${currentUnit.id === 'practice'
+                        ? `<button class="btn btn-primary" onclick="App.startPracticeExercises()">🔄 Practice Again</button>
+                           <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>`
+                        : `<button class="btn btn-primary" onclick="Engine.startUnit(Engine.getCurrentUnit(), Engine.getCurrentUnit().getExercises())">🔄 Try Again</button>
+                           <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>`
+                    }
                 </div>
             `;
 
@@ -700,7 +710,13 @@ const Engine = (() => {
 
         // For practice zone
         startPractice(questions) {
-            currentUnit = { id: 'practice', title: 'Practice Zone', theme: 'swim' };
+            currentUnit = {
+                id: 'practice',
+                title: 'Practice Zone',
+                theme: 'swim',
+                exerciseCount: questions.length,
+                getExercises: () => questions
+            };
             currentExercises = questions;
             currentExIndex = 0;
             score = { correct: 0, total: questions.length, stars: 0 };

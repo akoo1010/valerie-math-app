@@ -35,29 +35,60 @@ const Adaptive = (() => {
         session: { ...DEFAULT_SESSION }
     };
 
+    let _saveTimer = null;
+
     function save() {
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (e) { /* quota exceeded etc */ }
+        } catch (e) { /* quota exceeded */ }
+
+        // Debounce API sync: wait 1s after last save to batch rapid updates
+        clearTimeout(_saveTimer);
+        _saveTimer = setTimeout(() => {
+            fetch('/api/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state)
+            }).catch(() => { /* ignore network errors */ });
+        }, 1000);
     }
 
     const DEFAULT_UNLOCKED = ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'];
 
-    function load() {
+    function applyParsed(parsed) {
+        state = { ...state, ...parsed };
+        DEFAULT_UNLOCKED.forEach(id => {
+            if (!state.unlockedUnits.includes(id)) {
+                state.unlockedUnits.push(id);
+            }
+        });
+    }
+
+    // Returns a Promise that resolves when progress is loaded (from API or localStorage)
+    async function load() {
+        // Try API first (cross-browser persistence)
+        try {
+            const res = await fetch('/api/progress');
+            if (res.ok) {
+                const parsed = await res.json();
+                if (parsed && typeof parsed === 'object') {
+                    applyParsed(parsed);
+                    // Keep localStorage in sync
+                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+                    state.session = { ...DEFAULT_SESSION };
+                    return;
+                }
+            }
+        } catch (e) { /* network error — fall through to localStorage */ }
+
+        // Fallback: localStorage
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
             if (saved) {
-                const parsed = JSON.parse(saved);
-                state = { ...state, ...parsed };
-                // Ensure default unlocked units are always present
-                DEFAULT_UNLOCKED.forEach(id => {
-                    if (!state.unlockedUnits.includes(id)) {
-                        state.unlockedUnits.push(id);
-                    }
-                });
+                applyParsed(JSON.parse(saved));
             }
         } catch (e) { /* parse error */ }
-        // Always reset session on load (new session each page visit)
+
         state.session = { ...DEFAULT_SESSION };
     }
 

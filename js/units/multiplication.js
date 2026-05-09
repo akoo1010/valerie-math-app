@@ -93,23 +93,39 @@ const MultiplicationIntro = {
                 skillId: 'mult-intro-zero-one',
                 generate(diff) {
                     const useZero = Math.random() < 0.5;
-                    const other = R(1, 10);
-                    const a = useZero ? 0 : 1;
-                    const b = other;
-                    const answer = a * b;
+                    const n = R(2, 10);
+                    const answer = useZero ? 0 : n;
+
+                    const zeroScenarios = [
+                        { text: `There are ${n} pools, but ${0} swimmers showed up today.<br>How many swimmers are swimming?`, visual: '🏊 × 0 = ?' },
+                        { text: `Coach packed ${n} snack bags, but ${0} swimmers came to practice.<br>How many snacks were eaten?`, visual: '🍎 × 0 = ?' },
+                        { text: `There are ${n} starting blocks, but ${0} races happened today.<br>How many races were swum?`, visual: '🏁 × 0 = ?' },
+                        { text: `${n} swimmers each swam ${0} laps.<br>How many laps were swum in total?`, visual: '🌊 × 0 = ?' },
+                        { text: `The pool has ${n} lanes, but ${0} teams signed up.<br>How many teams are swimming?`, visual: '🏊 × 0 = ?' },
+                    ];
+
+                    const oneScenarios = [
+                        { text: `There is ${1} swim team with ${n} swimmers.<br>How many swimmers total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>` },
+                        { text: `${n} swimmers each swam ${1} lap.<br>How many laps total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🌊</span>').join('')}</div>` },
+                        { text: `There is ${1} pool with ${n} floaties in it.<br>How many floaties are there?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🛟</span>').join('')}</div>` },
+                        { text: `The coach gave ${1} trophy to each of the ${n} swimmers.<br>How many trophies total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🏆</span>').join('')}</div>` },
+                        { text: `${1} relay team has ${n} swimmers on it.<br>How many swimmers total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>` },
+                    ];
+
+                    const scenario = useZero ? pick(zeroScenarios) : pick(oneScenarios);
+                    const visual = useZero
+                        ? `<div style="font-size:2.5rem; opacity:0.5;">${scenario.visual}</div>`
+                        : scenario.visual;
+
                     return {
                         type: 'multiple-choice',
-                        questionText: useZero
-                            ? `There are ${b} pools but ${a} swimmers showed up.<br>How many swimmers are swimming?`
-                            : `There is ${a} swim team with ${b} swimmers.<br>How many swimmers total?`,
-                        visual: useZero
-                            ? '<div style="font-size:2.5rem; opacity: 0.5;">🏊 × 0 = 🤷</div>'
-                            : `<div class="swimmer-group">${Array.from({length: b}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>`,
+                        questionText: scenario.text,
+                        visual,
                         answer,
                         options: Engine.Utils.multipleChoice(answer),
                         hint1: useZero ? 'Any number times 0 is always 0!' : 'Any number times 1 stays the same!',
-                        hint2: `${a} × ${b} = ?`,
-                        hint3: `${a} × ${b} = ${answer}`
+                        hint2: useZero ? `${n} × 0 = ?` : `1 × ${n} = ?`,
+                        hint3: useZero ? `${n} × 0 = 0` : `1 × ${n} = ${n}`
                     };
                 }
             },
@@ -162,28 +178,52 @@ const MultiplicationIntro = {
             {
                 skillId: 'mult-intro-commutative',
                 generate(diff) {
-                    const a = R(2, diff >= 2 ? 8 : 5);
-                    const b = R(2, diff >= 2 ? 8 : 5);
-                    const answer = true;
-                    const wrong = a !== b; // always true since both >= 2
+                    const max = diff >= 2 ? 8 : 5;
+                    const a = R(2, max);
+                    const b = R(2, max);
+                    // ~50% chance of a false case: change one number on the right side
+                    const isTrue = Math.random() < 0.5;
+                    let rightA = b, rightB = a;
+                    if (!isTrue) {
+                        // Nudge one factor by 1 or 2 so it looks plausible but is wrong
+                        const delta = pick([1, 2]);
+                        if (Math.random() < 0.5) {
+                            rightA = b + delta <= 9 ? b + delta : b - delta;
+                        } else {
+                            rightB = a + delta <= 9 ? a + delta : a - delta;
+                        }
+                    }
+                    const swimmers = (n) => Array.from({length: Math.min(n, 9)}, () => '<span class="swimmer-item">🏊</span>').join('');
                     return {
                         type: 'true-false',
-                        questionText: `True or False?<br>${a} × ${b} = ${b} × ${a}`,
+                        questionText: `True or False?<br>${a} × ${b} = ${rightA} × ${rightB}`,
                         visual: `<div style="display:flex; gap: 24px; align-items:center;">
                             <div style="text-align:center">
                                 <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${a} × ${b}</div>
-                                <div class="swimmer-group">${Array.from({length: a}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>
+                                <div class="swimmer-group">${swimmers(a)}</div>
+                                <div style="font-size:0.9rem; color:#666">= ${a * b}</div>
                             </div>
-                            <div style="font-size:2rem">=</div>
+                            <div style="font-size:2rem">=?</div>
                             <div style="text-align:center">
-                                <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${b} × ${a}</div>
-                                <div class="swimmer-group">${Array.from({length: b}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>
+                                <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${rightA} × ${rightB}</div>
+                                <div class="swimmer-group">${swimmers(rightA)}</div>
+                                <div style="font-size:0.9rem; color:#666">= ${rightA * rightB}</div>
                             </div>
                         </div>`,
-                        answer: true,
-                        hint1: `The order of multiplication doesn't change the answer!`,
-                        hint2: `${a} × ${b} = ${a * b} and ${b} × ${a} = ${b * a}`,
-                        hint3: `Both equal ${a * b}! This is the commutative property.`
+                        answer: isTrue,
+                        hint1: isTrue
+                            ? `The order of multiplication doesn't change the answer!`
+                            : `Check the numbers carefully — are they really just swapped?`,
+                        hint2: `${a} × ${b} = ${a * b}. What does ${rightA} × ${rightB} equal?`,
+                        hint3: `${a} × ${b} = ${a * b} and ${rightA} × ${rightB} = ${rightA * rightB}. ${isTrue ? 'They match!' : "They don't match!"}`,
+                        diagnose(userAnswer) {
+                            if (userAnswer !== isTrue) return isTrue ? 'missed-commutative' : 'assumed-commutative';
+                            return null;
+                        },
+                        misconceptionHints: {
+                            'missed-commutative': `When the numbers are just swapped (like ${a}×${b} and ${b}×${a}), the answer is always the same!`,
+                            'assumed-commutative': `Check closely — these aren't just swapped. ${a}×${b}=${a*b} but ${rightA}×${rightB}=${rightA*rightB}.`
+                        }
                     };
                 }
             },
