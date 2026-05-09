@@ -13,7 +13,7 @@ A personalized, interactive math learning app for Valerie, built around the **Kh
 - **Adaptive difficulty** — questions get harder or easier based on performance
 - **Misconception detection** — identifies specific error patterns and shows targeted hints
 - **Star-based progress tracking** — earn up to 3 stars per run, across 7 runs per unit (21 stars max)
-- **Practice Zone** — missed skills are queued for extra reinforcement
+- **Practice Zone** — missed skills are queued for reinforcement
 - **Cross-device persistence** — progress is saved to the cloud via Vercel KV and syncs across any browser or device
 - **Animations & audio** — confetti celebrations, sound effects, and smooth transitions
 
