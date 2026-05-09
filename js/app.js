@@ -135,11 +135,12 @@ const App = (() => {
             <div class="unit-intro-icon">${unit.icon}</div>
             <h2 class="unit-intro-title">${unit.title}</h2>
             <p class="unit-intro-desc">${unit.description}</p>
+            <p class="unit-intro-rounds-label">Each round takes you through all ${unit.exerciseCount} skills. Complete 4 rounds to unlock the next unit!</p>
             <div class="unit-intro-exercises stagger-in">
-                ${unit.getExercises().map((ex, i) => `
+                ${Array.from({length: unit.exerciseCount}, (_, i) => `
                     <div class="exercise-list-item ${progress.completed > i ? 'completed' : ''}">
                         <div class="exercise-list-num">${progress.completed > i ? '✓' : i + 1}</div>
-                        <span class="exercise-list-name">Exercise ${i + 1}</span>
+                        <span class="exercise-list-name">Round ${i + 1}</span>
                     </div>
                 `).join('')}
             </div>

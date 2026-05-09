@@ -86,7 +86,7 @@ const MultiplyFractions4 = {
                         </div>
                         <div style="margin-top:8px;font-size:1.2rem;font-weight:700;color:var(--monster-yellow);">Each zap = 1/${denom}</div>`,
                         answer,
-                        options: Engine.Utils.multipleChoice(answer),
+                        options: Engine.Utils.shuffle([answer, ...([whole - 1, whole + 1, whole * denom, denom].filter(d => d > 0 && d !== answer))].slice(0, 4)),
                         hint1: `A unit fraction has 1 on top. Multiply: ${whole} × 1 = ?`,
                         hint2: `${whole} × 1/${denom} = ${whole}/${denom} — the numerator is ${whole}`,
                         hint3: `The numerator is ${whole}`,

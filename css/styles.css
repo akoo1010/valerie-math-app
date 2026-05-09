@@ -588,6 +588,13 @@ body {
     margin-bottom: 2rem;
 }
 
+.unit-intro-rounds-label {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
 .unit-intro-exercises {
     display: grid;
     grid-template-columns: 1fr;

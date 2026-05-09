@@ -193,21 +193,25 @@ const MultiplicationIntro = {
                             rightB = a + delta <= 9 ? a + delta : a - delta;
                         }
                     }
-                    const swimmers = (n) => Array.from({length: Math.min(n, 9)}, () => '<span class="swimmer-item">🏊</span>').join('');
+                    const swimmerRow = (n) => n <= 12
+                        ? Array.from({length: n}, () => '<span class="swimmer-item">🏊</span>').join('')
+                        : null;
+                    const leftProduct = a * b;
+                    const rightProduct = rightA * rightB;
+                    const leftVisual = swimmerRow(leftProduct);
+                    const rightVisual = swimmerRow(rightProduct);
                     return {
                         type: 'true-false',
                         questionText: `True or False?<br>${a} × ${b} = ${rightA} × ${rightB}`,
                         visual: `<div style="display:flex; gap: 24px; align-items:center;">
                             <div style="text-align:center">
                                 <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${a} × ${b}</div>
-                                <div class="swimmer-group">${swimmers(a)}</div>
-                                <div style="font-size:0.9rem; color:#666">= ${a * b}</div>
+                                ${leftVisual ? `<div class="swimmer-group">${leftVisual}</div>` : ''}
                             </div>
                             <div style="font-size:2rem">=?</div>
                             <div style="text-align:center">
                                 <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${rightA} × ${rightB}</div>
-                                <div class="swimmer-group">${swimmers(rightA)}</div>
-                                <div style="font-size:0.9rem; color:#666">= ${rightA * rightB}</div>
+                                ${rightVisual ? `<div class="swimmer-group">${rightVisual}</div>` : ''}
                             </div>
                         </div>`,
                         answer: isTrue,

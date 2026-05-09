@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Valerie's Math Adventure 🌟</title>
     <meta name="description" content="A fun, personalized 3rd grade math learning app with swimming, Geometry Dash, and arts & crafts themes.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Load Google Fonts async to avoid render-blocking -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap"></noscript>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+<main>
     <!-- Splash / Loading Screen -->
     <div id="screen-splash" class="screen active">
         <div class="splash-content">
@@ -76,7 +80,7 @@
                 <div class="progress-bar-container">
                     <div class="progress-bar-fill" id="exercise-progress-bar"></div>
                 </div>
-                <span class="progress-text" id="exercise-progress-text">1/7</span>
+                <span class="progress-text" id="exercise-progress-text">Skill 1 of 7</span>
             </div>
             <div class="exercise-stars" id="exercise-stars">⭐ 0</div>
         </div>
@@ -107,39 +111,40 @@
 
     <!-- Celebration Canvas (overlays everything) -->
     <canvas id="celebration-canvas"></canvas>
+</main>
 
-    <!-- Scripts -->
-    <script src="js/audio.js"></script>
-    <script src="js/animations.js"></script>
-    <script src="js/adaptive.js"></script>
-    <script src="js/engine.js"></script>
-    <script src="js/units/multiplication.js"></script>
-    <script src="js/units/multiplication-1digit.js"></script>
-    <script src="js/units/addition-subtraction.js"></script>
-    <script src="js/units/division.js"></script>
-    <script src="js/units/fractions.js"></script>
-    <script src="js/units/patterns.js"></script>
-    <script src="js/units/geometry.js"></script>
-    <script src="js/units/area.js"></script>
-    <script src="js/units/perimeter.js"></script>
-    <script src="js/units/time.js"></script>
-    <script src="js/units/measurement.js"></script>
-    <script src="js/units/data-graphs.js"></script>
+    <!-- Scripts — defer so they don't block rendering -->
+    <script defer src="js/audio.js"></script>
+    <script defer src="js/animations.js"></script>
+    <script defer src="js/adaptive.js"></script>
+    <script defer src="js/engine.js"></script>
+    <script defer src="js/units/multiplication.js"></script>
+    <script defer src="js/units/multiplication-1digit.js"></script>
+    <script defer src="js/units/addition-subtraction.js"></script>
+    <script defer src="js/units/division.js"></script>
+    <script defer src="js/units/fractions.js"></script>
+    <script defer src="js/units/patterns.js"></script>
+    <script defer src="js/units/geometry.js"></script>
+    <script defer src="js/units/area.js"></script>
+    <script defer src="js/units/perimeter.js"></script>
+    <script defer src="js/units/time.js"></script>
+    <script defer src="js/units/measurement.js"></script>
+    <script defer src="js/units/data-graphs.js"></script>
     <!-- 4th Grade Units -->
-    <script src="js/units/4-place-value.js"></script>
-    <script src="js/units/4-add-sub-estimation.js"></script>
-    <script src="js/units/4-multiply-1digit.js"></script>
-    <script src="js/units/4-multiply-2digit.js"></script>
-    <script src="js/units/4-division.js"></script>
-    <script src="js/units/4-factors-multiples.js"></script>
-    <script src="js/units/4-equiv-fractions.js"></script>
-    <script src="js/units/4-add-sub-fractions.js"></script>
-    <script src="js/units/4-multiply-fractions.js"></script>
-    <script src="js/units/4-decimals.js"></script>
-    <script src="js/units/4-angles.js"></script>
-    <script src="js/units/4-area-perimeter.js"></script>
-    <script src="js/units/4-measurement.js"></script>
-    <script src="js/units/4-plane-figures.js"></script>
-    <script src="js/app.js"></script>
+    <script defer src="js/units/4-place-value.js"></script>
+    <script defer src="js/units/4-add-sub-estimation.js"></script>
+    <script defer src="js/units/4-multiply-1digit.js"></script>
+    <script defer src="js/units/4-multiply-2digit.js"></script>
+    <script defer src="js/units/4-division.js"></script>
+    <script defer src="js/units/4-factors-multiples.js"></script>
+    <script defer src="js/units/4-equiv-fractions.js"></script>
+    <script defer src="js/units/4-add-sub-fractions.js"></script>
+    <script defer src="js/units/4-multiply-fractions.js"></script>
+    <script defer src="js/units/4-decimals.js"></script>
+    <script defer src="js/units/4-angles.js"></script>
+    <script defer src="js/units/4-area-perimeter.js"></script>
+    <script defer src="js/units/4-measurement.js"></script>
+    <script defer src="js/units/4-plane-figures.js"></script>
+    <script defer src="js/app.js"></script>
 </body>
 </html>

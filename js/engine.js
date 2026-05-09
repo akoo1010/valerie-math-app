@@ -47,6 +47,16 @@ const Engine = (() => {
             const options = Utils.shuffle([correct, ...wrong]);
             return options;
         },
+        // Multiple choice where all options must be multiples of `roundTo`
+        roundedMultipleChoice(correct, roundTo, numOptions = 4) {
+            const distSet = new Set([correct]);
+            const offsets = [-3, -2, -1, 1, 2, 3];
+            Utils.shuffle(offsets).forEach(o => {
+                const d = correct + o * roundTo;
+                if (d >= 0) distSet.add(d);
+            });
+            return Utils.shuffle([...distSet].slice(0, numOptions));
+        },
         // Format number with commas
         fmt(n) {
             return n.toLocaleString();
@@ -549,7 +559,7 @@ const Engine = (() => {
         const stars = document.getElementById('exercise-stars');
         const total = currentExercises.length;
         bar.style.width = `${(currentExIndex / total) * 100}%`;
-        text.textContent = `${currentExIndex + 1}/${total}`;
+        text.textContent = `Skill ${currentExIndex + 1} of ${total}`;
         stars.textContent = `⭐ ${score.correct}`;
     }
 

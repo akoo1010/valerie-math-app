@@ -67,6 +67,7 @@ const AdditionSubtraction = {
                     const roundTo = diff >= 2 ? 100 : 10;
                     const num = R(11, diff >= 2 ? 950 : 95);
                     const answer = Math.round(num / roundTo) * roundTo;
+                    const options = Engine.Utils.roundedMultipleChoice(answer, roundTo);
                     return {
                         type: 'multiple-choice',
                         questionText: `Round ${num} to the nearest ${roundTo}`,
@@ -77,7 +78,7 @@ const AdditionSubtraction = {
                             </div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.multipleChoice(answer, 4),
+                        options,
                         hint1: `Look at the ${roundTo === 10 ? 'ones' : 'tens'} digit. Is it 5 or more? Round up! Less than 5? Round down!`,
                         hint2: `${num}: the ${roundTo === 10 ? 'ones' : 'tens'} digit is ${roundTo === 10 ? num % 10 : Math.floor((num % 100) / 10)}`,
                         hint3: `${num} rounds to ${answer}`
@@ -169,7 +170,7 @@ const AdditionSubtraction = {
                         questionText: `Estimate! Round each number to the nearest 10, then add.<br>${a} + ${b} ≈ ?`,
                         subText: '🎨 About how many craft supplies?',
                         answer,
-                        options: Engine.Utils.multipleChoice(answer),
+                        options: Engine.Utils.roundedMultipleChoice(answer, 10),
                         hint1: `First, round ${a} to the nearest 10: ${estA}`,
                         hint2: `Then round ${b} to nearest 10: ${estB}. Now add them!`,
                         hint3: `${estA} + ${estB} = ${answer}`

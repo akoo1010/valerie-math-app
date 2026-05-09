@@ -134,7 +134,7 @@ const AddSubEstimation4 = {
                             <div style="text-align:center;"><span style="font-weight:700;">${Engine.Utils.fmt(b)}</span><br><span style="font-size:0.8rem;">≈ ${Engine.Utils.fmt(estB)}</span></div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.multipleChoice(answer),
+                        options: Engine.Utils.roundedMultipleChoice(answer, roundTo),
                         hint1: `Round ${Engine.Utils.fmt(a)} to the nearest ${Engine.Utils.fmt(roundTo)}: ${Engine.Utils.fmt(estA)} 🎵`,
                         hint2: `Round ${Engine.Utils.fmt(b)} to the nearest ${Engine.Utils.fmt(roundTo)}: ${Engine.Utils.fmt(estB)}. Now add!`,
                         hint3: `${Engine.Utils.fmt(estA)} + ${Engine.Utils.fmt(estB)} = ${Engine.Utils.fmt(answer)} 🌟`,
@@ -179,7 +179,7 @@ const AddSubEstimation4 = {
                             <div style="text-align:center;"><span style="font-weight:700;">${Engine.Utils.fmt(b)}</span><br><span style="font-size:0.8rem;">≈ ${Engine.Utils.fmt(estB)}</span></div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.multipleChoice(answer),
+                        options: Engine.Utils.roundedMultipleChoice(answer, roundTo),
                         hint1: `Round ${Engine.Utils.fmt(a)} → ${Engine.Utils.fmt(estA)} 🎶`,
                         hint2: `Round ${Engine.Utils.fmt(b)} → ${Engine.Utils.fmt(estB)}. Now subtract!`,
                         hint3: `${Engine.Utils.fmt(estA)} − ${Engine.Utils.fmt(estB)} = ${Engine.Utils.fmt(answer)} ✨`,
@@ -391,7 +391,7 @@ const AddSubEstimation4 = {
                             questionText: `🪩 DANCE-OFF ROUND! Estimate by rounding to the nearest 1,000!<br>${isAdd ? `${Engine.Utils.fmt(a)} + ${Engine.Utils.fmt(b)}` : `${Engine.Utils.fmt(big)} − ${Engine.Utils.fmt(small)}`} ≈ ?`,
                             visual: `<div style="font-size:2.5rem; animation: bounce 0.6s ease-in-out infinite; color:var(--dance-purple);">🎤✨</div>`,
                             answer,
-                            options: Engine.Utils.multipleChoice(answer),
+                            options: Engine.Utils.roundedMultipleChoice(answer, 1000),
                             hint1: `Round each number to the nearest 1,000 first! 🎵`,
                             hint2: isAdd
                                 ? `${Engine.Utils.fmt(a)} ≈ ${Engine.Utils.fmt(estA)}, ${Engine.Utils.fmt(b)} ≈ ${Engine.Utils.fmt(estB)}`
