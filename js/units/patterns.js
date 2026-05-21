@@ -17,9 +17,12 @@ const Patterns = {
             {
                 skillId: 'pat-number',
                 generate(diff) {
+                    // Ensure subtract sequences stay non-negative across 6 steps
+                    const subStep = R(2, 5);
+                    const subStart = R(subStep * 5 + 5, subStep * 5 + 50);
                     const rules = [
                         { start: R(1,5), step: R(2,5), op: '+' },
-                        { start: R(20,50), step: R(2,5), op: '-' },
+                        { start: subStart, step: subStep, op: '-' },
                         { start: R(2,4), step: R(2,3), op: '*' },
                     ];
                     const rule = pick(rules.slice(0, diff >= 2 ? 3 : 2));
@@ -139,15 +142,21 @@ const Patterns = {
             {
                 skillId: 'pat-machine',
                 generate(diff) {
+                    const subVal = R(1, 5);
                     const rules = [
                         { op: '+', val: R(2, 8), label: 'adds' },
                         { op: '*', val: R(2, 5), label: 'multiplies by' },
-                        { op: '-', val: R(1, 5), label: 'subtracts' },
+                        { op: '-', val: subVal, label: 'subtracts' },
                     ];
                     const rule = pick(rules.slice(0, diff >= 2 ? 3 : 2));
                     const applyRule = (n) => rule.op === '+' ? n + rule.val : rule.op === '*' ? n * rule.val : n - rule.val;
-                    const inputs = [R(1,5), R(3,8), R(5,10)];
-                    const testInput = R(2, 12);
+                    // For subtract, ensure all inputs and test stay >= rule.val so outputs are non-negative
+                    const minIn = rule.op === '-' ? rule.val + 1 : 1;
+                    const inputs = [R(minIn, minIn + 4), R(minIn + 2, minIn + 7), R(minIn + 4, minIn + 9)];
+                    // Ensure testInput is not already shown in the I/O table (otherwise the answer is given away)
+                    let testInput;
+                    let tries = 0;
+                    do { testInput = R(minIn + 1, minIn + 11); tries++; } while (inputs.includes(testInput) && tries < 20);
                     const answer = applyRule(testInput);
                     return {
                         type: 'input',

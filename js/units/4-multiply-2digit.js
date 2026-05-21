@@ -203,7 +203,7 @@ const Multiply2Digit4 = {
                             <div style="text-align:center;color:var(--dance-cyan);"><strong>${b}</strong><br><span style="font-size:0.8rem;">≈ ${estB}</span></div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.multipleChoice(answer),
+                        options: Engine.Utils.roundedMultipleChoice(answer, 100),
                         hint1: `Round: ${a} ≈ ${estA}, ${b} ≈ ${estB}`,
                         hint2: `${estA} × ${estB} = ?`,
                         hint3: `${estA} × ${estB} = ${Engine.Utils.fmt(answer)}`,
@@ -296,7 +296,10 @@ const Multiply2Digit4 = {
                 skillId: '4m2-distributive',
                 generate(diff, modality) {
                     const a = R(11, 40);
-                    const b = R(11, 30);
+                    // Avoid multiples of 10 (collapses ones partial to 0) and 19 (forgot-tens-zero
+                    // value collides with the tens-only partial, making diagnose ambiguous)
+                    let b = R(11, 30);
+                    while (b % 10 === 0 || b === 19) b = R(11, 30);
                     const bTens = Math.floor(b / 10) * 10;
                     const bOnes = b % 10;
                     const part1 = a * bTens;
@@ -324,7 +327,7 @@ const Multiply2Digit4 = {
                         diagnose(userAnswer) {
                             if (userAnswer === part1) return 'only-tens-part';
                             if (userAnswer === part2) return 'only-ones-part';
-                            if (userAnswer === a * b % 10 + a * Math.floor(b / 10)) return 'forgot-tens-zero';
+                            if (userAnswer === a * (b % 10) + a * Math.floor(b / 10)) return 'forgot-tens-zero';
                             return null;
                         },
                         misconceptionHints: {
@@ -383,19 +386,17 @@ const Multiply2Digit4 = {
                         hint2: `${a} × ${b}: try breaking ${b} into tens and ones — ${a} × ${bTens} + ${a} × ${bOnes}`,
                         hint3: `${a} × ${b} = ${Engine.Utils.fmt(answer)}`,
                         diagnose(userAnswer) {
-                            // Only multiplied by ones digit
+                            // Only multiplied by ones digit (equivalent to missing the tens partial)
                             if (userAnswer === a * bOnes) return 'only-ones-digit';
                             // Forgot to shift the tens partial product (treated tens digit as ones)
                             if (userAnswer === part2 + a * Math.floor(b / 10)) return 'forgot-tens-zero';
-                            // Missed one partial product
-                            if (userAnswer === answer - part1) return 'missed-tens-partial';
+                            // Missed the ones partial product
                             if (userAnswer === answer - part2) return 'missed-ones-partial';
                             return null;
                         },
                         misconceptionHints: {
                             'only-ones-digit': `✨ You only multiplied by the ones digit (${bOnes}). Don't forget to also multiply ${a} × ${bTens} = ${part1} and add it! Total: ${Engine.Utils.fmt(part1)} + ${part2} = ${Engine.Utils.fmt(answer)}.`,
                             'forgot-tens-zero': `🎵 When multiplying by the tens digit, remember ${Math.floor(b / 10)} represents ${bTens}! So ${a} × ${bTens} = ${part1}, not ${a * Math.floor(b / 10)}. Answer: ${Engine.Utils.fmt(answer)}.`,
-                            'missed-tens-partial': `💃 Almost! It looks like you forgot to add the tens partial product (${a} × ${bTens} = ${part1}). Add all parts: ${Engine.Utils.fmt(answer)}.`,
                             'missed-ones-partial': `🕺 Almost! It looks like you forgot to add the ones partial product (${a} × ${bOnes} = ${part2}). Add all parts: ${Engine.Utils.fmt(answer)}.`
                         }
                     };

@@ -113,6 +113,13 @@ body {
     background-attachment: fixed;
 }
 
+main {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-height: 100vh;
+}
+
 /* --- Screen Management --- */
 .screen {
     position: absolute;
@@ -156,11 +163,13 @@ body {
     align-items: center;
     justify-content: center;
     position: relative;
+    min-height: 100%;
 }
 
 .splash-content {
     text-align: center;
     z-index: 2;
+    padding: 24px 16px;
     animation: floatUp 1s ease-out;
 }
 
@@ -433,6 +442,9 @@ body {
     gap: 20px;
     padding: 10px;
     max-width: 1200px;
+    width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
     margin: 0 auto;
 }
 
@@ -1006,6 +1018,74 @@ body {
 .practice-empty-icon {
     font-size: 3rem;
     margin-bottom: 1rem;
+}
+
+.practice-section {
+    margin-bottom: 1.5rem;
+    padding: 24px;
+    background: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(255,255,255,0.08);
+    text-align: left;
+}
+
+.practice-section-title {
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+    color: white;
+}
+
+.practice-section-desc {
+    color: var(--text-secondary);
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+
+.mult-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.mult-table-btn {
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    padding: 14px 8px;
+    border: none;
+    border-radius: var(--radius-md);
+    background: linear-gradient(135deg, var(--ocean-light), var(--ocean-glow));
+    color: white;
+    cursor: pointer;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    box-shadow: 0 4px 14px rgba(45, 125, 210, 0.3);
+}
+
+.mult-table-btn:hover {
+    transform: translateY(-3px) scale(1.04);
+    box-shadow: 0 6px 20px rgba(45, 125, 210, 0.55);
+}
+
+.mult-table-btn:active {
+    transform: scale(0.96);
+}
+
+.mult-table-btn.mult-table-mixed {
+    grid-column: 1 / -1;
+    background: linear-gradient(135deg, var(--gd-pink), var(--gd-purple));
+    font-size: 1.3rem;
+    padding: 16px;
+    box-shadow: 0 4px 18px rgba(255, 45, 123, 0.45);
+}
+
+.mult-table-btn.mult-table-mixed:hover {
+    box-shadow: 0 6px 26px rgba(255, 45, 123, 0.65);
+}
+
+@media (max-width: 480px) {
+    .mult-tables-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
 }
 
 /* ================================================

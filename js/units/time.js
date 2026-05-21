@@ -90,7 +90,8 @@ const Time = {
                 skillId: 'time-set',
                 generate(diff) {
                     const h = R(1, 12);
-                    const m = diff >= 2 ? R(0, 11) * 5 : pick([0, 15, 30, 45]);
+                    // Exclude m=0 to avoid trivial "0 minutes past" question
+                    const m = diff >= 2 ? R(1, 11) * 5 : pick([15, 30, 45]);
                     const answer = h * 60 + m; // answer in total minutes for easier checking
                     return {
                         type: 'input',
@@ -164,7 +165,9 @@ const Time = {
                             return Engine.Utils.shuffle(opts).map(o => ({label: o, value: o}));
                         })(),
                         hint1: `Start at ${formatTime(startH, startM)} and add ${duration} minutes`,
-                        hint2: `${startM} + ${duration} = ${startM + duration} minutes past ${startH > 12 ? startH - 12 : startH}`,
+                        hint2: (startM + duration < 60)
+                            ? `${startM} + ${duration} = ${startM + duration} minutes past ${startH > 12 ? startH - 12 : startH}`
+                            : `${startM} + ${duration} = ${startM + duration} minutes — that's more than 60, so it crosses into the next hour`,
                         hint3: `${event} ends at ${formatTime(endH, endM)}`
                     };
                 }
@@ -183,9 +186,10 @@ const Time = {
                     return {
                         type: 'multiple-choice',
                         questionText: `"${e.name}" at ${e.h}:00.<br>Is this AM or PM?`,
-                        visual: `<div style="font-size:3rem">${e.ampm === 'AM' ? '🌅' : '🌆'}</div>`,
+                        // Neutral visual — don't give away AM/PM with a 🌅/🌆 that matches an option label
+                        visual: `<div style="font-size:3rem">🕐</div>`,
                         answer: e.ampm,
-                        options: [{label: '🌅 AM (morning)', value: 'AM'}, {label: '🌆 PM (afternoon/evening)', value: 'PM'}],
+                        options: [{label: 'AM (morning)', value: 'AM'}, {label: 'PM (afternoon/evening)', value: 'PM'}],
                         hint1: `AM = midnight to noon. PM = noon to midnight.`,
                         hint2: `"${e.name}" — does this happen in the morning or afternoon/evening?`,
                         hint3: `${e.name} is in the ${e.ampm}!`
@@ -217,18 +221,22 @@ const Time = {
                 generate(diff) {
                     const now = R(1, 10);
                     const nowM = pick([0, 15, 30, 45]);
-                    const eventH = now;
-                    const eventM = nowM + R(10, 40);
-                    const answer = eventM - nowM;
+                    const delta = R(10, 40);
+                    const totalEventM = now * 60 + nowM + delta;
+                    const eventH = Math.floor(totalEventM / 60);
+                    const eventM = totalEventM % 60;
+                    const answer = delta;
                     return {
                         type: 'input',
                         questionText: `It's ${formatTime(now, nowM)} now. The swim race starts at ${formatTime(eventH, eventM)}.<br>How many minutes until the race?`,
                         inputSuffix: 'minutes',
                         answer,
                         visual: `<div style="font-size:3rem;animation:pulse 1.5s infinite;">⏰</div>`,
-                        hint1: `Count from the current time to the race time`,
-                        hint2: `From :${nowM.toString().padStart(2,'0')} to :${eventM.toString().padStart(2,'0')}`,
-                        hint3: `${eventM} − ${nowM} = ${answer} minutes`
+                        hint1: `Count the minutes from the current time up to the race time`,
+                        hint2: eventH === now
+                            ? `From :${nowM.toString().padStart(2,'0')} to :${eventM.toString().padStart(2,'0')}`
+                            : `Count up to the next hour, then add the rest`,
+                        hint3: `It's ${answer} minutes until the race`
                     };
                 }
             }

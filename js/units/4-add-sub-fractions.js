@@ -18,8 +18,10 @@ const AddSubFractions4 = {
                 skillId: '4asf-add-same',
                 generate(diff, modality) {
                     const denom = pick(diff >= 2 ? [3, 4, 5, 6, 8, 10] : [3, 4, 5, 6]);
-                    const n1 = R(1, denom - 1);
-                    const n2 = R(1, denom - n1);
+                    // Keep n1 ≤ denom-2 so there is always room for n2, and the sum stays
+                    // strictly below denom (a proper fraction, not a whole number)
+                    const n1 = R(1, denom - 2);
+                    const n2 = R(1, denom - n1 - 1);
                     const answerNumer = n1 + n2;
                     const answer = answerNumer;
 
@@ -204,15 +206,12 @@ const AddSubFractions4 = {
                         diagnose(userAnswer) {
                             // Added only whole parts, forgot fractions
                             if (userAnswer === (w1 + w2) * denom) return 'forgot-fractions';
-                            // Added numerators but forgot to carry extra whole
-                            if (userAnswer === (w1 + w2) * denom + totalNumer) return 'forgot-carry';
                             // Added all four numbers together raw
                             if (userAnswer === w1 + n1 + w2 + n2) return 'added-all-raw';
                             return null;
                         },
                         misconceptionHints: {
                             'forgot-fractions': `Don't forget the fraction parts! Add the fractional numerators too: ${n1} + ${n2} = ${totalNumer}, then convert to ${denom}ths.`,
-                            'forgot-carry': `Almost! ${totalNumer}/${denom} is more than one whole — carry the extra whole into the whole number before converting.`,
                             'added-all-raw': `Mixed numbers have two parts each. Add the wholes together (${w1} + ${w2}) and the numerators together (${n1} + ${n2}) separately, then combine.`
                         }
                     };
@@ -268,14 +267,13 @@ const AddSubFractions4 = {
                             <div style="padding:10px 16px;background:rgba(251,191,36,0.1);border:2px solid var(--dance-gold);border-radius:10px;font-size:1.3rem;font-weight:700;color:var(--dance-gold);">${w2} ${n2}/${denom}</div>
                         </div>`,
                         answer,
-                        hint1: `Subtract wholes: ${w1} − ${w2} = ${w1 - w2}. Subtract fractions: ${n1}/${denom} − ${n2}/${denom}${needsBorrow ? ' (need to borrow!)' : ''}.`,
+                        hint1: `Subtract wholes: ${w1} − ${w2}${needsBorrow ? ` (borrow 1 → ${w1 - 1} − ${w2} = ${w1 - w2 - 1})` : ` = ${w1 - w2}`}. Subtract fractions: ${needsBorrow ? `${n1 + denom}` : n1}/${denom} − ${n2}/${denom}${needsBorrow ? ' (after borrowing)' : ''}.`,
                         hint2: `Result: ${resultWhole}${resultNumer > 0 ? ` ${resultNumer}/${denom}` : ''} = ?/${denom}`,
                         hint3: `${resultWhole} × ${denom} + ${resultNumer} = ${answer}`,
                         diagnose(userAnswer) {
-                            // Forgot to borrow — subtracted wrong direction for fractions
-                            if (needsBorrow && userAnswer === (w1 - w2) * denom + (n1 - n2 + denom)) {
-                                // This would be correct, skip
-                            }
+                            // Borrowed correctly for the fraction but forgot to reduce the whole by 1
+                            if (needsBorrow && userAnswer === (w1 - w2) * denom + (n1 - n2 + denom)) return 'forgot-reduce-whole';
+                            // Subtracted fractions the wrong way without borrowing
                             if (needsBorrow && userAnswer === (w1 - w2) * denom + (n2 - n1)) return 'forgot-borrow';
                             // Subtracted wholes only, ignored fractions
                             if (userAnswer === (w1 - w2) * denom) return 'forgot-fraction-part';
@@ -284,6 +282,7 @@ const AddSubFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
+                            'forgot-reduce-whole': `Almost! When you borrow, you must subtract 1 from the whole number part too. So ${w1} becomes ${w1 - 1}, giving ${w1 - 1} − ${w2} = ${w1 - w2 - 1} for the whole part.`,
                             'forgot-borrow': `When the top fraction (${n1}/${denom}) is smaller than the bottom (${n2}/${denom}), borrow 1 whole from ${w1} and add ${denom}/${denom} to your fraction before subtracting!`,
                             'forgot-fraction-part': `Don't forget the fractional parts! After subtracting wholes (${w1} − ${w2} = ${w1 - w2}), also handle the fraction: ${n1}/${denom} − ${n2}/${denom}.`,
                             'wrong-direction': `Subtract the second number FROM the first: ${w1} ${n1}/${denom} is the starting amount, ${w2} ${n2}/${denom} is what we remove.`
@@ -395,10 +394,12 @@ const AddSubFractions4 = {
 
                     let questionText, visualBase, answer, hint1, hint2, hint3;
                     let diagnose, misconceptionHints;
+                    let n1Val = 0, n2Val = 0; // captured for use in the visual scaffold below
 
                     if (type === 'add') {
                         const n1 = R(1, Math.floor(denom / 2));
                         const n2 = R(1, denom - n1);
+                        n1Val = n1; n2Val = n2;
                         answer = n1 + n2;
                         questionText = `🕺 DANCE-OFF! ${n1}/${denom} + ${n2}/${denom} = ?/${denom}`;
                         visualBase = `<div style="font-size:3rem;text-align:center;animation:bounce 0.6s ease-in-out infinite;">🎵💃🕺🎵</div>`;
@@ -417,6 +418,7 @@ const AddSubFractions4 = {
                     } else if (type === 'sub') {
                         const n1 = R(2, denom);
                         const n2 = R(1, n1 - 1);
+                        n1Val = n1; n2Val = n2;
                         answer = n1 - n2;
                         questionText = `🕺 DANCE-OFF! ${n1}/${denom} − ${n2}/${denom} = ?/${denom}`;
                         visualBase = `<div style="font-size:3rem;text-align:center;animation:bounce 0.6s ease-in-out infinite;">✨🪩✨</div>`;
@@ -481,12 +483,22 @@ const AddSubFractions4 = {
                                 <div style="font-size:0.85rem;color:var(--dance-gold);">Pink = filled (${n1Val}), dotted = empty. Count the empty ones!</div>
                             </div>`;
                         } else {
+                            // Show operands in two colours so the visual scaffolds the thinking
+                            // without revealing the answer directly
                             result.visual += `<div class="visual-scaffold" style="margin-top:14px;text-align:center;">
-                                <div style="color:var(--dance-gold);font-weight:700;margin-bottom:6px;">${type === 'add' ? '💃 Count the shaded sections' : '🪩 See what remains'}</div>
+                                <div style="color:var(--dance-gold);font-weight:700;margin-bottom:6px;">${type === 'add' ? '💃 Pink + Cyan = total shaded' : '🪩 Purple total, remove the gold ones'}</div>
                                 <div style="display:flex;gap:2px;justify-content:center;">
-                                    ${Array.from({length: denom}, (_, i) => `<div style="width:${Math.floor(220/denom)}px;height:32px;border-radius:4px;background:${i < answer ? 'var(--dance-purple)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                    ${Array.from({length: denom}, (_, i) => {
+                                        let bg;
+                                        if (type === 'add') {
+                                            bg = i < n1Val ? 'var(--dance-pink)' : i < n1Val + n2Val ? 'var(--dance-cyan)' : 'rgba(255,255,255,0.1)';
+                                        } else {
+                                            bg = i < n2Val ? 'var(--dance-gold)' : i < n1Val ? 'var(--dance-purple)' : 'rgba(255,255,255,0.1)';
+                                        }
+                                        return `<div style="width:${Math.floor(220/denom)}px;height:32px;border-radius:4px;background:${bg};border:2px solid rgba(255,255,255,0.2);"></div>`;
+                                    }).join('')}
                                 </div>
-                                <div style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-top:4px;">${answer} out of ${denom} sections highlighted = ${answer}/${denom}</div>
+                                <div style="font-size:0.85rem;color:rgba(255,255,255,0.7);margin-top:4px;">${type === 'add' ? `Pink: ${n1Val}/${denom} + Cyan: ${n2Val}/${denom} = ?/${denom}` : `Purple: ${n1Val}/${denom} − Gold: ${n2Val}/${denom} = ?/${denom}`}</div>
                             </div>`;
                         }
                     }

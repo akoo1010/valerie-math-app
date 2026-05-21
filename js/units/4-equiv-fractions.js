@@ -84,7 +84,10 @@ const EquivFractions4 = {
                 skillId: '4ef-simplify',
                 generate(diff, modality) {
                     const simpleDenom = pick([2, 3, 4, 5, 6]);
-                    const simpleNumer = R(1, simpleDenom - 1);
+                    // Force the target "simplified" pair to be coprime so the displayed answer
+                    // is actually in lowest terms (e.g., reject 2/4, 2/6, 3/6, 4/6)
+                    let simpleNumer = R(1, simpleDenom - 1);
+                    while (gcd(simpleNumer, simpleDenom) !== 1) simpleNumer = R(1, simpleDenom - 1);
                     const multiplier = R(2, diff >= 2 ? 5 : 3);
                     const numer = simpleNumer * multiplier;
                     const denom = simpleDenom * multiplier;
@@ -463,7 +466,9 @@ const EquivFractions4 = {
                         };
                     } else {
                         const sd = pick([2, 3, 4, 5]);
-                        const sn = R(1, sd - 1);
+                        // Force (sn, sd) coprime so "Simplify sn*m/sd*m" actually reduces to sn/sd
+                        let sn = R(1, sd - 1);
+                        while (gcd(sn, sd) !== 1) sn = R(1, sd - 1);
                         const m = R(2, 4);
                         const answer = sn;
                         result = {

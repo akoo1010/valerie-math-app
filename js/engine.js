@@ -10,6 +10,7 @@ const Engine = (() => {
     let wrongAttempts = 0;
     let hintShown = false;
     let answered = false;
+    let awaitingFeedback = false;
 
     // --- Utility functions available to unit files ---
     const Utils = {
@@ -64,14 +65,17 @@ const Engine = (() => {
     };
 
     // --- Rendering helpers ---
-    function renderQuestion(question) {
+    function renderQuestion(question, isRetry = false) {
         const body = document.getElementById('exercise-body');
         body.innerHTML = '';
         body.className = 'exercise-body';
         currentQuestion = question;
-        wrongAttempts = 0;
-        hintShown = false;
+        if (!isRetry) {
+            wrongAttempts = 0;
+            hintShown = false;
+        }
         answered = false;
+        awaitingFeedback = false;
 
         // Worked example (shown in worked-example modality)
         if (question.workedExample) {
@@ -192,9 +196,13 @@ const Engine = (() => {
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Check ✓';
+        let submitting = false;
         btn.addEventListener('click', () => {
+            if (submitting || answered) return;
             const val = parseFloat(input.value);
             if (isNaN(val)) return;
+            submitting = true;
+            btn.disabled = true;
             AudioManager.click();
             checkAnswer(val, question);
             input.classList.add(val === question.answer ? 'correct' : 'incorrect');
@@ -386,7 +394,8 @@ const Engine = (() => {
 
     // --- Answer checking ---
     function checkAnswer(userAnswer, question) {
-        if (answered) return;
+        if (answered || awaitingFeedback) return;
+        awaitingFeedback = true;
 
         const isCorrect = (question.checkAnswer)
             ? question.checkAnswer(userAnswer)
@@ -627,21 +636,8 @@ const Engine = (() => {
                     this.loadExercise(currentExIndex);
                 }
             } else {
-                // Try same question again (re-render it)
-                const exercise = currentExercises[currentExIndex];
-                const skillId = exercise.skillId || `${currentUnit.id}_ex${currentExIndex}`;
-                const difficulty = Adaptive.getDifficulty(skillId);
-                const modality = Adaptive.getModality(skillId);
-                const question = exercise.generate(difficulty, modality);
-                question.skillId = skillId;
-
-                // Show session notification if state changed
-                const sessionMsg = Adaptive.getSessionMessage();
-                if (sessionMsg) {
-                    showSessionBanner(sessionMsg);
-                }
-
-                renderQuestion(question);
+                // Retry same question — preserve wrongAttempts so hint level escalates
+                renderQuestion(currentQuestion, true);
             }
         },
 
@@ -704,7 +700,7 @@ const Engine = (() => {
                 </div>
                 <div class="results-buttons">
                     ${currentUnit.id === 'practice'
-                        ? `<button class="btn btn-primary" onclick="App.startPracticeExercises()">🔄 Practice Again</button>
+                        ? `<button class="btn btn-primary" onclick="App.repeatLastPractice()">🔄 Practice Again</button>
                            <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>`
                         : `<button class="btn btn-primary" onclick="Engine.startUnit(Engine.getCurrentUnit(), Engine.getCurrentUnit().getExercises())">🔄 Try Again</button>
                            <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>`

@@ -26,8 +26,9 @@ const Geometry = {
                 skillId: 'geo-identify',
                 generate(diff) {
                     const shape = pick(shapes);
-                    const options = Engine.Utils.shuffle(shapes.map(s => s.name)).slice(0, 4);
-                    if (!options.includes(shape.name)) options[0] = shape.name;
+                    // Always include the correct shape + 3 random distractors
+                    const distractors = Engine.Utils.shuffle(shapes.filter(s => s.name !== shape.name).map(s => s.name)).slice(0, 3);
+                    const options = [shape.name, ...distractors];
                     return {
                         type: 'multiple-choice',
                         questionText: `What type of quadrilateral is this?`,
@@ -45,6 +46,8 @@ const Geometry = {
                 skillId: 'geo-properties',
                 generate(diff) {
                     const shape = pick(shapes);
+                    // Always include the correct shape + 3 random distractors
+                    const distractors = Engine.Utils.shuffle(shapes.filter(s => s.name !== shape.name).map(s => s.name)).slice(0, 3);
                     return {
                         type: 'multiple-choice',
                         questionText: `Which shape has these properties?<br>"${shape.props}"`,
@@ -52,7 +55,7 @@ const Geometry = {
                             📋 ${shape.props}
                         </div>`,
                         answer: shape.name,
-                        options: Engine.Utils.shuffle(shapes.map(s => s.name)).slice(0, 4).map(o => ({label: o, value: o})),
+                        options: Engine.Utils.shuffle([shape.name, ...distractors]).map(o => ({label: o, value: o})),
                         hint1: `Think about which shape matches ALL of these properties`,
                         hint2: `Does it have equal sides? Right angles? Parallel sides?`,
                         hint3: `The answer is ${shape.name}!`
@@ -69,13 +72,17 @@ const Geometry = {
                     const shape = isQuad ? pick(quads) : pick(nonQuads);
                     const sides = { Triangle: 3, Pentagon: 5, Hexagon: 6, Circle: 0, Octagon: 8,
                                     Square: 4, Rectangle: 4, Rhombus: 4, Trapezoid: 4, Parallelogram: 4 };
+                    const shapeEmoji = {
+                        Square: '🟥', Rectangle: '▭', Rhombus: '🔷', Trapezoid: '🔶', Parallelogram: '▰',
+                        Triangle: '🔺', Pentagon: '⬠', Hexagon: '⬡', Circle: '🔴', Octagon: '🛑'
+                    };
                     return {
                         type: 'true-false',
                         questionText: `Is a ${shape} a quadrilateral?`,
-                        visual: `<div style="font-size:3rem">${isQuad ? '🔷' : shape === 'Triangle' ? '🔺' : shape === 'Circle' ? '🔴' : '⬡'}</div>`,
+                        visual: `<div style="font-size:3rem">${shapeEmoji[shape] || '❓'}</div>`,
                         answer: isQuad,
                         hint1: `A quadrilateral has exactly 4 sides!`,
-                        hint2: `A ${shape} has ${sides[shape] || '?'} sides`,
+                        hint2: `A ${shape} has ${sides[shape] ?? '?'} sides`,
                         hint3: `A ${shape} ${isQuad ? 'IS' : 'is NOT'} a quadrilateral!`
                     };
                 }
@@ -147,23 +154,24 @@ const Geometry = {
                 skillId: 'geo-mosaic',
                 generate(diff) {
                     const hidden = pick(['squares', 'rectangles', 'rhombuses', 'trapezoids']);
-                    const counts = { squares: R(2,5), rectangles: R(2,5), rhombuses: R(1,3), trapezoids: R(1,3) };
                     const shapeEmojis = { squares: '🟥', rectangles: '🟦', rhombuses: '🔷', trapezoids: '🔶' };
-                    const answer = counts[hidden];
+                    const decoys = ['🟡','🟣','🟠','⬜','🟤'];
+                    const totalCells = 25;
+                    const answer = R(3, 8);
+                    // Build cells deterministically so the count matches the answer
+                    const cells = [];
+                    for (let i = 0; i < answer; i++) cells.push(shapeEmojis[hidden]);
+                    for (let i = answer; i < totalCells; i++) cells.push(pick(decoys));
+                    const shuffledCells = Engine.Utils.shuffle(cells);
                     return {
                         type: 'input',
                         questionText: `How many ${hidden} can you count in this craft pattern?`,
                         visual: `<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px;max-width:250px;">
-                            ${Array.from({length: 25}, () => {
-                                const r = Math.random();
-                                if (r < 0.3) return `<span style="font-size:1.3rem">${shapeEmojis[hidden]}</span>`;
-                                return `<span style="font-size:1.3rem">${pick(['🟡','🟣','🟠','⬜','🟤'])}</span>`;
-                            }).join('')}
+                            ${shuffledCells.map(c => `<span style="font-size:1.3rem">${c}</span>`).join('')}
                         </div>`,
                         answer,
-                        checkAnswer(val) { return Math.abs(val - answer) <= 1; },
                         hint1: `Look carefully for all the ${shapeEmojis[hidden]} shapes`,
-                        hint2: `There are about ${answer} of them`,
+                        hint2: `Scan row by row and count only the ${shapeEmojis[hidden]} ones`,
                         hint3: `There are ${answer} ${hidden} in the pattern`
                     };
                 }

@@ -262,7 +262,12 @@ const AddSubEstimation4 = {
                 generate(diff, modality) {
                     const isAdd = Math.random() < 0.5;
                     const a = diff >= 2 ? R(10000, 50000) : R(1000, 5000);
-                    const missing = diff >= 2 ? R(5000, 20000) : R(500, 2000);
+                    const missingMin = diff >= 2 ? 5000 : 500;
+                    const missingMax = diff >= 2 ? 20000 : 2000;
+                    // Constrain missing < a when subtracting so c stays non-negative
+                    const missing = isAdd
+                        ? R(missingMin, missingMax)
+                        : R(missingMin, Math.min(missingMax, a - 1));
                     const c = isAdd ? a + missing : a - missing;
                     const answer = missing;
 
@@ -288,7 +293,6 @@ const AddSubEstimation4 = {
                         hint3: `The missing number is ${Engine.Utils.fmt(answer)} 💃`,
                         diagnose(userAnswer) {
                             // User added when they should have subtracted (or vice versa)
-                            const wrongOp = isAdd ? a + c : Math.abs(a + missing + a);
                             if (isAdd && userAnswer === a + c) return 'wrong-operation';
                             if (!isAdd && userAnswer === a + c) return 'wrong-operation';
                             if (userAnswer === c) return 'picked-total';

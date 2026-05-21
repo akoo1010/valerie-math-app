@@ -45,7 +45,7 @@ const Division = {
                         const weT = R(2, 3), wePT = R(2, 3), weTotal = weT * wePT;
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weTotal} swimmers ÷ ${weT} teams = ?</p><p>Split them evenly: ${Array(weT).fill(wePT).join(' + ')} = ${weTotal}</p><p>Each team gets <strong>${wePT}</strong> swimmers</p></div>`;
                     } else if (modality === 'visual') {
-                        result.visual += `<div class="visual-scaffold"><p>Deal swimmers to teams one by one:</p>${Array.from({length: teams}, (_, i) => `<div>Team ${i + 1}: ${Array(perTeam).fill('🏊').join('')} (${perTeam})</div>`).join('')}<div><strong>${total} ÷ ${teams} = ${perTeam}</strong></div></div>`;
+                        result.visual += `<div class="visual-scaffold"><p>Deal swimmers to teams one by one:</p>${Array.from({length: teams}, (_, i) => `<div>Team ${i + 1}: ${Array(perTeam).fill('🏊').join('')}</div>`).join('')}<div><strong>${total} ÷ ${teams} = ?</strong></div></div>`;
                     }
 
                     return result;
@@ -104,14 +104,10 @@ const Division = {
                         questionText: `${total} swimmers divided into groups of ${divisor}.<br>How many are left over?`,
                         subText: '(the remainder)',
                         visual: `<div style="text-align:center">
-                            <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
-                                ${Array.from({length: quotient}, (_, g) =>
-                                    `<div class="swimmer-group">${Array(divisor).fill('<span class="swimmer-item">🏊</span>').join('')}</div>`
-                                ).join('')}
+                            <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:480px;margin:0 auto;">
+                                ${Array(divisor * quotient + remainder).fill('<span class="swimmer-item">🏊</span>').join('')}
                             </div>
-                            <div style="margin-top:12px;font-size:1.3rem">
-                                ${Array(remainder).fill('🏊').join(' ')} <span style="color:var(--text-muted)">(leftover)</span>
-                            </div>
+                            <div style="margin-top:8px;color:var(--text-muted);font-size:0.85rem;">Try grouping them into ${divisor}s in your head!</div>
                         </div>`,
                         answer: remainder,
                         hint1: `How many full groups of ${divisor} can you make, and who's left?`,
@@ -187,11 +183,24 @@ const Division = {
                     const p = a * b;
                     // Which equation is in the fact family?
                     const correct = `${p} ÷ ${b} = ${a}`;
-                    const wrongs = [
+                    // The other true division in the fact family — must NOT be offered as a distractor
+                    const otherTrue = `${p} ÷ ${a} = ${b}`;
+                    const wrongSet = new Set([
                         `${p} ÷ ${a + 1} = ${b}`,
-                        `${p + 1} ÷ ${a} = ${b}`,
-                        `${p} ÷ ${R(2, 9)} = ${R(2, 9)}`
-                    ];
+                        `${p + 1} ÷ ${a} = ${b}`
+                    ]);
+                    // Build a third distractor that is NOT a true division of p and isn't already used
+                    let tries = 0;
+                    while (wrongSet.size < 3 && tries < 30) {
+                        const wd = R(2, 9);
+                        const wq = R(2, 9);
+                        const candidate = `${p} ÷ ${wd} = ${wq}`;
+                        if (wd * wq !== p && candidate !== correct && candidate !== otherTrue && !wrongSet.has(candidate)) {
+                            wrongSet.add(candidate);
+                        }
+                        tries++;
+                    }
+                    const wrongs = [...wrongSet];
                     return {
                         type: 'multiple-choice',
                         questionText: `If ${a} × ${b} = ${p}, which division fact is correct?`,
@@ -216,7 +225,7 @@ const Division = {
                         visual: `<div style="font-size:2.5rem;animation:swim 1s ease-in-out infinite;">🏊💨</div>`,
                         answer: a,
                         hint1: `What times ${b} equals ${product}?`,
-                        hint2: `Skip count by ${b}: ${Array.from({length:Math.min(a, 5)}, (_, i) => b * (i+1)).join(', ')}...`,
+                        hint2: `Skip count by ${b}: ${Array.from({length: Math.min(a - 1, 4)}, (_, i) => b * (i+1)).join(', ')}...`,
                         hint3: `${product} ÷ ${b} = ${a}`
                     };
                 }

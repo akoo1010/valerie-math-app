@@ -43,18 +43,25 @@ const Perimeter = {
                 skillId: 'perim-same',
                 generate(diff) {
                     const perim = R(12, 24) * 2; // even perimeter
-                    const l1 = R(perim / 4, perim / 2 - 1);
+                    // Use Math.ceil to keep dimensions as integers even when perim/4 is a half value
+                    const l1 = R(Math.ceil(perim / 4), perim / 2 - 1);
                     const w1 = perim / 2 - l1;
                     // Find another pair
                     let l2 = l1 + R(1, 3);
                     let w2 = perim / 2 - l2;
                     if (w2 <= 0) { l2 = l1 - 1; w2 = perim / 2 - l2; }
                     const correctPair = `${l2} × ${w2}`;
+                    // Generate distractor pairs as [length, width] then format — filter out any with non-positive dimensions
                     const wrongPairs = [
-                        `${l2 + 1} × ${w2}`,
-                        `${l2} × ${w2 + 1}`,
-                        `${l2 - 1} × ${w2 - 1}`
-                    ].filter(p => p !== correctPair);
+                        [l2 + 1, w2],
+                        [l2, w2 + 1],
+                        [l2 - 1, w2 - 1],
+                        [l2 + 2, w2],
+                        [l2, w2 + 2]
+                    ]
+                        .filter(([L, W]) => L > 0 && W > 0)
+                        .map(([L, W]) => `${L} × ${W}`)
+                        .filter(p => p !== correctPair);
                     return {
                         type: 'multiple-choice',
                         questionText: `A platform is ${l1} × ${w1} with perimeter ${perim}.<br>Which other rectangle also has perimeter ${perim}?`,
@@ -102,15 +109,27 @@ const Perimeter = {
                     const perim = 2 * (l + w);
                     const area = l * w;
                     const askPerim = Math.random() < 0.5;
+                    const correct = askPerim ? perim : area;
+
+                    // Build options: correct, the "trap" (the other value), plus distractors — all unique
+                    const opts = new Set([correct]);
+                    if (perim !== area) opts.add(askPerim ? area : perim);
+                    let tries = 0;
+                    while (opts.size < 4 && tries < 30) {
+                        const sign = Math.random() < 0.5 ? -1 : 1;
+                        const candidate = correct + sign * R(1, 5);
+                        if (candidate > 0) opts.add(candidate);
+                        tries++;
+                    }
                     return {
                         type: 'multiple-choice',
                         questionText: `A rectangle is ${l} × ${w}.<br>What is its ${askPerim ? 'PERIMETER' : 'AREA'}?`,
                         subText: askPerim ? '(distance around)' : '(space inside)',
-                        answer: askPerim ? perim : area,
-                        options: Engine.Utils.shuffle([perim, area, perim + R(1,5), area + R(1,5)]),
+                        answer: correct,
+                        options: Engine.Utils.shuffle([...opts]),
                         hint1: askPerim ? 'Perimeter = add all sides' : 'Area = length × width',
                         hint2: askPerim ? `${l}+${w}+${l}+${w} = ?` : `${l} × ${w} = ?`,
-                        hint3: `${askPerim ? 'Perimeter' : 'Area'} = ${askPerim ? perim : area}`
+                        hint3: `${askPerim ? 'Perimeter' : 'Area'} = ${correct}`
                     };
                 }
             },

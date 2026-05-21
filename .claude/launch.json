@@ -4,8 +4,8 @@
     {
       "name": "math-app",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["http-server", "/Users/valeriekoo/code/math-app", "-p", "8080", "-c-1"],
-      "port": 8080
+      "runtimeArgs": ["http-server", "/Users/alexanderkoo/code/valerie-math-app", "-p", "8765", "-c-1"],
+      "port": 8765
     }
   ]
 }

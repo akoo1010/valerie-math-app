@@ -194,8 +194,7 @@ const MultiplyFractions4 = {
                         visual: `<div style="text-align:center;">
                             <div style="display:grid;grid-template-columns:repeat(${denom}, 48px);gap:4px;justify-content:center;">
                                 ${Array.from({length: totalParts}, (_, i) => {
-                                    const row = Math.floor(i / denom);
-                                    return `<div style="width:48px;height:48px;border:2px solid var(--monster-purple);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:${i < shadedParts ? 'rgba(147,51,234,0.3)' : 'rgba(255,255,255,0.05)'};">${monsterEmoji}</div>`;
+                                    return `<div style="width:48px;height:48px;border:2px solid var(--monster-purple);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;background:rgba(255,255,255,0.05);">${monsterEmoji}</div>`;
                                 }).join('')}
                             </div>
                             <div style="margin-top:8px;color:var(--monster-purple);font-weight:700;">${whole} rows × ${denom} columns — shade ${numer}/${denom} of each row</div>
@@ -205,13 +204,11 @@ const MultiplyFractions4 = {
                         hint2: `${whole} rows × ${numer} shaded per row = ?`,
                         hint3: `${whole} × ${numer} = ${shadedParts} shaded cells`,
                         diagnose(userAnswer) {
-                            if (userAnswer === totalParts) return 'counted-total-not-shaded';
-                            if (userAnswer === whole * denom) return 'multiplied-denominators';
+                            if (userAnswer === totalParts) return 'multiplied-denominators';
                             if (userAnswer === numer) return 'counted-one-row-only';
                             return null;
                         },
                         misconceptionHints: {
-                            'counted-total-not-shaded': `${totalParts} is the total number of cells, not the shaded ones! Only shade ${numer} per row: ${whole} × ${numer} = ${shadedParts}.`,
                             'multiplied-denominators': `You multiplied by the denominator instead of the numerator! Shade ${numer} parts per row, not ${denom}: ${whole} × ${numer} = ${shadedParts}.`,
                             'counted-one-row-only': `${numer} is just one row! You have ${whole} rows, each with ${numer} shaded: ${whole} × ${numer} = ${shadedParts}.`
                         }
@@ -325,7 +322,7 @@ const MultiplyFractions4 = {
                         hint3: `${whole} × ${numer}/${denom} = ${answerNumer}/${denom} = ${wholeResult}${remainNumer > 0 ? ` ${remainNumer}/${denom}` : ''}`,
                         diagnose(userAnswer) {
                             if (userAnswer === wholeResult) return 'gave-whole-part-only';
-                            if (userAnswer === remainNumer) return 'gave-remainder-only';
+                            if (remainNumer > 0 && userAnswer === remainNumer) return 'gave-remainder-only';
                             return null;
                         },
                         misconceptionHints: {

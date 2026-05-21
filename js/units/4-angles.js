@@ -82,16 +82,18 @@ const Angles4 = {
                             <div style="width:120px;height:120px;margin:10px auto;position:relative;">
                                 <div style="position:absolute;bottom:0;left:10px;width:100px;height:3px;background:var(--monster-yellow);"></div>
                                 <div style="position:absolute;bottom:0;left:10px;width:100px;height:3px;background:var(--monster-red);transform-origin:left;transform:rotate(-${angle}deg);"></div>
-                                <div style="position:absolute;bottom:4px;left:30px;font-size:0.8rem;color:var(--monster-purple);font-weight:700;">${angle}°</div>
                             </div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.shuffle([
-                            {label: `${angle}°`, value: angle},
-                            {label: `${angle + 20}°`, value: angle + 20},
-                            {label: `${Math.max(10, angle - 20)}°`, value: Math.max(10, angle - 20)},
-                            {label: `${180 - angle}°`, value: 180 - angle}
-                        ]),
+                        options: (() => {
+                            const set = new Set([angle]);
+                            const candidates = [angle + 20, angle - 20, angle + 10, angle - 10, 180 - angle, angle + 30, angle - 30];
+                            for (const c of candidates) {
+                                if (c > 0 && c < 180 && c !== angle && !set.has(c)) set.add(c);
+                                if (set.size === 4) break;
+                            }
+                            return Engine.Utils.shuffle([...set]).map(v => ({label: `${v}°`, value: v}));
+                        })(),
                         hint1: `A right angle is 90°. Is this bigger or smaller?`,
                         hint2: `This angle looks ${angle < 90 ? 'smaller' : angle > 90 ? 'bigger' : 'equal to'} 90°`,
                         hint3: `The angle is ${angle}°`,
@@ -112,7 +114,6 @@ const Angles4 = {
                             <div style="width:160px;height:160px;margin:10px auto;position:relative;border:3px dashed var(--monster-purple);border-radius:50%;">
                                 <div style="position:absolute;bottom:50%;left:50%;width:70px;height:3px;background:var(--monster-yellow);"></div>
                                 <div style="position:absolute;bottom:50%;left:50%;width:70px;height:3px;background:var(--monster-red);transform-origin:left;transform:rotate(-${angle}deg);"></div>
-                                <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:0.8rem;color:var(--monster-purple);font-weight:700;">${angle}°</div>
                             </div>
                             <div style="font-size:0.9rem;color:var(--text-muted);">The monster's protractor shows the angle between its claws!</div>
                             <div class="visual-scaffold" style="margin-top:8px;padding:8px;background:rgba(250,204,21,0.1);border-radius:8px;font-size:0.85rem;">
@@ -330,7 +331,7 @@ const Angles4 = {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.4rem;font-weight:700;color:var(--monster-purple);margin-bottom:8px;">🐲 Monster Spin Tracker 🐲</div>
                             <div style="width:140px;height:140px;margin:0 auto;position:relative;border:3px solid var(--monster-purple);border-radius:50%;background:rgba(139,92,246,0.08);">
-                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-green);transform-origin:left;transform:rotate(-${rotation}deg);"></div>
+                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-green);transform-origin:left;transform:rotate(${rotation}deg);"></div>
                                 <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-red);"></div>
                                 <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:0.7rem;font-weight:700;color:var(--monster-purple);">Start</div>
                             </div>
@@ -369,6 +370,7 @@ const Angles4 = {
                                 if (answer === 'acute' && userAnswer === 'obtuse') return 'confused-acute-obtuse';
                                 if (answer === 'obtuse' && userAnswer === 'acute') return 'confused-acute-obtuse';
                                 if ((answer === 'acute' || answer === 'obtuse') && userAnswer === 'right') return 'confused-with-right';
+                                if (answer === 'right' && (userAnswer === 'acute' || userAnswer === 'obtuse')) return 'confused-with-right';
                                 return null;
                             },
                             misconceptionHints: {

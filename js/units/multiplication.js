@@ -48,7 +48,7 @@ const MultiplicationIntro = {
                         const weR = R(2, 3), weC = R(2, 3);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weR} lanes × ${weC} swimmers = ?</p><p>${Array(weR).fill(weC).join(' + ')} = ${weR * weC}</p><p>So ${weR} × ${weC} = <strong>${weR * weC}</strong></p></div>`;
                     } else if (modality === 'visual') {
-                        result.visual += `<div class="visual-scaffold"><p>Count row by row:</p>${Array.from({length: rows}, (_, i) => `<div>Lane ${i + 1}: ${cols} swimmers</div>`).join('')}<div><strong>Total: ${rows} × ${cols} = ${answer}</strong></div></div>`;
+                        result.visual += `<div class="visual-scaffold"><p>Count row by row:</p>${Array.from({length: rows}, (_, i) => `<div>Lane ${i + 1}: ${cols} swimmers</div>`).join('')}<div><strong>Total: ${rows} × ${cols} = ?</strong></div></div>`;
                     }
 
                     return result;

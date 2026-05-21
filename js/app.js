@@ -39,6 +39,7 @@ const App = (() => {
     const ALL_UNITS = [...UNITS_3RD, ...UNITS_4TH];
 
     let currentGrade = '3rd';
+    let lastPractice = null; // { kind: 'weakness' } | { kind: 'mult', table: number|'mixed' }
 
     async function init() {
         await Adaptive.load();
@@ -131,11 +132,12 @@ const App = (() => {
         const screen = document.getElementById('screen-unit-intro');
         screen.className = `screen active theme-bg-${unit.theme}`;
 
+        const roundsToUnlock = Math.ceil(unit.exerciseCount * 0.5);
         content.innerHTML = `
             <div class="unit-intro-icon">${unit.icon}</div>
             <h2 class="unit-intro-title">${unit.title}</h2>
             <p class="unit-intro-desc">${unit.description}</p>
-            <p class="unit-intro-rounds-label">Each round takes you through all ${unit.exerciseCount} skills. Complete 4 rounds to unlock the next unit!</p>
+            <p class="unit-intro-rounds-label">Each round takes you through all ${unit.exerciseCount} skills. Complete ${roundsToUnlock} rounds to unlock the next unit!</p>
             <div class="unit-intro-exercises stagger-in">
                 ${Array.from({length: unit.exerciseCount}, (_, i) => `
                     <div class="exercise-list-item ${progress.completed > i ? 'completed' : ''}">
@@ -186,20 +188,37 @@ const App = (() => {
 
         showPracticeZone() {
             AudioManager.click();
-            const queue = Adaptive.getWeaknessQueue();
+            // Only show weakness items that map to a real unit
+            const queue = Adaptive.getWeaknessQueue().filter(q => ALL_UNITS.some(u => u.id === q.unitId));
             const body = document.getElementById('practice-body');
 
+            const multTablesHTML = `
+                <div class="practice-section">
+                    <h3 class="practice-section-title">✖️ Multiplication Tables</h3>
+                    <p class="practice-section-desc">Practice your times tables! Pick a number or try a mix.</p>
+                    <div class="mult-tables-grid">
+                        <button class="mult-table-btn mult-table-mixed" onclick="App.startMultiplicationPractice('mixed')">
+                            🎲 Mixed (1–12)
+                        </button>
+                        ${Array.from({length: 12}, (_, i) => i + 1).map(n => `
+                            <button class="mult-table-btn" onclick="App.startMultiplicationPractice(${n})">×${n}</button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+
+            let weaknessHTML = '';
             if (queue.length === 0) {
-                body.innerHTML = `
-                    <div class="practice-empty">
-                        <div class="practice-empty-icon">🌟</div>
-                        <h3>No skills to practice!</h3>
-                        <p>Great job, Valerie! You've been getting everything right.<br>Keep exploring the map to learn more!</p>
-                        <button class="btn btn-primary" style="margin-top:20px" onclick="App.showMap()">🗺️ Back to Map</button>
+                weaknessHTML = `
+                    <div class="practice-section">
+                        <h3 class="practice-section-title">🌟 Tricky Skills</h3>
+                        <div class="practice-empty">
+                            <div class="practice-empty-icon">🌟</div>
+                            <p>No tricky skills to practice right now!<br>Keep exploring the map to find more.</p>
+                        </div>
                     </div>
                 `;
             } else {
-                // Build practice exercises from weakness queue
                 const practiceExercises = [];
                 queue.forEach(q => {
                     const unit = ALL_UNITS.find(u => u.id === q.unitId);
@@ -211,21 +230,66 @@ const App = (() => {
                 });
 
                 if (practiceExercises.length > 0) {
-                    body.innerHTML = `
-                        <p style="margin-bottom:16px;">${practiceExercises.length} skill${practiceExercises.length > 1 ? 's' : ''} to practice!</p>
-                        <button class="btn btn-start" onclick="App.startPracticeExercises()">
-                            <span class="btn-icon">💪</span> Start Practice
-                        </button>
+                    weaknessHTML = `
+                        <div class="practice-section">
+                            <h3 class="practice-section-title">🌟 Tricky Skills</h3>
+                            <p class="practice-section-desc">${practiceExercises.length} skill${practiceExercises.length > 1 ? 's' : ''} to practice!</p>
+                            <button class="btn btn-start" onclick="App.startPracticeExercises()">
+                                <span class="btn-icon">💪</span> Start Practice
+                            </button>
+                        </div>
                     `;
-                } else {
-                    body.innerHTML = `<div class="practice-empty"><div class="practice-empty-icon">🌟</div><p>All caught up!</p></div>`;
                 }
             }
 
+            body.innerHTML = multTablesHTML + weaknessHTML;
             showScreen('screen-practice');
         },
 
+        startMultiplicationPractice(table) {
+            AudioManager.click();
+            lastPractice = { kind: 'mult', table };
+            const R = Engine.Utils.rand;
+            const NUM_QUESTIONS = 12;
+            const skillId = table === 'mixed' ? 'mult-tables-mixed' : `mult-tables-${table}`;
+
+            // Build a fresh batch of facts, avoiding immediate repeats
+            const seen = new Set();
+            const exercises = [];
+            for (let i = 0; i < NUM_QUESTIONS; i++) {
+                exercises.push({
+                    skillId,
+                    _sourceUnitId: 'mult-tables',
+                    generate() {
+                        let a, b, key, tries = 0;
+                        do {
+                            a = table === 'mixed' ? R(1, 12) : table;
+                            b = R(1, 12);
+                            key = `${a}x${b}`;
+                            tries++;
+                        } while (seen.has(key) && tries < 20);
+                        if (seen.size >= 100) seen.clear();
+                        seen.add(key);
+
+                        const answer = a * b;
+                        return {
+                            type: 'input',
+                            questionText: `What is ${a} × ${b}?`,
+                            subText: `${a} × ${b} = ?`,
+                            answer,
+                            hint1: `Think of ${a} groups of ${b}.`,
+                            hint2: `Skip count by ${a}: ${Array.from({length: b}, (_, i) => a * (i + 1)).join(', ')}`,
+                            hint3: `${a} × ${b} = ${answer}`
+                        };
+                    }
+                });
+            }
+
+            Engine.startPractice(exercises);
+        },
+
         startPracticeExercises() {
+            lastPractice = { kind: 'weakness' };
             const queue = Adaptive.getWeaknessQueue();
             const practiceExercises = [];
             queue.forEach(q => {
@@ -238,6 +302,14 @@ const App = (() => {
             });
             if (practiceExercises.length > 0) {
                 Engine.startPractice(Engine.Utils.shuffle(practiceExercises).slice(0, 7));
+            }
+        },
+
+        repeatLastPractice() {
+            if (lastPractice && lastPractice.kind === 'mult') {
+                this.startMultiplicationPractice(lastPractice.table);
+            } else {
+                this.startPracticeExercises();
             }
         }
     };

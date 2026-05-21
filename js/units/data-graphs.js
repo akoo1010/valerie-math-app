@@ -13,13 +13,21 @@ const DataGraphs = {
         const pick = Engine.Utils.pick;
         const colors = ['var(--ocean-glow)','var(--gd-pink)','var(--gd-green)','var(--gd-yellow)','var(--craft-lavender)'];
 
-        function barGraphHTML(data, maxVal) {
-            return `<div style="display:flex;align-items:flex-end;gap:12px;height:160px;padding:10px;border-left:2px solid rgba(255,255,255,0.3);border-bottom:2px solid rgba(255,255,255,0.3);">
-                ${data.map((d,i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
-                    <span style="font-size:0.7rem;font-weight:800">${d.value}</span>
-                    <div style="width:36px;height:${(d.value/maxVal)*120}px;background:${colors[i%colors.length]};border-radius:4px 4px 0 0;min-height:4px;"></div>
-                    <span style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-align:center;max-width:60px;">${d.label}</span>
-                </div>`).join('')}
+        function barGraphHTML(data, maxVal, showValues = true) {
+            // Build a y-axis tick list so kids can read bar heights even without printed values
+            const ticks = Array.from({length: maxVal + 1}, (_, i) => maxVal - i);
+            const tickHeight = 120 / Math.max(maxVal, 1);
+            return `<div style="display:flex;gap:8px;justify-content:center;">
+                <div style="display:flex;flex-direction:column;justify-content:flex-end;height:160px;padding-bottom:30px;font-size:0.65rem;color:var(--text-secondary);font-weight:700;">
+                    ${ticks.map(t => `<div style="height:${tickHeight}px;line-height:${tickHeight}px;">${t}</div>`).join('')}
+                </div>
+                <div style="display:flex;align-items:flex-end;gap:12px;height:160px;padding:10px;border-left:2px solid rgba(255,255,255,0.3);border-bottom:2px solid rgba(255,255,255,0.3);">
+                    ${data.map((d,i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
+                        ${showValues ? `<span style="font-size:0.7rem;font-weight:800">${d.value}</span>` : ''}
+                        <div style="width:36px;height:${(d.value/maxVal)*120}px;background:${colors[i%colors.length]};border-radius:4px 4px 0 0;min-height:4px;"></div>
+                        <span style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-align:center;max-width:60px;">${d.label}</span>
+                    </div>`).join('')}
+                </div>
             </div>`;
         }
 
@@ -35,10 +43,11 @@ const DataGraphs = {
                     return {
                         type: 'input',
                         questionText: `How many swimmers are in the ${askAbout.label} event?`,
-                        visual: barGraphHTML(data, maxVal),
+                        // Hide printed values so the student must read bar height against the y-axis
+                        visual: barGraphHTML(data, maxVal, false),
                         answer: askAbout.value,
-                        hint1: `Find the ${askAbout.label} bar and read its height`,
-                        hint2: `Look at the number above the bar`,
+                        hint1: `Find the ${askAbout.label} bar and read its height against the y-axis`,
+                        hint2: `Count the gridlines the bar reaches`,
                         hint3: `${askAbout.label} has ${askAbout.value} swimmers`
                     };
                 }
@@ -48,7 +57,9 @@ const DataGraphs = {
                 skillId: 'data-compare-bar',
                 generate(diff) {
                     const events = ['Freestyle','Backstroke','Butterfly','Breaststroke'];
-                    const data = events.map(e => ({label: e, value: R(2, 12)}));
+                    // Assign unique values so there's exactly one maximum
+                    const pool = Engine.Utils.shuffle([2,3,4,5,6,7,8,9,10,11,12]).slice(0, events.length);
+                    const data = events.map((e, i) => ({label: e, value: pool[i]}));
                     const maxVal = Math.max(...data.map(d => d.value));
                     const sorted = [...data].sort((a,b) => b.value - a.value);
                     return {
@@ -115,7 +126,6 @@ const DataGraphs = {
                 skillId: 'data-lineplot',
                 generate(diff) {
                     const times = Array.from({length:8}, () => R(30, 50));
-                    const mode = times.sort((a,b)=>a-b)[Math.floor(times.length/2)];
                     const min = Math.min(...times);
                     return {
                         type: 'input',
@@ -139,7 +149,9 @@ const DataGraphs = {
                 skillId: 'data-difference',
                 generate(diff) {
                     const events = ['Freestyle','Backstroke','Butterfly','Breaststroke'];
-                    const data = events.map(e => ({label:e, value:R(3,12)}));
+                    // Use a unique-values pool so the two compared bars never tie
+                    const pool = Engine.Utils.shuffle([3,4,5,6,7,8,9,10,11,12]).slice(0, events.length);
+                    const data = events.map((e, i) => ({label:e, value:pool[i]}));
                     const maxVal = Math.max(...data.map(d=>d.value));
                     const a = data[0], b = data[1];
                     const answer = Math.abs(a.value - b.value);

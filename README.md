@@ -10,10 +10,10 @@ A personalized, interactive math learning app for Valerie, built around the **Kh
 
 - **Two grade worlds** — 3rd Grade (Ocean, Dash & Craft World) and 4th Grade (Monster & Dance World)
 - **26 exercise units** covering the full Khan Academy syllabus for grades 3–4
-- **Adaptive difficulty** — questions get harder or easier based on performance
+- **Adaptive difficulty** — questions get harder or easier based on consecutive correct/wrong streaks
 - **Misconception detection** — identifies specific error patterns and shows targeted hints
-- **Star-based progress tracking** — earn up to 3 stars per run, across 7 runs per unit (21 stars max)
-- **Practice Zone** — missed skills are queued for reinforcement
+- **Star-based progress tracking** — earn up to 3 stars per round; complete 50% of a unit's rounds to unlock the next unit
+- **Practice Zone** — missed skills are queued for reinforcement, plus free-play multiplication tables (×1–×12 and mixed)
 - **Cross-device persistence** — progress is saved to the cloud via Vercel KV and syncs across any browser or device
 - **Animations & audio** — confetti celebrations, sound effects, and smooth transitions
 
@@ -145,3 +145,12 @@ Progress is saved in two places:
 2. **localStorage** — used as an offline fallback if the network is unavailable.
 
 No user accounts or personal data are collected. All progress is stored under a single key for Valerie.
+
+---
+
+## 🧠 Adaptive Engine
+
+- **Difficulty levels (1–3)** are tracked per skill. Three consecutive correct answers bump difficulty up; three consecutive wrong answers bump it down.
+- **Modality switching** picks between standard input, multiple choice, and worked examples based on recent performance.
+- **Weakness queue** tracks skills the player has missed and surfaces them in the Practice Zone until they're mastered again.
+- **Hint escalation** — hint level persists across retries of the same question, so each subsequent attempt gets a more direct nudge.

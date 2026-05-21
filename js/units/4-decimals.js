@@ -318,18 +318,26 @@ const Decimals4 = {
                             </div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.shuffle([
-                            {label: `${answer}`, value: answer},
-                            {label: `${Math.min(answer + 0.1, 1)}`, value: Math.min(answer + 0.1, 1)},
-                            {label: `${Math.max(answer - 0.1, 0)}`, value: Math.max(answer - 0.1, 0)},
-                            {label: `${Math.min(answer + 0.2, 1)}`, value: Math.min(answer + 0.2, 1)}
-                        ]),
+                        options: (() => {
+                            const round1 = (x) => Math.round(x * 10) / 10;
+                            const clamp = (x) => Math.min(1, Math.max(0, round1(x)));
+                            const candidates = [answer, clamp(answer + 0.1), clamp(answer - 0.1), clamp(answer + 0.2), clamp(answer - 0.2)];
+                            const unique = [];
+                            for (const v of candidates) {
+                                if (!unique.includes(v)) unique.push(v);
+                                if (unique.length === 4) break;
+                            }
+                            return Engine.Utils.shuffle(unique).map(v => ({label: `${v}`, value: v}));
+                        })(),
                         hint1: `Count the tick marks from 0. Each space is one tenth!`,
                         hint2: `The arrow is at the ${tenths}th tick mark out of 10`,
                         hint3: `The arrow points to ${answer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === tenths) return 'wrote-tick-not-decimal';
-                            if (userAnswer === Math.min(answer + 0.1, 1) || userAnswer === Math.max(answer - 0.1, 0)) return 'off-by-one-tenth';
+                            const round1 = (x) => Math.round(x * 10) / 10;
+                            const plus = Math.min(1, round1(answer + 0.1));
+                            const minus = Math.max(0, round1(answer - 0.1));
+                            if (userAnswer === plus || userAnswer === minus) return 'off-by-one-tenth';
                             return null;
                         },
                         misconceptionHints: {
@@ -406,7 +414,7 @@ const Decimals4 = {
                     } else if (modality === 'visual') {
                         const aCells = Math.round(a * 10);
                         const bCells = Math.round(b * 10);
-                        const totalCells = 10;
+                        const totalCells = Math.max(10, aCells + bCells);
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <p>🎵 Each block = 0.1. Count the shaded blocks:</p>
                             <div style="display:flex;gap:2px;justify-content:center;margin:8px 0;">
@@ -435,7 +443,8 @@ const Decimals4 = {
                         const numer = denom === 10 ? R(1, 9) : R(1, 99);
                         const answer = numer / denom;
                         const wrongA = denom === 10 ? numer / 100 : numer / 10;
-                        const wrongB = (numer + 1) / denom;
+                        // Clamp so wrongB stays within (0, 1) and doesn't equal answer or 1
+                        const wrongB = numer < denom - 1 ? (numer + 1) / denom : (numer - 1) / denom;
 
                         const result = {
                             type: 'multiple-choice',

@@ -180,7 +180,7 @@ const PlaceValue4 = {
                 skillId: '4pv-round',
                 generate(diff, modality) {
                     const roundTo = diff >= 3 ? pick([10, 100, 1000]) : diff >= 2 ? pick([10, 100]) : 10;
-                    const num = R(101, diff >= 3 ? 9999 : diff >= 2 ? 999 : 99);
+                    const num = diff >= 3 ? R(101, 9999) : diff >= 2 ? R(101, 999) : R(11, 99);
                     const answer = Math.round(num / roundTo) * roundTo;
                     const roundLabel = roundTo === 10 ? 'nearest 10' : roundTo === 100 ? 'nearest 100' : 'nearest 1,000';
 
@@ -249,13 +249,16 @@ const PlaceValue4 = {
                     const swapIdx = R(0, almostRight.length - 2);
                     [almostRight[swapIdx], almostRight[swapIdx + 1]] = [almostRight[swapIdx + 1], almostRight[swapIdx]];
                     const almostStr = almostRight.map(n => n.toLocaleString()).join(', ');
-                    const shuffled = Engine.Utils.shuffle([...sorted]).map(n => n.toLocaleString()).join(', ');
+                    // Fourth distractor: swap the smallest and largest to guarantee a unique fourth ordering
+                    const endSwap = [...sorted];
+                    [endSwap[0], endSwap[endSwap.length - 1]] = [endSwap[endSwap.length - 1], endSwap[0]];
+                    const endSwapStr = endSwap.map(n => n.toLocaleString()).join(', ');
 
                     const options = Engine.Utils.shuffle([
                         { label: correct, value: correct },
                         { label: descending, value: descending },
                         { label: almostStr, value: almostStr },
-                        { label: shuffled !== correct && shuffled !== descending && shuffled !== almostStr ? shuffled : [...sorted].reverse().slice(0, -1).concat(sorted[0]).map(n => n.toLocaleString()).join(', '), value: shuffled !== correct && shuffled !== descending && shuffled !== almostStr ? shuffled : 'wrong' }
+                        { label: endSwapStr, value: endSwapStr }
                     ]);
 
                     const result = {
@@ -355,8 +358,9 @@ const PlaceValue4 = {
                             <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                                 <div style="background:var(--monster-red);color:#fff;padding:8px 12px;border-radius:10px;">🐲 ${onesWords[thousands]} thousand = ${(thousands * 1000).toLocaleString()}</div>
                                 ${hundreds > 0 ? `<div style="background:var(--monster-purple);color:#fff;padding:8px 12px;border-radius:10px;">🦖 ${onesWords[hundreds]} hundred = ${hundreds * 100}</div>` : ''}
+                                ${tens === 1 ? `<div style="background:var(--monster-blue);color:#fff;padding:8px 12px;border-radius:10px;">⚡ ${teensWords[ones]} = ${10 + ones}</div>` : ''}
                                 ${tens > 1 ? `<div style="background:var(--monster-blue);color:#fff;padding:8px 12px;border-radius:10px;">⚡ ${tensWords[tens]} = ${tens * 10}</div>` : ''}
-                                ${ones > 0 ? `<div style="background:var(--monster-yellow);color:#000;padding:8px 12px;border-radius:10px;">🔥 ${onesWords[ones]} = ${ones}</div>` : ''}
+                                ${tens !== 1 && ones > 0 ? `<div style="background:var(--monster-yellow);color:#000;padding:8px 12px;border-radius:10px;">🔥 ${onesWords[ones]} = ${ones}</div>` : ''}
                             </div>
                             <p style="margin-top:8px;">Add them all: <strong>${num.toLocaleString()}</strong></p>
                         </div>`;
@@ -413,10 +417,12 @@ const PlaceValue4 = {
                             return result;
                         },
                         () => {
-                            // What number is 100 more/less?
-                            const num = R(200, diff >= 2 ? 9000 : 2000);
+                            // What number is 10/100/1000 more/less?
                             const moreOrLess = pick(['more', 'less']);
                             const amount = pick([10, 100, 1000]);
+                            // Ensure num >= amount when subtracting so the answer stays non-negative
+                            const minNum = moreOrLess === 'less' ? Math.max(200, amount + 100) : 200;
+                            const num = R(minNum, diff >= 2 ? 9000 : 2000);
                             const answer = moreOrLess === 'more' ? num + amount : num - amount;
                             const oppositeAnswer = moreOrLess === 'more' ? num - amount : num + amount;
 

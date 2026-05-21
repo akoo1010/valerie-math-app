@@ -208,9 +208,11 @@ const AdditionSubtraction = {
             {
                 skillId: 'add-sub-3digit',
                 generate(diff) {
-                    const a = R(200, 700);
-                    const b = R(100, 300);
                     const isAdd = Math.random() < 0.5;
+                    // For subtraction, ensure the bigger number is on top
+                    let a = R(200, 700);
+                    let b = R(100, 300);
+                    if (!isAdd && b > a) [a, b] = [b, a];
                     const answer = isAdd ? a + b : a - b;
                     return {
                         type: 'input',
@@ -221,7 +223,11 @@ const AdditionSubtraction = {
                         </div>`,
                         answer,
                         hint1: `Work column by column: ones, tens, hundreds`,
-                        hint2: `Ones: ${a % 10} ${isAdd ? '+' : '−'} ${b % 10} = ${isAdd ? (a % 10) + (b % 10) : (a % 10) - (b % 10)}`,
+                        hint2: isAdd
+                            ? `Ones: ${a % 10} + ${b % 10} = ${(a % 10) + (b % 10)}${(a % 10) + (b % 10) >= 10 ? ' (carry the 1!)' : ''}`
+                            : ((a % 10) >= (b % 10)
+                                ? `Ones: ${a % 10} − ${b % 10} = ${(a % 10) - (b % 10)}`
+                                : `Ones: ${a % 10} is smaller than ${b % 10} → borrow from the tens column!`),
                         hint3: `${a} ${isAdd ? '+' : '−'} ${b} = ${answer}`
                     };
                 }

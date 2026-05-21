@@ -105,7 +105,7 @@ const Multiplication1Digit = {
                             ${Array.from({length: Math.min(levels, 6)}, (_, i) =>
                                 `<div style="text-align:center;padding:8px;background:rgba(255,230,0,0.1);border-radius:8px;border:1px solid rgba(255,230,0,0.3);">
                                     <div style="font-size:0.7rem;color:var(--text-muted);">Lvl ${i + 1}</div>
-                                    <div>${Array(Math.min(coins, 5)).fill('🪙').join('')}</div>
+                                    <div>${Array(Math.min(coins, 5)).fill('🪙').join('')}${coins > 5 ? `<span style="font-size:0.65rem;color:var(--text-muted);"> +${coins - 5}</span>` : ''}</div>
                                 </div>`
                             ).join('')}
                             ${levels > 6 ? '<div style="font-size:1.2rem;align-self:center">...</div>' : ''}
@@ -121,15 +121,33 @@ const Multiplication1Digit = {
             {
                 skillId: 'mult-1d-fact-family',
                 generate(diff) {
-                    const a = R(2, diff >= 2 ? 9 : 6);
-                    const b = R(2, diff >= 2 ? 9 : 6);
+                    let a = R(2, diff >= 2 ? 9 : 6);
+                    let b = R(2, diff >= 2 ? 9 : 6);
+                    // Avoid a == b so the four family facts don't collapse to duplicates
+                    while (b === a) b = R(2, diff >= 2 ? 9 : 6);
                     const product = a * b;
-                    // Ask which one is NOT in the fact family
-                    const family = [`${a} × ${b} = ${product}`, `${b} × ${a} = ${product}`, `${product} ÷ ${a} = ${b}`, `${product} ÷ ${b} = ${a}`];
-                    const wrongC = R(2, 9);
-                    const wrongD = product + R(1, 5);
-                    const wrong = `${wrongC} × ${a} = ${wrongD}`;
-                    const options = Engine.Utils.shuffle([...family.slice(0, 3), wrong]).map(o => ({label: o, value: o}));
+                    // Pick 3 distinct family facts (random selection, not always the same 3)
+                    const family = Engine.Utils.shuffle([
+                        `${a} × ${b} = ${product}`,
+                        `${b} × ${a} = ${product}`,
+                        `${product} ÷ ${a} = ${b}`,
+                        `${product} ÷ ${b} = ${a}`
+                    ]).slice(0, 3);
+                    // Build a wrong fact that is definitely not a true equation
+                    let wrong;
+                    let tries = 0;
+                    while (tries < 30) {
+                        const wrongC = R(2, 9);
+                        const wrongD = product + pick([-2, -1, 1, 2, 3, 4, 5]);
+                        const candidate = `${wrongC} × ${a} = ${wrongD}`;
+                        if (wrongC * a !== wrongD && wrongD > 0 && !family.includes(candidate)) {
+                            wrong = candidate;
+                            break;
+                        }
+                        tries++;
+                    }
+                    if (!wrong) wrong = `${a + 1} × ${a} = ${product + 7}`; // safe fallback
+                    const options = Engine.Utils.shuffle([...family, wrong]).map(o => ({label: o, value: o}));
                     return {
                         type: 'multiple-choice',
                         questionText: `Which one does NOT belong in the fact family for ${a}, ${b}, and ${product}?`,

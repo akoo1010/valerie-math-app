@@ -62,13 +62,15 @@ const FactorsMultiples4 = {
             {
                 skillId: '4fm-is-factor',
                 generate(diff, modality) {
-                    const n = diff >= 2 ? R(20, 60) : R(10, 30);
+                    const pickN = () => diff >= 2 ? R(20, 60) : R(10, 30);
                     const isFactor = Math.random() < 0.5;
+                    let n = pickN();
+                    // For "Yes" questions, avoid primes — their only factors are 1 and n (trivial)
+                    if (isFactor) while (getFactors(n).length <= 2) n = pickN();
                     let testNum;
                     if (isFactor) {
                         const factors = getFactors(n);
                         testNum = pick(factors.filter(f => f !== 1 && f !== n));
-                        if (!testNum) testNum = pick(factors);
                     } else {
                         testNum = R(2, n - 1);
                         while (n % testNum === 0) testNum = R(2, n - 1);
@@ -178,7 +180,6 @@ const FactorsMultiples4 = {
                         testNum = base * R(2, 12) + R(1, base - 1);
                     }
                     const answer = testNum % base === 0 ? 'Yes' : 'No';
-                    const baseFactors = getFactors(base);
 
                     const result = {
                         type: 'multiple-choice',
@@ -192,13 +193,11 @@ const FactorsMultiples4 = {
                         hint2: `${testNum} ÷ ${base} = ${(testNum / base).toFixed(2)}`,
                         hint3: `${testNum} ÷ ${base} = ${testNum % base === 0 ? testNum / base : Math.floor(testNum / base) + ' R ' + (testNum % base)}, so ${answer}!`,
                         diagnose(userAnswer) {
-                            if (baseFactors.includes(testNum) && userAnswer === 'No' && answer === 'Yes') return 'confused-multiple-factor';
                             if (answer === 'No' && userAnswer === 'Yes') return 'ignored-remainder';
                             if (answer === 'Yes' && userAnswer === 'No') return 'skip-count-error';
                             return null;
                         },
                         misconceptionHints: {
-                            'confused-multiple-factor': `Don't mix up factors and multiples! A MULTIPLE of ${base} means ${base} × something = ${testNum}. Check: ${base} × ${testNum / base} = ${testNum}. It works!`,
                             'ignored-remainder': `Look again — ${testNum} ÷ ${base} = ${Math.floor(testNum / base)} remainder ${testNum % base}. That leftover means it does NOT divide evenly, so ${testNum} is NOT a multiple of ${base}.`,
                             'skip-count-error': `Try skip-counting by ${base}: ${Array.from({length: Math.min(Math.floor(testNum / base) + 1, 6)}, (_, i) => base * (i + 1)).join(', ')}... Does ${testNum} appear?`
                         }
@@ -283,8 +282,10 @@ const FactorsMultiples4 = {
             {
                 skillId: '4fm-common-factors',
                 generate(diff, modality) {
-                    const a = pick(diff >= 2 ? [12, 16, 18, 20, 24, 30] : [6, 8, 10, 12]);
-                    const b = pick(diff >= 2 ? [12, 16, 18, 20, 24, 30] : [6, 8, 10, 12]);
+                    const pool = diff >= 2 ? [12, 16, 18, 20, 24, 30] : [6, 8, 10, 12];
+                    const a = pick(pool);
+                    let b = pick(pool);
+                    while (b === a) b = pick(pool);
                     const aFactors = getFactors(a);
                     const bFactors = getFactors(b);
                     const common = aFactors.filter(f => bFactors.includes(f));

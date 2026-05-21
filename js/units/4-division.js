@@ -409,8 +409,9 @@ const Division4 = {
                         diagnose(userAnswer) {
                             if (userAnswer === a * b) return 'multiplied-instead';
                             if (userAnswer === a - b) return 'subtracted-instead';
-                            if (Math.abs(userAnswer - answer) <= 2 && userAnswer !== answer) return 'close-error';
+                            // Check rounded-up before close-error since answer+1 is within 2 of answer
                             if (type === 'remainder' && userAnswer === answer + 1) return 'rounded-up';
+                            if (Math.abs(userAnswer - answer) <= 2 && userAnswer !== answer) return 'close-error';
                             return null;
                         },
                         misconceptionHints: {

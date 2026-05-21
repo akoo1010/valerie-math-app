@@ -38,7 +38,8 @@ const Fractions = {
                 skillId: 'frac-name',
                 generate(diff) {
                     const denom = pick(diff >= 2 ? [2, 3, 4, 5, 6, 8] : [2, 3, 4]);
-                    const numer = R(1, denom);
+                    // Use proper fractions (numer < denom) so distractors don't collide with the answer
+                    const numer = R(1, denom - 1);
                     const colors = ['#ff8fab', '#cdb4db', '#b8f2e6', '#fde68a', '#ff7f7f', '#a8e6cf'];
                     let barHTML = '<div class="fraction-bar" style="pointer-events:none">';
                     for (let i = 0; i < denom; i++) {
@@ -46,12 +47,24 @@ const Fractions = {
                     }
                     barHTML += '</div>';
                     const answer = `${numer}/${denom}`;
-                    const options = Engine.Utils.shuffle([
-                        {label: `${numer}/${denom}`, value: answer},
-                        {label: `${denom}/${numer}`, value: `${denom}/${numer}`},
-                        {label: `${numer}/${denom + 1}`, value: `${numer}/${denom + 1}`},
-                        {label: `${Math.min(numer + 1, denom)}/${denom}`, value: `${Math.min(numer + 1, denom)}/${denom}`}
-                    ]);
+                    // Build unique options
+                    const seen = new Set([answer]);
+                    const optionStrings = [answer];
+                    const candidates = [
+                        `${denom}/${numer}`,
+                        `${numer}/${denom + 1}`,
+                        `${numer + 1}/${denom}`,
+                        `${Math.max(1, numer - 1)}/${denom}`,
+                        `${numer}/${Math.max(2, denom - 1)}`
+                    ];
+                    for (const c of candidates) {
+                        if (!seen.has(c)) {
+                            seen.add(c);
+                            optionStrings.push(c);
+                            if (optionStrings.length === 4) break;
+                        }
+                    }
+                    const options = Engine.Utils.shuffle(optionStrings.map(s => ({label: s, value: s})));
                     return {
                         type: 'multiple-choice',
                         questionText: `What fraction of the ribbon is colored?`,
@@ -68,7 +81,13 @@ const Fractions = {
             {
                 skillId: 'frac-equiv',
                 generate(diff) {
-                    const pairs = [[1,2,2,4], [1,3,2,6], [2,4,1,2], [2,3,4,6], [1,4,2,8], [3,6,1,2]];
+                    // Mix of equivalent and non-equivalent pairs so the answer can be either true or false
+                    const pairs = [
+                        // equivalent
+                        [1,2,2,4], [1,3,2,6], [2,4,1,2], [2,3,4,6], [1,4,2,8], [3,6,1,2],
+                        // NOT equivalent
+                        [1,2,1,3], [1,3,2,5], [2,3,1,2], [1,4,1,3], [2,5,1,2], [3,4,2,3]
+                    ];
                     const [n1,d1,n2,d2] = pick(pairs);
                     return {
                         type: 'true-false',

@@ -102,13 +102,17 @@ const Adaptive = (() => {
                 difficulty: 1, // 1 = easy, 2 = medium, 3 = hard
                 lastAttempt: null,
                 wrongAnswers: [],   // [{ userAnswer, correctAnswer, timestamp }] capped at 20
-                misconceptions: {}  // { 'label': count }
+                misconceptions: {}, // { 'label': count }
+                consecutiveCorrect: 0, // resets when difficulty bumps up
+                consecutiveWrong: 0    // resets when difficulty bumps down
             };
         }
         // Migrate existing skills missing new fields
         const skill = state.skills[skillId];
         if (!skill.wrongAnswers) skill.wrongAnswers = [];
         if (!skill.misconceptions) skill.misconceptions = {};
+        if (skill.consecutiveCorrect == null) skill.consecutiveCorrect = 0;
+        if (skill.consecutiveWrong == null) skill.consecutiveWrong = 0;
         return skill;
     }
 
@@ -181,6 +185,8 @@ const Adaptive = (() => {
         recordCorrect(skillId, unitId) {
             const skill = getSkill(skillId);
             skill.streak++;
+            skill.consecutiveCorrect++;
+            skill.consecutiveWrong = 0;
             skill.totalCorrect++;
             skill.lastAttempt = Date.now();
             state.session.currentStreak++;
@@ -196,9 +202,10 @@ const Adaptive = (() => {
                 skill.mastered = true;
             }
 
-            // Difficulty scaling up
-            if (skill.streak >= DIFFICULTY_UP_THRESHOLD && skill.difficulty < 3) {
+            // Difficulty scaling up — only when threshold met, then reset the consecutive counter
+            if (skill.consecutiveCorrect >= DIFFICULTY_UP_THRESHOLD && skill.difficulty < 3) {
                 skill.difficulty++;
+                skill.consecutiveCorrect = 0;
             }
 
             // Remove from weakness queue if mastered
@@ -218,6 +225,8 @@ const Adaptive = (() => {
         recordWrong(skillId, unitId, userAnswer, questionData) {
             const skill = getSkill(skillId);
             skill.streak = 0; // Reset streak
+            skill.consecutiveCorrect = 0;
+            skill.consecutiveWrong++;
             skill.totalWrong++;
             skill.mastered = false;
             skill.lastAttempt = Date.now();
@@ -252,14 +261,16 @@ const Adaptive = (() => {
                 }
             }
 
-            // Difficulty scaling down
-            if (skill.totalWrong > 0 && skill.totalWrong % DIFFICULTY_DOWN_THRESHOLD === 0 && skill.difficulty > 1) {
+            // Difficulty scaling down — only on consecutive wrongs, reset counter on bump
+            if (skill.consecutiveWrong >= DIFFICULTY_DOWN_THRESHOLD && skill.difficulty > 1) {
                 skill.difficulty--;
+                skill.consecutiveWrong = 0;
             }
 
-            // Add to weakness queue (avoid duplicates)
+            // Add to weakness queue (avoid duplicates).
+            // Skip free-practice modes (e.g. multiplication tables) — they don't belong to a unit.
             const exists = state.weaknessQueue.some(q => q.skillId === skillId);
-            if (!exists) {
+            if (!exists && !skillId.startsWith('mult-tables')) {
                 state.weaknessQueue.push({
                     skillId,
                     unitId,

@@ -38,12 +38,20 @@ const PlaneFigures4 = {
                             <div style="font-weight:700;color:var(--dance-purple);margin-top:4px;">${shape.name}</div>
                         </div>`,
                         answer,
-                        options: shuffle([
-                            {label: '0', value: 0},
-                            {label: '1', value: 1},
-                            {label: `${typeof shape.lines === 'number' ? shape.lines : 'infinite'}`, value: typeof shape.lines === 'number' ? shape.lines : 'infinite'},
-                            {label: `${typeof shape.lines === 'number' ? shape.lines + 2 : 4}`, value: typeof shape.lines === 'number' ? shape.lines + 2 : 4}
-                        ]),
+                        options: (() => {
+                            // Build unique distractors near the answer, plus 0/1/'infinite' as common alternatives
+                            const optMap = new Map();
+                            const addOpt = (val, label) => { if (!optMap.has(val)) optMap.set(val, {label, value: val}); };
+                            addOpt(answer, `${answer}`);
+                            if (typeof shape.lines === 'number') {
+                                for (const off of [1, 2, -1, -2, 3]) {
+                                    const v = shape.lines + off;
+                                    if (v >= 0) addOpt(v, `${v}`);
+                                }
+                            }
+                            for (const v of [0, 1, 2, 'infinite']) addOpt(v, `${v}`);
+                            return shuffle([...optMap.values()].slice(0, 4));
+                        })(),
                         hint1: `A line of symmetry divides a shape into two matching halves`,
                         hint2: `Think about folding the ${shape.name} — how many ways can you fold it in half?`,
                         hint3: `A ${shape.name} has ${shape.lines} line${shape.lines !== 1 ? 's' : ''} of symmetry`,
@@ -171,19 +179,23 @@ const PlaneFigures4 = {
                     const quads = [
                         {name: 'square', properties: '4 equal sides, 4 right angles', emoji: '⬜'},
                         {name: 'rectangle', properties: 'opposite sides equal, 4 right angles', emoji: '▬'},
-                        {name: 'rhombus', properties: '4 equal sides, no right angles', emoji: '◆'},
+                        {name: 'rhombus', properties: '4 equal sides, opposite angles equal', emoji: '◆'},
                         {name: 'parallelogram', properties: 'opposite sides parallel and equal', emoji: '▰'},
                         {name: 'trapezoid', properties: 'exactly 1 pair of parallel sides', emoji: '⏢'}
                     ];
                     const quad = pick(diff >= 2 ? quads : quads.slice(0, 3));
                     const answer = quad.name;
+                    // Build options ensuring the correct shape is always included
+                    const distractorPool = quads.filter(q => q.name !== quad.name);
+                    const distractors = shuffle(distractorPool).slice(0, (diff >= 2 ? 4 : 3) - 1);
+                    const optionShapes = shuffle([quad, ...distractors]);
 
                     const result = {
                         type: 'multiple-choice',
                         questionText: `🕺 What shape has these properties?<br><em>${quad.properties}</em>`,
                         visual: `<div style="text-align:center;font-size:4rem;">${quad.emoji}</div>`,
                         answer,
-                        options: shuffle(quads.slice(0, diff >= 2 ? 4 : 3).map(q => ({label: q.name.charAt(0).toUpperCase() + q.name.slice(1), value: q.name}))),
+                        options: optionShapes.map(q => ({label: q.name.charAt(0).toUpperCase() + q.name.slice(1), value: q.name})),
                         hint1: `Think about the sides and angles described`,
                         hint2: `"${quad.properties}" — which shape matches?`,
                         hint3: `A ${quad.name}: ${quad.properties}`,
@@ -268,7 +280,7 @@ const PlaneFigures4 = {
                         visual: `<div style="font-size:3rem;text-align:center;">✨🔷✨</div>`,
                         answer: selected.a,
                         hint1: `Think about the shape — count carefully!`,
-                        hint2: `The prefix tells you: tri=3, quad=4, pent=5, hex=6, oct=8`,
+                        hint2: selected.hint,
                         hint3: `The answer is ${selected.a}`,
                         diagnose(userAnswer) {
                             const num = Number(userAnswer);

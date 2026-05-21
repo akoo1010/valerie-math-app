@@ -18,10 +18,10 @@ const Measurement4 = {
                 skillId: '4meas-length-cust',
                 generate(diff, modality) {
                     const conversions = [
-                        {from: 'feet', to: 'inches', factor: 12, emoji: '📏'},
-                        {from: 'yards', to: 'feet', factor: 3, emoji: '📐'},
+                        {from: 'feet', to: 'inches', factor: 12, emoji: '📏', singular: 'foot'},
+                        {from: 'yards', to: 'feet', factor: 3, emoji: '📐', singular: 'yard'},
                     ];
-                    if (diff >= 2) conversions.push({from: 'miles', to: 'feet', factor: 5280, emoji: '🗺️'});
+                    if (diff >= 2) conversions.push({from: 'miles', to: 'feet', factor: 5280, emoji: '🗺️', singular: 'mile'});
                     const conv = pick(conversions);
                     const amount = R(1, diff >= 2 ? 10 : 5);
                     const answer = amount * conv.factor;
@@ -33,7 +33,7 @@ const Measurement4 = {
                             🐲 ${amount} ${conv.from} = ? ${conv.to}
                         </div>`,
                         answer,
-                        hint1: `1 ${conv.from.slice(0, -1)} = ${conv.factor} ${conv.to}`,
+                        hint1: `1 ${conv.singular} = ${conv.factor} ${conv.to}`,
                         hint2: `${amount} × ${conv.factor} = ?`,
                         hint3: `${amount} ${conv.from} = ${Engine.Utils.fmt(answer)} ${conv.to}`,
                         diagnose(userAnswer) {
@@ -260,8 +260,9 @@ const Measurement4 = {
                 generate(diff, modality) {
                     const startHour = R(1, 11);
                     const startMin = pick([0, 15, 30, 45]);
-                    const elapsedHours = R(0, diff >= 2 ? 3 : 1);
-                    const elapsedMins = pick([15, 30, 45, 60]);
+                    const elapsedHours = R(1, diff >= 2 ? 3 : 2);
+                    // Use [15, 30, 45] only; 60 produces awkward "X hour and 60 minutes" phrasing
+                    const elapsedMins = pick([15, 30, 45]);
                     const totalMins = startHour * 60 + startMin + elapsedHours * 60 + elapsedMins;
                     const endHour = Math.floor(totalMins / 60) % 12 || 12;
                     const endMin = totalMins % 60;
@@ -270,21 +271,28 @@ const Measurement4 = {
                     const period = startHour < 12 ? 'AM' : 'PM';
                     const startStr = `${startHour}:${String(startMin).padStart(2, '0')} ${period}`;
 
-                    // Pre-compute wrong answers for diagnose
-                    const wrongOnlyMins = `${endHour}:${String((endMin + 15) % 60).padStart(2, '0')}`;
-                    const wrongHourOff = `${(endHour % 12) + 1}:${String(endMin).padStart(2, '0')}`;
+                    // Build distractor times; ensure all labels are unique and different from the answer
+                    const labelSet = new Set([answer]);
+                    const valueMap = { [answer]: answer };
+                    const addLabel = (label, tag) => {
+                        if (!labelSet.has(label)) { labelSet.add(label); valueMap[label] = tag; }
+                    };
+                    addLabel(`${endHour}:${String((endMin + 15) % 60).padStart(2, '0')}`, 'wrong1');
+                    addLabel(`${(endHour % 12) + 1}:${String(endMin).padStart(2, '0')}`, 'wrong2');
+                    // Build a third distractor by tweaking minutes by 30, 10, -10, etc. until distinct
+                    for (const off of [30, -30, 10, -10, 5, -5, 20, -20]) {
+                        const m = ((endMin + off) % 60 + 60) % 60;
+                        const cand = `${endHour}:${String(m).padStart(2, '0')}`;
+                        if (!labelSet.has(cand)) { addLabel(cand, 'wrong3'); break; }
+                    }
+                    const options = Engine.Utils.shuffle([...labelSet]).map(l => ({label: l, value: valueMap[l]}));
 
                     const result = {
                         type: 'multiple-choice',
                         questionText: `⏰ A monster training session starts at ${startStr} and lasts ${elapsedHours > 0 ? elapsedHours + ' hour' + (elapsedHours > 1 ? 's' : '') + ' and ' : ''}${elapsedMins} minutes.<br>What time does it end?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-red);">⏰ 🐲 Start: ${startStr}</div>`,
                         answer,
-                        options: Engine.Utils.shuffle([
-                            {label: answer, value: answer},
-                            {label: wrongOnlyMins, value: 'wrong1'},
-                            {label: wrongHourOff, value: 'wrong2'},
-                            {label: `${endHour}:${String(Math.abs(endMin - 15)).padStart(2, '0')}`, value: 'wrong3'}
-                        ]),
+                        options,
                         hint1: `Start at ${startStr} and count forward ${elapsedHours > 0 ? elapsedHours + ' hour(s) and ' : ''}${elapsedMins} minutes`,
                         hint2: `Add the hours first, then the minutes`,
                         hint3: `The session ends at ${answer}`,

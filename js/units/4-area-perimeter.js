@@ -132,7 +132,7 @@ const AreaPerimeter4 = {
                             if (userAnswer === area - known) return 'subtracted-instead-of-divided';
                             if (userAnswer === area + known) return 'added-instead-of-divided';
                             if (userAnswer === area * known) return 'multiplied-instead-of-divided';
-                            if (userAnswer === 2 * (area + known)) return 'used-perimeter-formula';
+                            if (userAnswer === 2 * (answer + known)) return 'used-perimeter-formula';
                             return null;
                         },
                         misconceptionHints: {
@@ -209,11 +209,12 @@ const AreaPerimeter4 = {
             {
                 skillId: '4ap-composite-area',
                 generate(diff, modality) {
-                    // Two rectangles making an L
-                    const w1 = R(3, 8);
-                    const h1 = R(3, 8);
+                    // Two rectangles making an L — w1/h1 ≥ 4 so w2/h2 always have a real range,
+                    // and h2 < h1 so the bottom piece doesn't extend taller than the top piece
+                    const w1 = R(4, 8);
+                    const h1 = R(4, 8);
                     const w2 = R(2, w1 - 1);
-                    const h2 = R(2, 6);
+                    const h2 = R(2, h1 - 1);
                     const area1 = w1 * h1;
                     const area2 = w2 * h2;
                     const answer = area1 + area2;
@@ -386,7 +387,7 @@ const AreaPerimeter4 = {
                             hint3: `Length = ${answer} ft`,
                             diagnose(userAnswer) {
                                 if (userAnswer === area - w) return 'subtracted-instead-of-divided';
-                                if (userAnswer === 2 * (area + w)) return 'used-perimeter-formula';
+                                if (userAnswer === 2 * (answer + w)) return 'used-perimeter-formula';
                                 if (userAnswer === area * w) return 'multiplied-again';
                                 return null;
                             },
