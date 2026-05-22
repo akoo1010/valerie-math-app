@@ -118,7 +118,7 @@ const Fractions = {
             {
                 skillId: 'frac-compare',
                 generate(diff) {
-                    const d = pick(diff >= 2 ? [3,4,5,6,8] : [2,3,4]);
+                    const d = pick(diff >= 2 ? [3,4,5,6,8] : [3,4]);
                     const n1 = R(1, d - 1);
                     let n2 = R(1, d - 1);
                     while (n2 === n1) n2 = R(1, d - 1);

@@ -321,7 +321,7 @@ const FactorsMultiples4 = {
                         },
                         misconceptionHints: {
                             'gave-lcm': `You found the LCM (Least Common Multiple), not the GCF! The GCF is the GREATEST factor they SHARE. Common factors: ${common.join(', ')} → GCF = ${gcf}.`,
-                            'gave-common-not-greatest': `${userAnswer} IS a common factor, but not the GREATEST one. Common factors: ${common.join(', ')} → pick the biggest!`
+                            'gave-common-not-greatest': `That is a common factor, but not the GREATEST one. Common factors: ${common.join(', ')} → pick the biggest!`
                         }
                     };
 

@@ -225,10 +225,10 @@ const Decimals4 = {
                     } else {
                         nums = Array.from({length: count}, () => R(1, 99) / 100);
                     }
-                    // Ensure unique
                     const unique = [...new Set(nums)];
                     while (unique.length < count) {
-                        unique.push((diff <= 1 ? R(1, 9) / 10 : R(1, 99) / 100));
+                        const candidate = diff <= 1 ? R(1, 9) / 10 : R(1, 99) / 100;
+                        if (!unique.includes(candidate)) unique.push(candidate);
                     }
                     nums = unique.slice(0, count);
 
@@ -236,15 +236,17 @@ const Decimals4 = {
                     const answer = sorted.join(', ');
 
                     const shuffled = shuffle([...nums]);
-                    const wrongOrders = [
-                        [...sorted].reverse().join(', '),
-                        shuffle([...nums]).join(', '),
-                        shuffle([...nums]).join(', ')
-                    ];
+                    const wrongOrders = new Set([[...sorted].reverse().join(', ')]);
+                    let attempts = 0;
+                    while (wrongOrders.size < 3 && attempts < 30) {
+                        const order = shuffle([...nums]).join(', ');
+                        if (order !== answer) wrongOrders.add(order);
+                        attempts++;
+                    }
 
                     const options = shuffle([
                         {label: answer, value: answer},
-                        ...wrongOrders.filter(w => w !== answer).slice(0, 3).map(w => ({label: w, value: w}))
+                        ...[...wrongOrders].filter(w => w !== answer).slice(0, 3).map(w => ({label: w, value: w}))
                     ]);
 
                     const result = {
