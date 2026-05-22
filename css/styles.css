@@ -29,7 +29,7 @@
     --craft-coral: #ff7f7f;
     --craft-cream: #fefae0;
 
-    /* Monster (Pokemon-inspired) palette */
+    /* Monster theme palette */
     --monster-red: #ef4444;
     --monster-blue: #3b82f6;
     --monster-yellow: #facc15;
@@ -137,14 +137,6 @@ main {
     display: flex;
     opacity: 1;
     z-index: 2;
-}
-
-.screen.fade-out {
-    opacity: 0;
-}
-
-.screen.fade-in {
-    opacity: 1;
 }
 
 /* --- Celebration Canvas --- */
@@ -651,12 +643,6 @@ main {
     font-size: 0.95rem;
 }
 
-.exercise-list-stars {
-    margin-left: auto;
-    color: var(--star);
-    font-size: 0.85rem;
-}
-
 /* ================================================
    EXERCISE SCREEN
    ================================================ */
@@ -807,23 +793,6 @@ main {
     font-family: var(--font-body);
     font-weight: 700;
 }
-
-/* Hint banner */
-.hint-banner {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.1));
-    border: 1px solid rgba(251, 191, 36, 0.3);
-    border-radius: var(--radius-md);
-    padding: 14px 20px;
-    width: 100%;
-    font-weight: 600;
-    color: var(--craft-yellow);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    animation: slideDown 0.3s ease;
-}
-
-.hint-banner .hint-icon { font-size: 1.3rem; }
 
 /* ================================================
    EXERCISE FEEDBACK OVERLAY
@@ -1089,108 +1058,6 @@ main {
 }
 
 /* ================================================
-   DRAG & DROP
-   ================================================ */
-.drag-item {
-    padding: 10px 18px;
-    background: var(--bg-card);
-    border: 2px solid rgba(255,255,255,0.2);
-    border-radius: var(--radius-md);
-    cursor: grab;
-    font-weight: 700;
-    transition: all var(--transition-fast);
-    user-select: none;
-    touch-action: none;
-}
-
-.drag-item:hover {
-    border-color: var(--ocean-glow);
-    transform: scale(1.05);
-}
-
-.drag-item.dragging {
-    opacity: 0.5;
-    cursor: grabbing;
-}
-
-.drop-zone {
-    min-width: 80px;
-    min-height: 50px;
-    border: 2px dashed rgba(255,255,255,0.3);
-    border-radius: var(--radius-md);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all var(--transition-fast);
-    padding: 8px;
-}
-
-.drop-zone.drag-over {
-    border-color: var(--ocean-glow);
-    background: rgba(69, 183, 209, 0.15);
-    box-shadow: var(--shadow-glow-cyan);
-}
-
-.drop-zone.filled {
-    border-style: solid;
-    border-color: var(--ocean-glow);
-    background: rgba(69, 183, 209, 0.1);
-}
-
-/* ================================================
-   INTERACTIVE NUMBER LINE
-   ================================================ */
-.number-line-container {
-    width: 100%;
-    padding: 20px;
-}
-
-.number-line {
-    position: relative;
-    height: 6px;
-    background: rgba(255,255,255,0.2);
-    border-radius: 3px;
-    margin: 40px 10px 30px;
-}
-
-.number-line-tick {
-    position: absolute;
-    top: -6px;
-    width: 2px;
-    height: 18px;
-    background: rgba(255,255,255,0.4);
-    transform: translateX(-50%);
-}
-
-.number-line-label {
-    position: absolute;
-    top: 20px;
-    transform: translateX(-50%);
-    font-size: 0.8rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-}
-
-.number-line-marker {
-    position: absolute;
-    top: -18px;
-    width: 24px;
-    height: 24px;
-    background: var(--gd-cyan);
-    border-radius: 50%;
-    transform: translateX(-50%);
-    cursor: grab;
-    box-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
-    transition: box-shadow var(--transition-fast);
-    z-index: 5;
-}
-
-.number-line-marker:active {
-    cursor: grabbing;
-    box-shadow: 0 0 20px rgba(0, 240, 255, 0.8);
-}
-
-/* ================================================
    SVG CLOCK
    ================================================ */
 .clock-container {
@@ -1265,17 +1132,6 @@ main {
 .gd-block.coin { background: var(--gd-yellow); border-color: #e6c300; color: #333; }
 .gd-block.portal { background: var(--gd-purple); border-color: #9333ea; }
 .gd-block.jump { background: var(--gd-cyan); border-color: #00d4e6; }
-
-/* Craft items */
-.craft-item {
-    padding: 6px 12px;
-    border-radius: var(--radius-round);
-    font-size: 0.85rem;
-    font-weight: 700;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
 
 .craft-bead {
     width: 24px;
@@ -1366,14 +1222,6 @@ main {
     50% { box-shadow: 0 4px 40px rgba(255, 45, 123, 0.8); }
 }
 
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-5px); }
-    80% { transform: translateX(5px); }
-}
-
 @keyframes nudge {
     0%, 100% { transform: translateX(0); }
     25% { transform: translateX(-3px); }
@@ -1398,11 +1246,6 @@ main {
     to { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
 @keyframes spin {
     from { transform: rotate(0deg); }
     to { transform: rotate(360deg); }
@@ -1411,11 +1254,6 @@ main {
 @keyframes glow {
     0%, 100% { box-shadow: 0 0 5px currentColor; }
     50% { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
-}
-
-@keyframes rainbow {
-    0% { filter: hue-rotate(0deg); }
-    100% { filter: hue-rotate(360deg); }
 }
 
 /* Stagger children animations */
@@ -1510,59 +1348,6 @@ main {
     font-size: 1.4rem;
     text-align: center;
     animation: floatUp 0.3s ease backwards;
-}
-
-/* Bar graph for data unit */
-.bar-graph {
-    display: flex;
-    align-items: flex-end;
-    gap: 16px;
-    height: 200px;
-    padding: 10px;
-    border-left: 2px solid rgba(255,255,255,0.3);
-    border-bottom: 2px solid rgba(255,255,255,0.3);
-}
-
-.bar-graph-col {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
-    flex: 1;
-}
-
-.bar-graph-bar {
-    width: 40px;
-    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-    transition: height var(--transition-slow);
-    min-height: 4px;
-}
-
-.bar-graph-label {
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: var(--text-secondary);
-    text-align: center;
-    max-width: 60px;
-    word-break: break-word;
-}
-
-.bar-graph-value {
-    font-size: 0.75rem;
-    font-weight: 800;
-    color: white;
-}
-
-/* Y-axis labels for bar graph */
-.bar-graph-y-axis {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    height: 200px;
-    padding-right: 8px;
-    font-size: 0.7rem;
-    color: var(--text-muted);
-    font-weight: 700;
 }
 
 /* Picture graph */
@@ -1914,70 +1699,6 @@ main {
     font-weight: 600;
     position: relative;
     z-index: 1;
-}
-
-/* --- Monster theme exercise visuals --- */
-.monster-block {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    font-size: 1.5rem;
-    background: rgba(124, 58, 237, 0.2);
-    border: 2px solid rgba(124, 58, 237, 0.4);
-}
-
-.monster-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 14px;
-    border-radius: var(--radius-round);
-    background: linear-gradient(135deg, var(--monster-red), var(--monster-purple));
-    font-weight: 700;
-    font-size: 0.85rem;
-}
-
-/* --- Dance theme exercise visuals --- */
-.dance-block {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    font-size: 1.5rem;
-    background: rgba(236, 72, 153, 0.2);
-    border: 2px solid rgba(236, 72, 153, 0.4);
-}
-
-.dance-spotlight {
-    display: inline-block;
-    padding: 8px 18px;
-    border-radius: var(--radius-round);
-    background: radial-gradient(ellipse at center, rgba(251,191,36,0.2), transparent 70%);
-    border: 1px solid rgba(251,191,36,0.3);
-    font-weight: 700;
-}
-
-/* Monster/Dance keyframes */
-@keyframes monsterShake {
-    0%, 100% { transform: rotate(0deg); }
-    25% { transform: rotate(-5deg); }
-    75% { transform: rotate(5deg); }
-}
-
-@keyframes discoFlash {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.6; filter: hue-rotate(60deg); }
-}
-
-@keyframes spotlight {
-    0% { background-position: 0% 50%; }
-    50% { background-position: 100% 50%; }
-    100% { background-position: 0% 50%; }
 }
 
 /* Responsive adjustments for adaptive UI */

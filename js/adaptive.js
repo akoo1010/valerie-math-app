@@ -1,5 +1,6 @@
 /* ===== ADAPTIVE LEARNING SYSTEM ===== */
 /* Tracks mastery, manages difficulty, and builds practice queues */
+/// <reference path="./types.js" />
 
 const Adaptive = (() => {
     const STORAGE_KEY = 'valerie_math_progress';
@@ -7,7 +8,7 @@ const Adaptive = (() => {
     const DIFFICULTY_UP_THRESHOLD = 3; // correct in a row → harder
     const DIFFICULTY_DOWN_THRESHOLD = 2; // wrong in a row → easier
 
-    // Default session state (reset on every page load)
+    /** @type {SessionSnapshot} */
     const DEFAULT_SESSION = {
         currentStreak: 0,
         questionsAnswered: 0,
@@ -19,23 +20,210 @@ const Adaptive = (() => {
         lastSessionMessage: null
     };
 
-    // State loaded from localStorage
-    let state = {
-        // Per-unit progress: { unitId: { completed: [exerciseIndex], stars: {exerciseIndex: n}, currentExercise: 0 } }
-        units: {},
-        // Per-skill mastery: { skillId: { streak: 0, mastered: false, totalCorrect: 0, totalWrong: 0, difficulty: 1 } }
-        skills: {},
-        // Weakness queue: [ { skillId, unitId, question } ]
-        weaknessQueue: [],
-        // Total stars earned
-        totalStars: 0,
-        // Units unlocked (first 3 of each grade always unlocked)
-        unlockedUnits: ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'],
-        // Current session
-        session: { ...DEFAULT_SESSION }
-    };
+    const DEFAULT_UNLOCKED = ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'];
+
+    /** @returns {ProgressState} */
+    function createDefaultState() {
+        return {
+            units: {},
+            skills: {},
+            weaknessQueue: [],
+            totalStars: 0,
+            unlockedUnits: [...DEFAULT_UNLOCKED],
+            session: { ...DEFAULT_SESSION }
+        };
+    }
+
+    /** @type {ProgressState} */
+    let state = createDefaultState();
 
     let _saveTimer = null;
+
+    function isPlainObject(value) {
+        return value !== null && typeof value === 'object' && !Array.isArray(value);
+    }
+
+    function clampInteger(value, min, max) {
+        if (typeof value !== 'number' || !Number.isFinite(value)) return min;
+        const n = Math.trunc(value);
+        return Math.min(max, Math.max(min, n));
+    }
+
+    function toNonNegativeInteger(value, fallback = 0) {
+        if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) return fallback;
+        return Math.trunc(value);
+    }
+
+    function toTimestampOrNull(value) {
+        return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null;
+    }
+
+    function isAnswerValue(value) {
+        return value == null || typeof value === 'number' || typeof value === 'string' || typeof value === 'boolean';
+    }
+
+    function normalizeStringArray(value) {
+        if (!Array.isArray(value)) return [];
+        return [...new Set(value.filter(item => typeof item === 'string' && item.length > 0))];
+    }
+
+    function normalizeUnitProgress(value) {
+        if (!isPlainObject(value)) {
+            return { completed: [], stars: {} };
+        }
+
+        const completed = Array.isArray(value.completed)
+            ? [...new Set(value.completed.map(n => toNonNegativeInteger(n, -1)).filter(n => n >= 0))]
+            : [];
+
+        const stars = {};
+        if (isPlainObject(value.stars)) {
+            Object.entries(value.stars).forEach(([exerciseIndex, starCount]) => {
+                if (/^\d+$/.test(exerciseIndex)) {
+                    stars[exerciseIndex] = clampInteger(starCount, 0, 3);
+                }
+            });
+        }
+
+        return {
+            completed,
+            stars
+        };
+    }
+
+    function normalizeSkillProgress(value) {
+        const base = {
+            streak: 0,
+            mastered: false,
+            totalCorrect: 0,
+            totalWrong: 0,
+            difficulty: 1,
+            lastAttempt: null,
+            wrongAnswers: [],
+            misconceptions: {},
+            consecutiveCorrect: 0,
+            consecutiveWrong: 0
+        };
+
+        if (!isPlainObject(value)) return base;
+
+        const wrongAnswers = Array.isArray(value.wrongAnswers)
+            ? value.wrongAnswers
+                .filter(record => (
+                    isPlainObject(record) &&
+                    isAnswerValue(record.userAnswer) &&
+                    isAnswerValue(record.correctAnswer) &&
+                    typeof record.timestamp === 'number' &&
+                    Number.isFinite(record.timestamp)
+                ))
+                .slice(-20)
+                .map(record => ({
+                    userAnswer: record.userAnswer,
+                    correctAnswer: record.correctAnswer,
+                    timestamp: record.timestamp
+                }))
+            : [];
+
+        const misconceptions = {};
+        if (isPlainObject(value.misconceptions)) {
+            Object.entries(value.misconceptions).forEach(([label, count]) => {
+                if (typeof label === 'string' && label.length > 0) {
+                    misconceptions[label] = toNonNegativeInteger(count);
+                }
+            });
+        }
+
+        return {
+            streak: toNonNegativeInteger(value.streak),
+            mastered: value.mastered === true,
+            totalCorrect: toNonNegativeInteger(value.totalCorrect),
+            totalWrong: toNonNegativeInteger(value.totalWrong),
+            difficulty: clampInteger(value.difficulty, 1, 3),
+            lastAttempt: toTimestampOrNull(value.lastAttempt),
+            wrongAnswers,
+            misconceptions,
+            consecutiveCorrect: toNonNegativeInteger(value.consecutiveCorrect),
+            consecutiveWrong: toNonNegativeInteger(value.consecutiveWrong)
+        };
+    }
+
+    function normalizeWeaknessQueue(value) {
+        if (!Array.isArray(value)) return [];
+        const seen = new Set();
+        return value
+            .filter(item => (
+                isPlainObject(item) &&
+                typeof item.skillId === 'string' &&
+                item.skillId.length > 0 &&
+                typeof item.unitId === 'string' &&
+                item.unitId.length > 0
+            ))
+            .filter(item => {
+                if (seen.has(item.skillId)) return false;
+                seen.add(item.skillId);
+                return true;
+            })
+            .map(item => ({
+                skillId: item.skillId,
+                unitId: item.unitId,
+                addedAt: toNonNegativeInteger(item.addedAt, Date.now())
+            }));
+    }
+
+    function normalizeSession(value) {
+        if (!isPlainObject(value)) return { ...DEFAULT_SESSION };
+        const sessionState = ['normal', 'struggling', 'cruising', 'fatigued'].includes(value.sessionState)
+            ? value.sessionState
+            : 'normal';
+
+        return {
+            currentStreak: toNonNegativeInteger(value.currentStreak),
+            questionsAnswered: toNonNegativeInteger(value.questionsAnswered),
+            correctThisSession: toNonNegativeInteger(value.correctThisSession),
+            wrongThisSession: toNonNegativeInteger(value.wrongThisSession),
+            startTime: toTimestampOrNull(value.startTime),
+            recentResults: Array.isArray(value.recentResults) ? value.recentResults.filter(v => typeof v === 'boolean').slice(-20) : [],
+            sessionState,
+            lastSessionMessage: typeof value.lastSessionMessage === 'string' ? value.lastSessionMessage : null
+        };
+    }
+
+    /**
+     * Convert unknown persisted JSON into the exact progress shape the app uses.
+     * @param {unknown} value
+     * @returns {ProgressState|null}
+     */
+    function normalizeProgressState(value) {
+        if (!isPlainObject(value)) return null;
+        const hasProgressShape = ['units', 'skills', 'weaknessQueue', 'totalStars', 'unlockedUnits', 'session']
+            .some(key => Object.prototype.hasOwnProperty.call(value, key));
+        if (!hasProgressShape) return null;
+
+        const normalized = createDefaultState();
+
+        if (isPlainObject(value.units)) {
+            Object.entries(value.units).forEach(([unitId, unitProgress]) => {
+                if (typeof unitId === 'string' && unitId.length > 0) {
+                    normalized.units[unitId] = normalizeUnitProgress(unitProgress);
+                }
+            });
+        }
+
+        if (isPlainObject(value.skills)) {
+            Object.entries(value.skills).forEach(([skillId, skillProgress]) => {
+                if (typeof skillId === 'string' && skillId.length > 0) {
+                    normalized.skills[skillId] = normalizeSkillProgress(skillProgress);
+                }
+            });
+        }
+
+        normalized.weaknessQueue = normalizeWeaknessQueue(value.weaknessQueue);
+        normalized.totalStars = toNonNegativeInteger(value.totalStars);
+        normalized.unlockedUnits = [...new Set([...DEFAULT_UNLOCKED, ...normalizeStringArray(value.unlockedUnits)])];
+        normalized.session = normalizeSession(value.session);
+
+        return normalized;
+    }
 
     function save() {
         try {
@@ -53,15 +241,15 @@ const Adaptive = (() => {
         }, 1000);
     }
 
-    const DEFAULT_UNLOCKED = ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'];
-
+    /**
+     * @param {unknown} parsed
+     * @returns {boolean}
+     */
     function applyParsed(parsed) {
-        state = { ...state, ...parsed };
-        DEFAULT_UNLOCKED.forEach(id => {
-            if (!state.unlockedUnits.includes(id)) {
-                state.unlockedUnits.push(id);
-            }
-        });
+        const normalized = normalizeProgressState(parsed);
+        if (!normalized) return false;
+        state = normalized;
+        return true;
     }
 
     // Returns a Promise that resolves when progress is loaded (from API or localStorage)
@@ -71,8 +259,7 @@ const Adaptive = (() => {
             const res = await fetch('/api/progress');
             if (res.ok) {
                 const parsed = await res.json();
-                if (parsed && typeof parsed === 'object') {
-                    applyParsed(parsed);
+                if (applyParsed(parsed)) {
                     // Keep localStorage in sync
                     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
                     state.session = { ...DEFAULT_SESSION };
@@ -92,6 +279,10 @@ const Adaptive = (() => {
         state.session = { ...DEFAULT_SESSION };
     }
 
+    /**
+     * @param {string} skillId
+     * @returns {SkillProgress}
+     */
     function getSkill(skillId) {
         if (!state.skills[skillId]) {
             state.skills[skillId] = {
@@ -107,28 +298,30 @@ const Adaptive = (() => {
                 consecutiveWrong: 0    // resets when difficulty bumps down
             };
         }
-        // Migrate existing skills missing new fields
-        const skill = state.skills[skillId];
-        if (!skill.wrongAnswers) skill.wrongAnswers = [];
-        if (!skill.misconceptions) skill.misconceptions = {};
-        if (skill.consecutiveCorrect == null) skill.consecutiveCorrect = 0;
-        if (skill.consecutiveWrong == null) skill.consecutiveWrong = 0;
-        return skill;
+        return state.skills[skillId];
     }
 
+    /**
+     * @param {string} unitId
+     * @returns {UnitProgress}
+     */
     function getUnit(unitId) {
         if (!state.units[unitId]) {
             state.units[unitId] = {
                 completed: [],
-                stars: {},
-                currentExercise: 0,
-                bestScore: 0
+                stars: {}
             };
         }
         return state.units[unitId];
     }
 
     // --- Misconception Detection ---
+    /**
+     * @param {AnswerValue} userAnswer
+     * @param {AnswerValue} correctAnswer
+     * @param {string} skillId
+     * @returns {string|null}
+     */
     function detectGenericMisconception(userAnswer, correctAnswer, skillId) {
         if (typeof userAnswer !== 'number' || typeof correctAnswer !== 'number') return null;
         if (Math.abs(userAnswer - correctAnswer) === 1) return 'off-by-one';
@@ -165,23 +358,32 @@ const Adaptive = (() => {
         s.sessionState = 'normal';
     }
 
+    function recordSessionResult(isCorrect) {
+        const session = state.session;
+        session.currentStreak = isCorrect ? session.currentStreak + 1 : 0;
+        session.questionsAnswered++;
+        if (isCorrect) {
+            session.correctThisSession++;
+        } else {
+            session.wrongThisSession++;
+        }
+        if (!session.startTime) session.startTime = Date.now();
+        session.recentResults.push(isCorrect);
+        if (session.recentResults.length > 20) session.recentResults.shift();
+        updateSessionState();
+    }
+
     return {
         load,
-        save,
+        /** @returns {ProgressState} */
         getState() { return state; },
 
-        // Reset all progress
-        reset() {
-            localStorage.removeItem(STORAGE_KEY);
-            state = {
-                units: {}, skills: {}, weaknessQueue: [],
-                totalStars: 0,
-                unlockedUnits: ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'],
-                session: { ...DEFAULT_SESSION }
-            };
-        },
-
-        // Record a correct answer
+        /**
+         * Record a correct answer for a skill.
+         *
+         * @param {string} skillId
+         * @param {string} unitId
+         */
         recordCorrect(skillId, unitId) {
             const skill = getSkill(skillId);
             skill.streak++;
@@ -189,13 +391,7 @@ const Adaptive = (() => {
             skill.consecutiveWrong = 0;
             skill.totalCorrect++;
             skill.lastAttempt = Date.now();
-            state.session.currentStreak++;
-            state.session.questionsAnswered++;
-            state.session.correctThisSession++;
-            if (!state.session.startTime) state.session.startTime = Date.now();
-            state.session.recentResults.push(true);
-            if (state.session.recentResults.length > 20) state.session.recentResults.shift();
-            updateSessionState();
+            recordSessionResult(true);
 
             // Check mastery
             if (skill.streak >= MASTERY_STREAK) {
@@ -221,7 +417,14 @@ const Adaptive = (() => {
             };
         },
 
-        // Record a wrong answer
+        /**
+         * Record a wrong answer and update misconception tracking.
+         *
+         * @param {string} skillId
+         * @param {string} unitId
+         * @param {AnswerValue} userAnswer
+         * @param {ExerciseQuestion} questionData
+         */
         recordWrong(skillId, unitId, userAnswer, questionData) {
             const skill = getSkill(skillId);
             skill.streak = 0; // Reset streak
@@ -230,13 +433,7 @@ const Adaptive = (() => {
             skill.totalWrong++;
             skill.mastered = false;
             skill.lastAttempt = Date.now();
-            state.session.currentStreak = 0;
-            state.session.questionsAnswered++;
-            state.session.wrongThisSession++;
-            if (!state.session.startTime) state.session.startTime = Date.now();
-            state.session.recentResults.push(false);
-            if (state.session.recentResults.length > 20) state.session.recentResults.shift();
-            updateSessionState();
+            recordSessionResult(false);
 
             // Misconception detection
             if (userAnswer !== undefined && questionData) {
@@ -292,18 +489,6 @@ const Adaptive = (() => {
             return getSkill(skillId).difficulty;
         },
 
-        // Check if a skill is mastered
-        isMastered(skillId) {
-            return getSkill(skillId).mastered;
-        },
-
-        // Get hint level based on consecutive wrongs
-        getHintLevel(skillId) {
-            const skill = getSkill(skillId);
-            if (skill.streak > 0) return 0; // No hint if they got the last one right
-            return Math.min(3 - skill.streak, 3); // more wrongs = more hints (capped at 3)
-        },
-
         // Record exercise completion and stars
         completeExercise(unitId, exerciseIndex, starsEarned) {
             const unit = getUnit(unitId);
@@ -329,7 +514,11 @@ const Adaptive = (() => {
             return state.unlockedUnits.includes(unitId);
         },
 
-        // Unlock the next unit(s) based on progress
+        /**
+         * Unlock the next unit(s) based on progress.
+         *
+         * @param {MathUnit[]} allUnits
+         */
         checkUnlocks(allUnits) {
             // Unlock next unit when previous has >= 50% exercises completed
             for (let i = 0; i < allUnits.length; i++) {
@@ -360,7 +549,7 @@ const Adaptive = (() => {
             };
         },
 
-        // Get weakness queue for practice zone
+        /** @returns {WeaknessQueueItem[]} */
         getWeaknessQueue() {
             return [...state.weaknessQueue];
         },
@@ -420,16 +609,7 @@ const Adaptive = (() => {
             return null;
         },
 
-        // Get session stats
-        getSessionStats() {
-            return { ...state.session };
-        },
-
         // --- Misconception API ---
-        getMisconceptions(skillId) {
-            return { ...getSkill(skillId).misconceptions };
-        },
-
         getTopMisconception(skillId) {
             const m = getSkill(skillId).misconceptions;
             let top = null, topCount = 0;
@@ -444,6 +624,7 @@ const Adaptive = (() => {
             return state.session.sessionState || 'normal';
         },
 
+        /** @returns {SessionMessage|null} */
         getSessionMessage() {
             const ss = state.session.sessionState;
             const last = state.session.lastSessionMessage;
@@ -462,6 +643,10 @@ const Adaptive = (() => {
         },
 
         // --- Modality API ---
+        /**
+         * @param {string} skillId
+         * @returns {ExerciseModality}
+         */
         getModality(skillId) {
             const skill = getSkill(skillId);
             const sessionState = state.session.sessionState;

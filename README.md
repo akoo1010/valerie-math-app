@@ -1,6 +1,6 @@
 # 🌟 Valerie's Math Adventure
 
-A personalized, interactive math learning app for Valerie, built around the **Khan Academy 3rd & 4th Grade Math syllabus**. Designed to make math fun through themes she loves — swimming 🏊‍♀️, Geometry Dash 🎮, and arts & crafts 🎨.
+A personalized, interactive math learning app for Valerie, aligned with **3rd and 4th grade math topics**. Designed to make math fun through themes she loves — swimming 🏊‍♀️, Geometry Dash 🎮, and arts & crafts 🎨.
 
 **Live app:** [valerie-math-app.vercel.app](https://valerie-math-app.vercel.app)
 
@@ -9,7 +9,7 @@ A personalized, interactive math learning app for Valerie, built around the **Kh
 ## ✨ Features
 
 - **Two grade worlds** — 3rd Grade (Ocean, Dash & Craft World) and 4th Grade (Monster & Dance World)
-- **26 exercise units** covering the full Khan Academy syllabus for grades 3–4
+- **26 exercise units** covering the app's 3rd and 4th grade topic map
 - **Adaptive difficulty** — questions get harder or easier based on consecutive correct/wrong streaks
 - **Misconception detection** — identifies specific error patterns and shows targeted hints
 - **Star-based progress tracking** — earn up to 3 stars per round; complete 50% of a unit's rounds to unlock the next unit
@@ -34,6 +34,7 @@ valerie-math-app/
     ├── app.js              # App controller (screen routing, map rendering)
     ├── engine.js           # Exercise rendering engine (all question types)
     ├── adaptive.js         # Adaptive difficulty, mastery tracking, cloud sync
+    ├── types.js            # Shared JSDoc contracts for editor/type checking
     ├── animations.js       # Confetti, particle effects, mascot animations
     ├── audio.js            # Sound effects (correct, wrong, celebration)
     └── units/              # Individual exercise unit files
@@ -141,7 +142,7 @@ The `/api/progress` endpoint requires a **Vercel KV (Upstash Redis)** store conn
 
 Progress is saved in two places:
 
-1. **Cloud (Vercel KV)** — loaded first on every page visit, synced after every answer. Works across any browser or device.
+1. **Cloud (Vercel KV)** — loaded first on every page visit, then debounced to avoid excessive writes. Works across any browser or device.
 2. **localStorage** — used as an offline fallback if the network is unavailable.
 
 No user accounts or personal data are collected. All progress is stored under a single key for Valerie.
@@ -150,7 +151,7 @@ No user accounts or personal data are collected. All progress is stored under a 
 
 ## 🧠 Adaptive Engine
 
-- **Difficulty levels (1–3)** are tracked per skill. Three consecutive correct answers bump difficulty up; three consecutive wrong answers bump it down.
+- **Difficulty levels (1–3)** are tracked per skill. Three consecutive correct answers bump difficulty up; two consecutive wrong answers bump it down.
 - **Modality switching** picks between standard input, multiple choice, and worked examples based on recent performance.
 - **Weakness queue** tracks skills the player has missed and surfaces them in the Practice Zone until they're mastered again.
 - **Hint escalation** — hint level persists across retries of the same question, so each subsequent attempt gets a more direct nudge.

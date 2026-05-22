@@ -1,8 +1,9 @@
 /* ===== APP CONTROLLER ===== */
 /* Main app: routing, screen management, map rendering, practice zone */
+/// <reference path="./types.js" />
 
 const App = (() => {
-    // 3rd grade units
+    /** @type {MathUnit[]} */
     const UNITS_3RD = [
         MultiplicationIntro,
         Multiplication1Digit,
@@ -18,7 +19,7 @@ const App = (() => {
         DataGraphs
     ];
 
-    // 4th grade units
+    /** @type {MathUnit[]} */
     const UNITS_4TH = [
         PlaceValue4,
         AddSubEstimation4,
@@ -36,12 +37,21 @@ const App = (() => {
         PlaneFigures4
     ];
 
+    /** @type {MathUnit[]} */
     const ALL_UNITS = [...UNITS_3RD, ...UNITS_4TH];
 
     let currentGrade = '3rd';
-    let lastPractice = null; // { kind: 'weakness' } | { kind: 'mult', table: number|'mixed' }
+    /** @type {PracticeSelection|null} */
+    let lastPractice = null;
 
     async function init() {
+        Engine.configureNavigation({
+            showScreen,
+            getAllUnits: () => ALL_UNITS,
+            showMap: () => App.showMap(),
+            repeatLastPractice: () => App.repeatLastPractice()
+        });
+
         await Adaptive.load();
         Animations.init();
         Animations.createSplashBubbles();
@@ -70,6 +80,10 @@ const App = (() => {
         }
     }
 
+    /**
+     * @param {'3rd'|'4th'} grade
+     * @returns {MathUnit[]}
+     */
     function getUnitsForGrade(grade) {
         return grade === '4th' ? UNITS_4TH : UNITS_3RD;
     }
@@ -124,6 +138,7 @@ const App = (() => {
         });
     }
 
+    /** @param {MathUnit} unit */
     function showUnitIntro(unit) {
         const content = document.getElementById('unit-intro-content');
         const progress = Adaptive.getUnitProgress(unit.id, unit.exerciseCount);
@@ -157,6 +172,7 @@ const App = (() => {
 
     return {
         init,
+        /** @returns {MathUnit[]} */
         getAllUnits() { return ALL_UNITS; },
 
         showScreen,
@@ -173,6 +189,7 @@ const App = (() => {
             showScreen('screen-map');
         },
 
+        /** @param {string} unitId */
         startUnit(unitId) {
             const unit = ALL_UNITS.find(u => u.id === unitId);
             if (!unit) return;
@@ -219,6 +236,7 @@ const App = (() => {
                     </div>
                 `;
             } else {
+                /** @type {ExerciseDefinition[]} */
                 const practiceExercises = [];
                 queue.forEach(q => {
                     const unit = ALL_UNITS.find(u => u.id === q.unitId);
@@ -246,6 +264,7 @@ const App = (() => {
             showScreen('screen-practice');
         },
 
+        /** @param {number|'mixed'} table */
         startMultiplicationPractice(table) {
             AudioManager.click();
             lastPractice = { kind: 'mult', table };
@@ -255,6 +274,7 @@ const App = (() => {
 
             // Build a fresh batch of facts, avoiding immediate repeats
             const seen = new Set();
+            /** @type {ExerciseDefinition[]} */
             const exercises = [];
             for (let i = 0; i < NUM_QUESTIONS; i++) {
                 exercises.push({
@@ -291,6 +311,7 @@ const App = (() => {
         startPracticeExercises() {
             lastPractice = { kind: 'weakness' };
             const queue = Adaptive.getWeaknessQueue();
+            /** @type {ExerciseDefinition[]} */
             const practiceExercises = [];
             queue.forEach(q => {
                 const unit = ALL_UNITS.find(u => u.id === q.unitId);

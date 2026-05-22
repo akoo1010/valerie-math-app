@@ -5,7 +5,6 @@ const Animations = (() => {
     let canvas, ctxC;
     let particles = [];
     let animFrame = null;
-    let bubbles = [];
 
     function init() {
         canvas = document.getElementById('celebration-canvas');
@@ -250,10 +249,10 @@ const Animations = (() => {
             startLoop();
         },
 
-        // Monster (Pokemon-inspired) sparkle burst
+        // Monster theme sparkle burst
         monsterBurst(x, y) {
             if (!ctxC) init();
-            // Pokeball-style expanding ring + star sparks
+            // Expanding ring + star sparks.
             for (let i = 0; i < 24; i++) {
                 const angle = (Math.PI * 2 * i) / 24;
                 const speed = 3 + Math.random() * 5;
@@ -375,16 +374,6 @@ const Animations = (() => {
                 bubble.style.animationDelay = Math.random() * 5 + 's';
                 container.appendChild(bubble);
             }
-        },
-
-        // Stop all animations
-        clear() {
-            particles = [];
-            if (animFrame) {
-                cancelAnimationFrame(animFrame);
-                animFrame = null;
-            }
-            if (ctxC) ctxC.clearRect(0, 0, canvas.width, canvas.height);
         }
     };
 })();

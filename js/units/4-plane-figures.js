@@ -9,7 +9,6 @@ const PlaneFigures4 = {
     exerciseCount: 7,
 
     getExercises() {
-        const R = Engine.Utils.rand;
         const pick = Engine.Utils.pick;
         const shuffle = Engine.Utils.shuffle;
 

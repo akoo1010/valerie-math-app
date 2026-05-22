@@ -1,16 +1,26 @@
 /* ===== EXERCISE ENGINE ===== */
 /* Manages exercise flow: question generation, answer validation, feedback, scoring */
+/// <reference path="./types.js" />
 
 const Engine = (() => {
+    /** @type {MathUnit|null} */
     let currentUnit = null;
+    /** @type {ExerciseDefinition[]} */
     let currentExercises = [];
     let currentExIndex = 0;
+    /** @type {ExerciseQuestion|null} */
     let currentQuestion = null;
-    let score = { correct: 0, total: 0, stars: 0 };
+    let score = { correct: 0 };
     let wrongAttempts = 0;
-    let hintShown = false;
     let answered = false;
     let awaitingFeedback = false;
+    /** @type {EngineNavigation} */
+    let navigation = {
+        showScreen() {},
+        getAllUnits() { return []; },
+        showMap() {},
+        repeatLastPractice() {}
+    };
 
     // --- Utility functions available to unit files ---
     const Utils = {
@@ -33,7 +43,7 @@ const Engine = (() => {
             const set = new Set([correct]);
             let attempts = 0;
             while (set.size < count + 1 && attempts < 100) {
-                let d = correct + Engine.Utils.rand(-range, range);
+                let d = correct + Utils.rand(-range, range);
                 if (d < 0) d = Math.abs(d);
                 if (d !== correct) set.add(d);
                 attempts++;
@@ -64,7 +74,26 @@ const Engine = (() => {
         }
     };
 
+    /** @param {QuestionOption|AnswerValue} value */
+    function isQuestionOption(value) {
+        return value !== null && typeof value === 'object' && Object.prototype.hasOwnProperty.call(value, 'value');
+    }
+
+    /** @param {QuestionOption|AnswerValue} option */
+    function getOptionLabel(option) {
+        return String(isQuestionOption(option) ? (option.label ?? option.value) : option);
+    }
+
+    /** @param {QuestionOption|AnswerValue} option */
+    function getOptionValue(option) {
+        return isQuestionOption(option) ? option.value : option;
+    }
+
     // --- Rendering helpers ---
+    /**
+     * @param {ExerciseQuestion} question
+     * @param {boolean} [isRetry]
+     */
     function renderQuestion(question, isRetry = false) {
         const body = document.getElementById('exercise-body');
         body.innerHTML = '';
@@ -72,7 +101,6 @@ const Engine = (() => {
         currentQuestion = question;
         if (!isRetry) {
             wrongAttempts = 0;
-            hintShown = false;
         }
         answered = false;
         awaitingFeedback = false;
@@ -113,39 +141,27 @@ const Engine = (() => {
             }
         }
 
-        // Hint area (hidden initially)
-        const hintDiv = document.createElement('div');
-        hintDiv.id = 'hint-area';
-        hintDiv.style.width = '100%';
-        body.appendChild(hintDiv);
-
         // Answer area based on type
         if (question.type === 'multiple-choice') {
             renderMultipleChoice(body, question);
         } else if (question.type === 'input') {
             renderInput(body, question);
-        } else if (question.type === 'drag-drop') {
-            renderDragDrop(body, question);
         } else if (question.type === 'grid-click') {
             renderGridClick(body, question);
         } else if (question.type === 'fraction-click') {
             renderFractionClick(body, question);
         } else if (question.type === 'true-false') {
             renderTrueFalse(body, question);
-        } else if (question.type === 'custom') {
-            // Custom rendering handled by the question itself
-            if (question.render) {
-                const customDiv = document.createElement('div');
-                customDiv.className = 'exercise-answers';
-                body.appendChild(customDiv);
-                question.render(customDiv, (answer) => checkAnswer(answer, question));
-            }
         }
 
         // Animate in
         body.classList.add('stagger-in');
     }
 
+    /**
+     * @param {HTMLElement} body
+     * @param {ExerciseQuestion} question
+     */
     function renderMultipleChoice(body, question) {
         const div = document.createElement('div');
         div.className = 'exercise-answers stagger-in';
@@ -153,8 +169,8 @@ const Engine = (() => {
         options.forEach(opt => {
             const btn = document.createElement('button');
             btn.className = 'btn-answer';
-            btn.textContent = typeof opt === 'object' ? opt.label : opt;
-            const value = typeof opt === 'object' ? opt.value : opt;
+            btn.textContent = getOptionLabel(opt);
+            const value = getOptionValue(opt);
             btn.addEventListener('click', () => {
                 AudioManager.click();
                 checkAnswer(value, question);
@@ -167,6 +183,23 @@ const Engine = (() => {
         body.appendChild(div);
     }
 
+    /**
+     * @param {() => void} onClick
+     * @param {string} [marginTop]
+     */
+    function createCheckButton(onClick, marginTop) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Check ✓';
+        if (marginTop) btn.style.marginTop = marginTop;
+        btn.addEventListener('click', onClick);
+        return btn;
+    }
+
+    /**
+     * @param {HTMLElement} body
+     * @param {ExerciseQuestion} question
+     */
     function renderInput(body, question) {
         const div = document.createElement('div');
         div.className = 'exercise-input-area';
@@ -193,11 +226,8 @@ const Engine = (() => {
             div.appendChild(suffix);
         }
 
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-primary';
-        btn.textContent = 'Check ✓';
         let submitting = false;
-        btn.addEventListener('click', () => {
+        const btn = createCheckButton(() => {
             if (submitting || answered) return;
             const val = parseFloat(input.value);
             if (isNaN(val)) return;
@@ -218,6 +248,10 @@ const Engine = (() => {
         setTimeout(() => input.focus(), 100);
     }
 
+    /**
+     * @param {HTMLElement} body
+     * @param {ExerciseQuestion} question
+     */
     function renderTrueFalse(body, question) {
         const div = document.createElement('div');
         div.className = 'exercise-answers';
@@ -239,83 +273,10 @@ const Engine = (() => {
         body.appendChild(div);
     }
 
-    function renderDragDrop(body, question) {
-        // question.dragItems, question.dropZones, question.checkDrop(zones)
-        const container = document.createElement('div');
-        container.className = 'exercise-answers';
-        container.style.flexDirection = 'column';
-        container.style.gap = '20px';
-
-        // Drop zones
-        const zonesDiv = document.createElement('div');
-        zonesDiv.style.display = 'flex';
-        zonesDiv.style.gap = '12px';
-        zonesDiv.style.flexWrap = 'wrap';
-        zonesDiv.style.justifyContent = 'center';
-
-        question.dropZones.forEach((zone, i) => {
-            const dz = document.createElement('div');
-            dz.className = 'drop-zone';
-            dz.dataset.zone = i;
-            dz.innerHTML = `<span style="color: var(--text-muted); font-size: 0.8rem;">${zone.label || 'Drop here'}</span>`;
-            dz.addEventListener('dragover', (e) => { e.preventDefault(); dz.classList.add('drag-over'); });
-            dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-            dz.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dz.classList.remove('drag-over');
-                const data = e.dataTransfer.getData('text/plain');
-                const item = container.querySelector(`[data-drag-id="${data}"]`);
-                if (item) {
-                    dz.innerHTML = '';
-                    dz.appendChild(item.cloneNode(true));
-                    dz.classList.add('filled');
-                    dz.dataset.value = data;
-                    item.style.opacity = '0.3';
-                    AudioManager.pop();
-                }
-            });
-            zonesDiv.appendChild(dz);
-        });
-        container.appendChild(zonesDiv);
-
-        // Drag items
-        const itemsDiv = document.createElement('div');
-        itemsDiv.style.display = 'flex';
-        itemsDiv.style.gap = '10px';
-        itemsDiv.style.flexWrap = 'wrap';
-        itemsDiv.style.justifyContent = 'center';
-
-        Utils.shuffle(question.dragItems).forEach(item => {
-            const di = document.createElement('div');
-            di.className = 'drag-item';
-            di.draggable = true;
-            di.textContent = typeof item === 'object' ? item.label : item;
-            di.dataset.dragId = typeof item === 'object' ? item.value : item;
-            di.addEventListener('dragstart', (e) => {
-                e.dataTransfer.setData('text/plain', di.dataset.dragId);
-                di.classList.add('dragging');
-            });
-            di.addEventListener('dragend', () => di.classList.remove('dragging'));
-            itemsDiv.appendChild(di);
-        });
-        container.appendChild(itemsDiv);
-
-        // Check button
-        const checkBtn = document.createElement('button');
-        checkBtn.className = 'btn btn-primary';
-        checkBtn.textContent = 'Check ✓';
-        checkBtn.addEventListener('click', () => {
-            const zones = zonesDiv.querySelectorAll('.drop-zone');
-            const values = {};
-            zones.forEach(z => { values[z.dataset.zone] = z.dataset.value; });
-            const isCorrect = question.checkDrop(values);
-            checkAnswer(isCorrect ? question.answer : null, question);
-        });
-        container.appendChild(checkBtn);
-
-        body.appendChild(container);
-    }
-
+    /**
+     * @param {HTMLElement} body
+     * @param {ExerciseQuestion} question
+     */
     function renderGridClick(body, question) {
         // question.gridRows, question.gridCols, question.targetCount
         const container = document.createElement('div');
@@ -343,17 +304,17 @@ const Engine = (() => {
         }
         container.appendChild(grid);
 
-        const checkBtn = document.createElement('button');
-        checkBtn.className = 'btn btn-primary';
-        checkBtn.style.marginTop = '16px';
-        checkBtn.textContent = 'Check ✓';
-        checkBtn.addEventListener('click', () => {
+        const checkBtn = createCheckButton(() => {
             checkAnswer(filledCount, { ...question, answer: question.targetCount });
-        });
+        }, '16px');
         container.appendChild(checkBtn);
         body.appendChild(container);
     }
 
+    /**
+     * @param {HTMLElement} body
+     * @param {ExerciseQuestion} question
+     */
     function renderFractionClick(body, question) {
         // question.parts, question.targetNumerator, question.targetDenominator
         const container = document.createElement('div');
@@ -381,18 +342,18 @@ const Engine = (() => {
         }
         container.appendChild(bar);
 
-        const checkBtn = document.createElement('button');
-        checkBtn.className = 'btn btn-primary';
-        checkBtn.style.marginTop = '16px';
-        checkBtn.textContent = 'Check ✓';
-        checkBtn.addEventListener('click', () => {
+        const checkBtn = createCheckButton(() => {
             checkAnswer(selectedCount, { ...question, answer: question.targetNumerator });
-        });
+        }, '16px');
         container.appendChild(checkBtn);
         body.appendChild(container);
     }
 
     // --- Answer checking ---
+    /**
+     * @param {AnswerValue} userAnswer
+     * @param {ExerciseQuestion} question
+     */
     function checkAnswer(userAnswer, question) {
         if (answered || awaitingFeedback) return;
         awaitingFeedback = true;
@@ -410,11 +371,12 @@ const Engine = (() => {
         }
     }
 
+    /** @param {ExerciseQuestion} question */
     function handleCorrect(question) {
         score.correct++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
         const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
-        const result = Adaptive.recordCorrect(skillId, unitId);
+        Adaptive.recordCorrect(skillId, unitId);
 
         AudioManager.correct();
 
@@ -437,7 +399,7 @@ const Engine = (() => {
         // Show feedback (recovery message if student got it after wrong attempts)
         const isRecovery = wrongAttempts > 0;
         const encouragement = isRecovery ? Adaptive.getRecoveryMessage() : Adaptive.getEncouragement(true);
-        showFeedback(true, encouragement, question);
+        showFeedback(true, encouragement);
 
         // Streak message
         const streakMsg = Adaptive.getStreakMessage();
@@ -448,11 +410,15 @@ const Engine = (() => {
         }
     }
 
+    /**
+     * @param {ExerciseQuestion} question
+     * @param {AnswerValue} userAnswer
+     */
     function handleWrong(question, userAnswer) {
         wrongAttempts++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
         const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
-        const result = Adaptive.recordWrong(skillId, unitId, userAnswer, question);
+        Adaptive.recordWrong(skillId, unitId, userAnswer, question);
 
         AudioManager.incorrect();
 
@@ -479,10 +445,15 @@ const Engine = (() => {
             hintText = prefix + hintText;
         }
 
-        showFeedback(false, Adaptive.getEncouragement(false), question, hintText);
+        showFeedback(false, Adaptive.getEncouragement(false), hintText);
     }
 
-    function showFeedback(isCorrect, message, question, hintText) {
+    /**
+     * @param {boolean} isCorrect
+     * @param {string} message
+     * @param {string} [hintText]
+     */
+    function showFeedback(isCorrect, message, hintText) {
         const fb = document.getElementById('exercise-feedback');
         fb.className = `exercise-feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
 
@@ -514,6 +485,7 @@ const Engine = (() => {
         fb.className = 'exercise-feedback';
     }
 
+    /** @param {SessionMessage} msg */
     function showSessionBanner(msg) {
         const existing = document.getElementById('session-banner');
         if (existing) existing.remove();
@@ -555,7 +527,7 @@ const Engine = (() => {
                 <p class="break-overlay-text">You've been working hard! A short break helps your brain learn better.</p>
                 <div class="break-overlay-buttons">
                     <button class="btn btn-primary" onclick="document.getElementById('break-overlay').remove()">Keep Going 💪</button>
-                    <button class="btn btn-success" onclick="document.getElementById('break-overlay').remove(); App.showMap();">Take a Break 🌟</button>
+                    <button class="btn btn-success" onclick="document.getElementById('break-overlay').remove(); Engine.goToMap();">Take a Break 🌟</button>
                 </div>
             </div>
         `;
@@ -575,14 +547,32 @@ const Engine = (() => {
     return {
         Utils,
 
-        // Start a unit's exercises
+        /** @param {Partial<EngineNavigation>} handlers */
+        configureNavigation(handlers) {
+            navigation = { ...navigation, ...handlers };
+        },
+
+        goToMap() {
+            navigation.showMap();
+        },
+
+        repeatPractice() {
+            navigation.repeatLastPractice();
+        },
+
+        /**
+         * Start a unit's exercises.
+         *
+         * @param {MathUnit} unit
+         * @param {ExerciseDefinition[]} exercises
+         */
         startUnit(unit, exercises) {
             currentUnit = unit;
             currentExercises = exercises;
             currentExIndex = 0;
-            score = { correct: 0, total: exercises.length, stars: 0 };
+            score = { correct: 0 };
 
-            App.showScreen('screen-exercise');
+            navigation.showScreen('screen-exercise');
 
             // Apply theme background
             const screen = document.getElementById('screen-exercise');
@@ -592,7 +582,11 @@ const Engine = (() => {
             this.loadExercise(0);
         },
 
-        // Load a specific exercise
+        /**
+         * Load a specific exercise.
+         *
+         * @param {number} index
+         */
         loadExercise(index) {
             if (index >= currentExercises.length) {
                 this.showResults();
@@ -625,7 +619,11 @@ const Engine = (() => {
             renderQuestion(question);
         },
 
-        // After feedback button
+        /**
+         * Continue after the feedback button is clicked.
+         *
+         * @param {boolean} wasCorrect
+         */
         nextAfterFeedback(wasCorrect) {
             hideFeedback();
             if (wasCorrect || wrongAttempts >= 3) {
@@ -654,7 +652,7 @@ const Engine = (() => {
                 const _unitState = Adaptive.getState().units[currentUnit.id] || { completed: [] };
                 const _nextSlot = Math.min(_unitState.completed.length, currentUnit.exerciseCount - 1);
                 Adaptive.completeExercise(currentUnit.id, _nextSlot, starsEarned);
-                Adaptive.checkUnlocks(App.getAllUnits());
+                Adaptive.checkUnlocks(navigation.getAllUnits());
             }
 
             // Celebration
@@ -700,21 +698,25 @@ const Engine = (() => {
                 </div>
                 <div class="results-buttons">
                     ${currentUnit.id === 'practice'
-                        ? `<button class="btn btn-primary" onclick="App.repeatLastPractice()">🔄 Practice Again</button>
-                           <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>`
+                        ? `<button class="btn btn-primary" onclick="Engine.repeatPractice()">🔄 Practice Again</button>
+                           <button class="btn btn-success" onclick="Engine.goToMap()">🗺️ Back to Map</button>`
                         : `<button class="btn btn-primary" onclick="Engine.startUnit(Engine.getCurrentUnit(), Engine.getCurrentUnit().getExercises())">🔄 Try Again</button>
-                           <button class="btn btn-success" onclick="App.showMap()">🗺️ Back to Map</button>`
+                           <button class="btn btn-success" onclick="Engine.goToMap()">🗺️ Back to Map</button>`
                     }
                 </div>
             `;
 
-            App.showScreen('screen-results');
+            navigation.showScreen('screen-results');
         },
 
+        /** @returns {MathUnit|null} */
         getCurrentUnit() { return currentUnit; },
-        getScore() { return score; },
 
-        // For practice zone
+        /**
+         * Start the practice zone with generated exercises.
+         *
+         * @param {ExerciseDefinition[]} questions
+         */
         startPractice(questions) {
             currentUnit = {
                 id: 'practice',
@@ -725,8 +727,8 @@ const Engine = (() => {
             };
             currentExercises = questions;
             currentExIndex = 0;
-            score = { correct: 0, total: questions.length, stars: 0 };
-            App.showScreen('screen-exercise');
+            score = { correct: 0 };
+            navigation.showScreen('screen-exercise');
             updateProgress();
             this.loadExercise(0);
         }
