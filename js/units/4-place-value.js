@@ -92,7 +92,7 @@ const PlaceValue4 = {
                         </div>`,
                         answer,
                         options: Engine.Utils.shuffle([answer, ...[0,1,2,3,4,5,6,7,8,9].filter(d => d !== answer && Math.abs(d - answer) <= 4)].slice(0, 4)),
-                        hint1: `The ${place} place is ${place === 'ones' ? 'the last digit' : place === 'tens' ? 'the second-to-last digit' : place === 'hundreds' ? 'the third digit from the right' : 'the fourth digit from the right'}`,
+                        hint1: `The ${place} place is ${place === 'ones' ? 'the last digit' : place === 'tens' ? 'the second-to-last digit' : place === 'hundreds' ? 'the third digit from the right' : place === 'thousands' ? 'the fourth digit from the right' : 'the fifth digit from the right'}`,
                         hint2: `Look at ${num.toLocaleString()} — count from the right`,
                         hint3: `The digit in the ${place} place is ${answer}`,
                         diagnose(userAnswer) {

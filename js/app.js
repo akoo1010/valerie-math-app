@@ -69,6 +69,17 @@ const App = (() => {
         if (el) el.textContent = `⭐ ${Adaptive.getTotalStars()}`;
     }
 
+    /**
+     * @param {string} text
+     * @param {'success'|'error'|'info'} kind
+     */
+    function showBackupStatus(text, kind) {
+        const el = document.getElementById('backup-status');
+        if (!el) return;
+        el.textContent = text;
+        el.className = `backup-status backup-status-${kind}`;
+    }
+
     function showScreen(id) {
         AudioManager.whoosh();
         document.querySelectorAll('.screen').forEach(s => {
@@ -332,6 +343,68 @@ const App = (() => {
             } else {
                 this.startPracticeExercises();
             }
+        },
+
+        // --- Progress Backup ---
+        exportBackup() {
+            AudioManager.click();
+            try {
+                const snapshot = Adaptive.exportSnapshot();
+                const blob = new Blob([JSON.stringify(snapshot, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                const date = new Date().toISOString().slice(0, 10);
+                a.href = url;
+                a.download = `valerie-math-backup-${date}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showBackupStatus('✅ Backup saved to your downloads folder.', 'success');
+            } catch (e) {
+                showBackupStatus('❌ Could not create backup file.', 'error');
+            }
+        },
+
+        importBackup() {
+            AudioManager.click();
+            const input = document.getElementById('backup-file-input');
+            if (!input) return;
+            input.value = ''; // allow re-selecting the same file
+            input.click();
+        },
+
+        /** @param {Event} event */
+        async handleBackupFile(event) {
+            const input = /** @type {HTMLInputElement} */ (event.target);
+            const file = input.files && input.files[0];
+            if (!file) return;
+
+            let parsed;
+            try {
+                parsed = JSON.parse(await file.text());
+            } catch (e) {
+                showBackupStatus('❌ That file isn\'t valid JSON.', 'error');
+                return;
+            }
+
+            if (!confirm("Restore this backup? Valerie's current progress and study notes will be replaced.")) {
+                showBackupStatus('Restore cancelled.', 'info');
+                return;
+            }
+
+            showBackupStatus('⏳ Restoring…', 'info');
+            const result = await Adaptive.importSnapshot(parsed);
+            if (!result.ok) {
+                showBackupStatus(`❌ ${result.error}`, 'error');
+                return;
+            }
+
+            const note = result.synced
+                ? '✅ Restored! Reloading…'
+                : '✅ Restored locally (offline — open online to sync). Reloading…';
+            showBackupStatus(note, 'success');
+            setTimeout(() => window.location.reload(), 900);
         }
     };
 })();

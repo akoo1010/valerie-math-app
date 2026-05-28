@@ -642,6 +642,69 @@ const Adaptive = (() => {
             }
         },
 
+        // --- Backup API ---
+        /**
+         * Build a serializable snapshot of everything worth restoring:
+         * unit completion, skill mastery, the wrong-answer / misconception
+         * "study notes" that drive Practice Zone, and the unlock list.
+         * The in-memory session is deliberately omitted — it's per-device.
+         *
+         * @returns {{ format: 'valerie-math-progress', version: number, exportedAt: string, progress: Omit<ProgressState, 'session'> }}
+         */
+        exportSnapshot() {
+            const progress = {
+                units: JSON.parse(JSON.stringify(state.units)),
+                skills: JSON.parse(JSON.stringify(state.skills)),
+                weaknessQueue: JSON.parse(JSON.stringify(state.weaknessQueue)),
+                totalStars: state.totalStars,
+                unlockedUnits: [...state.unlockedUnits]
+            };
+            return {
+                format: 'valerie-math-progress',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                progress
+            };
+        },
+
+        /**
+         * Restore a snapshot produced by exportSnapshot (or a bare ProgressState).
+         * Writes localStorage immediately and POSTs to /api/progress so the
+         * restore propagates to Vercel KV — no need to wait on the save debounce.
+         *
+         * @param {unknown} parsed Parsed JSON from the user-supplied backup file.
+         * @returns {Promise<{ ok: true } | { ok: false, error: string }>}
+         */
+        async importSnapshot(parsed) {
+            const candidate = isPlainObject(parsed) && isPlainObject(parsed.progress)
+                ? parsed.progress
+                : parsed;
+            const normalized = normalizeProgressState(candidate);
+            if (!normalized) {
+                return { ok: false, error: "That file doesn't look like a Valerie's Math backup." };
+            }
+
+            state = normalized;
+            state.session = { ...DEFAULT_SESSION };
+
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* quota */ }
+
+            // Sync immediately so a reload (or a different browser) sees the restored state.
+            let synced = true;
+            try {
+                const res = await fetch('/api/progress', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(state)
+                });
+                synced = res.ok;
+            } catch (e) {
+                synced = false;
+            }
+
+            return { ok: true, synced };
+        },
+
         // --- Modality API ---
         /**
          * @param {string} skillId

@@ -176,10 +176,10 @@ const PlaneFigures4 = {
                 skillId: '4pf-quadrilaterals',
                 generate(diff, modality) {
                     const quads = [
-                        {name: 'square', properties: '4 equal sides, 4 right angles', emoji: '⬜'},
-                        {name: 'rectangle', properties: 'opposite sides equal, 4 right angles', emoji: '▬'},
-                        {name: 'rhombus', properties: '4 equal sides, opposite angles equal', emoji: '◆'},
-                        {name: 'parallelogram', properties: 'opposite sides parallel and equal', emoji: '▰'},
+                        {name: 'square', properties: '4 equal sides and 4 right angles', emoji: '⬜'},
+                        {name: 'rectangle', properties: 'opposite sides equal and 4 right angles, but not all 4 sides equal', emoji: '▬'},
+                        {name: 'rhombus', properties: '4 equal sides but no right angles', emoji: '◆'},
+                        {name: 'parallelogram', properties: '2 pairs of parallel sides, with no right angles and not all sides equal', emoji: '▰'},
                         {name: 'trapezoid', properties: 'exactly 1 pair of parallel sides', emoji: '⏢'}
                     ];
                     const quad = pick(diff >= 2 ? quads : quads.slice(0, 3));

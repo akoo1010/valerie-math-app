@@ -206,7 +206,7 @@ const FactorsMultiples4 = {
                     if (modality === 'worked-example') {
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Is 21 a multiple of 7?</p><p>21 ÷ 7 = 3 (no remainder)</p><p>Yes! 21 = 7 × 3, so 21 IS a multiple of 7.</p><p><strong>Non-example:</strong> Is 22 a multiple of 7? 22 ÷ 7 = 3 R 1. No!</p></div>`;
                     } else if (modality === 'visual') {
-                        const steps = Math.min(Math.ceil(testNum / base), 10);
+                        const steps = Math.min(Math.ceil(testNum / base), 12);
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🕺 Skip-Count Dance Floor 🕺</div>
                             <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">

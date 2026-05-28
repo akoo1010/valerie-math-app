@@ -2,6 +2,10 @@
   "name": "valerie-math-app",
   "version": "1.0.0",
   "private": true,
+  "scripts": {
+    "check": "node scripts/check-generators.js",
+    "test": "npm run check"
+  },
   "dependencies": {
     "@vercel/kv": "^3.0.0"
   }

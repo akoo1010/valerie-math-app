@@ -44,6 +44,26 @@
                 <div class="world-card-desc">Monster & Dance World</div>
             </div>
         </div>
+
+        <section class="backup-panel" aria-label="Progress backup">
+            <div class="backup-panel-header">
+                <span class="backup-panel-icon" aria-hidden="true">📦</span>
+                <div class="backup-panel-text">
+                    <h3 class="backup-panel-title">Progress Backup</h3>
+                    <p class="backup-panel-desc">Save Valerie's progress + study notes as a file, or restore on another device.</p>
+                </div>
+            </div>
+            <div class="backup-panel-actions">
+                <button class="btn btn-backup btn-backup-export" onclick="App.exportBackup()">
+                    <span class="btn-icon">⬇️</span> Export
+                </button>
+                <button class="btn btn-backup btn-backup-import" onclick="App.importBackup()">
+                    <span class="btn-icon">⬆️</span> Import
+                </button>
+                <input type="file" id="backup-file-input" accept="application/json,.json" hidden onchange="App.handleBackupFile(event)">
+            </div>
+            <div class="backup-status" id="backup-status" role="status" aria-live="polite"></div>
+        </section>
     </div>
 
     <!-- World Map Screen -->

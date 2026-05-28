@@ -237,7 +237,7 @@ const EquivFractions4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🔮 Which fraction is larger?`,
+                        questionText: `🔮 Compare the fractions — which is larger, or are they equal?`,
                         visual: `<div style="display:flex;gap:20px;align-items:center;justify-content:center;">
                             <div style="padding:12px 20px;background:rgba(124,58,237,0.15);border:2px solid var(--monster-purple);border-radius:12px;font-size:1.8rem;font-weight:800;color:var(--monster-purple);">🐲 ${n1}/${d1}</div>
                             <div style="font-size:2rem;color:var(--monster-yellow);">?</div>

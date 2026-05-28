@@ -93,20 +93,20 @@ The `/api/progress` endpoint requires a **Vercel KV (Upstash Redis)** store conn
 
 ## 🔎 Development Checks
 
-This app is intentionally framework-free, so there is no build step. Before changing shared engine code, API code, or unit generators, run a syntax pass:
+This app is intentionally framework-free, so there is no build step. Before changing shared engine code, API code, or unit generators, run:
 
 ```bash
-find js api -name '*.js' -exec node --check {} \;
+npm run check
 ```
 
-When editing question generators, also smoke-test the affected unit across difficulty levels and modalities. Good generator checks should verify that:
+The check script runs `node --check` across JavaScript files, then loads every unit file with a small `Engine.Utils` harness and generates questions across difficulty levels and modalities. It verifies that:
 
 - Every generator terminates for each difficulty level
 - Multiple-choice options include the correct answer
 - Multiple-choice option values are unique
 - Hints only reference values available when the question is created, or values passed into `diagnose`
 
-The unit files rely on browser globals, so generator smoke tests usually need to load the files with a small `Engine.Utils` test harness rather than importing them as modules.
+`npm test` runs the same checks.
 
 ---
 
