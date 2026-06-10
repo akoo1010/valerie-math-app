@@ -10,7 +10,7 @@ const Engine = (() => {
     let currentExIndex = 0;
     /** @type {ExerciseQuestion|null} */
     let currentQuestion = null;
-    let score = { correct: 0 };
+    let correctCount = 0;
     let wrongAttempts = 0;
     let answered = false;
     let awaitingFeedback = false;
@@ -173,10 +173,11 @@ const Engine = (() => {
             const value = getOptionValue(opt);
             btn.addEventListener('click', () => {
                 AudioManager.click();
-                checkAnswer(value, question);
+                const isCorrect = checkAnswer(value, question);
+                if (isCorrect === null) return; // attempt ignored (already answered)
                 // Disable all after answering
                 div.querySelectorAll('.btn-answer').forEach(b => b.classList.add('disabled'));
-                btn.classList.add(value === question.answer ? 'correct' : 'incorrect');
+                btn.classList.add(isCorrect ? 'correct' : 'incorrect');
             });
             div.appendChild(btn);
         });
@@ -234,8 +235,10 @@ const Engine = (() => {
             submitting = true;
             btn.disabled = true;
             AudioManager.click();
-            checkAnswer(val, question);
-            input.classList.add(val === question.answer ? 'correct' : 'incorrect');
+            const isCorrect = checkAnswer(val, question);
+            if (isCorrect !== null) {
+                input.classList.add(isCorrect ? 'correct' : 'incorrect');
+            }
         });
         div.appendChild(btn);
 
@@ -264,9 +267,10 @@ const Engine = (() => {
             btn.style.fontSize = '1.2rem';
             btn.addEventListener('click', () => {
                 AudioManager.click();
-                checkAnswer(val, question);
+                const isCorrect = checkAnswer(val, question);
+                if (isCorrect === null) return; // attempt ignored (already answered)
                 div.querySelectorAll('.btn-answer').forEach(b => b.classList.add('disabled'));
-                btn.classList.add(val === question.answer ? 'correct' : 'incorrect');
+                btn.classList.add(isCorrect ? 'correct' : 'incorrect');
             });
             div.appendChild(btn);
         });
@@ -353,9 +357,11 @@ const Engine = (() => {
     /**
      * @param {AnswerValue} userAnswer
      * @param {ExerciseQuestion} question
+     * @returns {boolean|null} Whether the answer was correct, or null if the
+     *   attempt was ignored (question already answered / feedback pending).
      */
     function checkAnswer(userAnswer, question) {
-        if (answered || awaitingFeedback) return;
+        if (answered || awaitingFeedback) return null;
         awaitingFeedback = true;
 
         const isCorrect = (question.checkAnswer)
@@ -369,11 +375,12 @@ const Engine = (() => {
             handleWrong(question, userAnswer);
             if (wrongAttempts >= 3) answered = true;
         }
+        return isCorrect;
     }
 
     /** @param {ExerciseQuestion} question */
     function handleCorrect(question) {
-        score.correct++;
+        correctCount++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
         const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
         Adaptive.recordCorrect(skillId, unitId);
@@ -541,7 +548,7 @@ const Engine = (() => {
         const total = currentExercises.length;
         bar.style.width = `${(currentExIndex / total) * 100}%`;
         text.textContent = `Skill ${currentExIndex + 1} of ${total}`;
-        stars.textContent = `⭐ ${score.correct}`;
+        stars.textContent = `⭐ ${correctCount}`;
     }
 
     return {
@@ -570,7 +577,7 @@ const Engine = (() => {
             currentUnit = unit;
             currentExercises = exercises;
             currentExIndex = 0;
-            score = { correct: 0 };
+            correctCount = 0;
 
             navigation.showScreen('screen-exercise');
 
@@ -641,7 +648,7 @@ const Engine = (() => {
 
         // Show results screen
         showResults() {
-            const pct = currentExercises.length > 0 ? score.correct / currentExercises.length : 0;
+            const pct = currentExercises.length > 0 ? correctCount / currentExercises.length : 0;
             let starsEarned = 0;
             if (pct >= 0.9) starsEarned = 3;
             else if (pct >= 0.7) starsEarned = 2;
@@ -684,7 +691,7 @@ const Engine = (() => {
                 </div>
                 <div class="results-stats">
                     <div class="stat-box">
-                        <div class="stat-value">${score.correct}</div>
+                        <div class="stat-value">${correctCount}</div>
                         <div class="stat-label">Correct</div>
                     </div>
                     <div class="stat-box">
@@ -714,23 +721,19 @@ const Engine = (() => {
 
         /**
          * Start the practice zone with generated exercises.
+         * Delegates to startUnit so practice runs get the same setup
+         * (theme background included) as a regular unit.
          *
          * @param {ExerciseDefinition[]} questions
          */
         startPractice(questions) {
-            currentUnit = {
+            this.startUnit({
                 id: 'practice',
                 title: 'Practice Zone',
                 theme: 'swim',
                 exerciseCount: questions.length,
                 getExercises: () => questions
-            };
-            currentExercises = questions;
-            currentExIndex = 0;
-            score = { correct: 0 };
-            navigation.showScreen('screen-exercise');
-            updateProgress();
-            this.loadExercise(0);
+            }, questions);
         }
     };
 })();

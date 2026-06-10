@@ -24,7 +24,7 @@ A personalized, interactive math learning app for Valerie, aligned with **3rd an
 ```
 valerie-math-app/
 ├── index.html              # Main entry point
-├── vercel.json             # Vercel routing config
+├── vercel.json             # Vercel config (empty — platform defaults are correct here)
 ├── package.json            # Dependencies (@vercel/kv)
 ├── api/
 │   └── progress.js         # Serverless API: GET/POST progress to Vercel KV

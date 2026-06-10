@@ -654,10 +654,15 @@ main {
     position: relative;
 }
 
-.exercise-header .btn-back {
+.exercise-header .btn-back,
+.map-header-left .btn-back {
     position: relative;
     top: auto;
     left: auto;
+}
+
+.map-header-left .btn-back {
+    margin-bottom: 8px;
 }
 
 .exercise-progress {
@@ -1242,13 +1247,8 @@ main {
 }
 
 @keyframes slideDown {
-    from { opacity: 0; transform: translateY(-10px); }
+    from { opacity: 0; transform: translateY(-12px); }
     to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
 }
 
 @keyframes glow {
@@ -1433,11 +1433,6 @@ main {
     padding: 16px 20px;
     margin-bottom: 8px;
     animation: slideDown 0.4s ease;
-}
-
-@keyframes slideDown {
-    from { opacity: 0; transform: translateY(-12px); }
-    to { opacity: 1; transform: translateY(0); }
 }
 
 .worked-example-label {

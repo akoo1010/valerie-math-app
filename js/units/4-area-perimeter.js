@@ -25,7 +25,7 @@ const AreaPerimeter4 = {
                         type: 'input',
                         questionText: `🪩 The dance floor is ${w} meters wide and ${h} meters long.<br>What is the area?`,
                         visual: `<div style="text-align:center;">
-                            <div style="display:inline-block;width:${Math.min(w * 20, 200)}px;height:${Math.min(h * 20, 160)}px;background:rgba(236,72,153,0.15);border:3px solid var(--dance-pink);border-radius:8px;display:flex;align-items:center;justify-content:center;position:relative;">
+                            <div style="display:inline-flex;width:${Math.min(w * 20, 200)}px;height:${Math.min(h * 20, 160)}px;background:rgba(236,72,153,0.15);border:3px solid var(--dance-pink);border-radius:8px;align-items:center;justify-content:center;position:relative;">
                                 <span style="font-weight:700;color:var(--dance-pink);">🪩</span>
                                 <span style="position:absolute;bottom:-24px;font-size:0.9rem;font-weight:700;color:var(--dance-gold);">${w} m</span>
                                 <span style="position:absolute;right:-40px;top:50%;transform:translateY(-50%);font-size:0.9rem;font-weight:700;color:var(--dance-cyan);">${h} m</span>

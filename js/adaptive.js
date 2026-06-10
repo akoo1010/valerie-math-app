@@ -8,17 +8,39 @@ const Adaptive = (() => {
     const DIFFICULTY_UP_THRESHOLD = 3; // correct in a row → harder
     const DIFFICULTY_DOWN_THRESHOLD = 2; // wrong in a row → easier
 
-    /** @type {SessionSnapshot} */
-    const DEFAULT_SESSION = {
-        currentStreak: 0,
-        questionsAnswered: 0,
-        correctThisSession: 0,
-        wrongThisSession: 0,
-        startTime: null,
-        recentResults: [],       // sliding window of last 20 booleans
-        sessionState: 'normal',  // 'normal' | 'struggling' | 'cruising' | 'fatigued'
-        lastSessionMessage: null
-    };
+    /**
+     * Per-visit session tracking. Built fresh every time — spreading a shared default
+     * object would alias `recentResults`, leaking results across session resets.
+     * @returns {SessionSnapshot}
+     */
+    function freshSession() {
+        return {
+            currentStreak: 0,
+            questionsAnswered: 0,
+            correctThisSession: 0,
+            wrongThisSession: 0,
+            startTime: null,
+            recentResults: [],       // sliding window of last 20 booleans
+            sessionState: 'normal',  // 'normal' | 'struggling' | 'cruising' | 'fatigued'
+            lastSessionMessage: null
+        };
+    }
+
+    /** @returns {SkillProgress} */
+    function createDefaultSkill() {
+        return {
+            streak: 0,
+            mastered: false,
+            totalCorrect: 0,
+            totalWrong: 0,
+            difficulty: 1, // 1 = easy, 2 = medium, 3 = hard
+            lastAttempt: null,
+            wrongAnswers: [],   // [{ userAnswer, correctAnswer, timestamp }] capped at 20
+            misconceptions: {}, // { 'label': count }
+            consecutiveCorrect: 0, // resets when difficulty bumps up
+            consecutiveWrong: 0    // resets when difficulty bumps down
+        };
+    }
 
     const DEFAULT_UNLOCKED = ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'];
 
@@ -30,7 +52,7 @@ const Adaptive = (() => {
             weaknessQueue: [],
             totalStars: 0,
             unlockedUnits: [...DEFAULT_UNLOCKED],
-            session: { ...DEFAULT_SESSION }
+            session: freshSession()
         };
     }
 
@@ -92,20 +114,7 @@ const Adaptive = (() => {
     }
 
     function normalizeSkillProgress(value) {
-        const base = {
-            streak: 0,
-            mastered: false,
-            totalCorrect: 0,
-            totalWrong: 0,
-            difficulty: 1,
-            lastAttempt: null,
-            wrongAnswers: [],
-            misconceptions: {},
-            consecutiveCorrect: 0,
-            consecutiveWrong: 0
-        };
-
-        if (!isPlainObject(value)) return base;
+        if (!isPlainObject(value)) return createDefaultSkill();
 
         const wrongAnswers = Array.isArray(value.wrongAnswers)
             ? value.wrongAnswers
@@ -171,7 +180,7 @@ const Adaptive = (() => {
     }
 
     function normalizeSession(value) {
-        if (!isPlainObject(value)) return { ...DEFAULT_SESSION };
+        if (!isPlainObject(value)) return freshSession();
         const sessionState = ['normal', 'struggling', 'cruising', 'fatigued'].includes(value.sessionState)
             ? value.sessionState
             : 'normal';
@@ -260,9 +269,9 @@ const Adaptive = (() => {
             if (res.ok) {
                 const parsed = await res.json();
                 if (applyParsed(parsed)) {
+                    state.session = freshSession();
                     // Keep localStorage in sync
                     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-                    state.session = { ...DEFAULT_SESSION };
                     return;
                 }
             }
@@ -276,7 +285,7 @@ const Adaptive = (() => {
             }
         } catch (e) { /* parse error */ }
 
-        state.session = { ...DEFAULT_SESSION };
+        state.session = freshSession();
     }
 
     /**
@@ -285,18 +294,7 @@ const Adaptive = (() => {
      */
     function getSkill(skillId) {
         if (!state.skills[skillId]) {
-            state.skills[skillId] = {
-                streak: 0,
-                mastered: false,
-                totalCorrect: 0,
-                totalWrong: 0,
-                difficulty: 1, // 1 = easy, 2 = medium, 3 = hard
-                lastAttempt: null,
-                wrongAnswers: [],   // [{ userAnswer, correctAnswer, timestamp }] capped at 20
-                misconceptions: {}, // { 'label': count }
-                consecutiveCorrect: 0, // resets when difficulty bumps up
-                consecutiveWrong: 0    // resets when difficulty bumps down
-            };
+            state.skills[skillId] = createDefaultSkill();
         }
         return state.skills[skillId];
     }
@@ -344,7 +342,7 @@ const Adaptive = (() => {
 
         if (total < 4) { s.sessionState = 'normal'; return; }
 
-        if (accuracy < 0.5 && total >= 4) { s.sessionState = 'struggling'; return; }
+        if (accuracy < 0.5) { s.sessionState = 'struggling'; return; }
         if (accuracy >= 0.9 && total >= 5) { s.sessionState = 'cruising'; return; }
 
         if (recent.length >= 10) {
@@ -537,15 +535,19 @@ const Adaptive = (() => {
             }
         },
 
-        // Get unit progress
+        // Get unit progress. Clamped so stale saves (e.g. a unit that shrank)
+        // can't report more than 100% or more stars than the unit allows.
         getUnitProgress(unitId, totalExercises) {
             const unit = getUnit(unitId);
+            const completed = Math.min(unit.completed.length, totalExercises);
+            const maxStars = totalExercises * 3;
+            const stars = Object.values(unit.stars).reduce((a, b) => a + b, 0);
             return {
-                completed: unit.completed.length,
+                completed,
                 total: totalExercises,
-                percent: Math.round((unit.completed.length / totalExercises) * 100),
-                stars: Object.values(unit.stars).reduce((a, b) => a + b, 0),
-                maxStars: totalExercises * 3
+                percent: Math.round((completed / totalExercises) * 100),
+                stars: Math.min(stars, maxStars),
+                maxStars
             };
         },
 
@@ -673,7 +675,7 @@ const Adaptive = (() => {
          * restore propagates to Vercel KV — no need to wait on the save debounce.
          *
          * @param {unknown} parsed Parsed JSON from the user-supplied backup file.
-         * @returns {Promise<{ ok: true } | { ok: false, error: string }>}
+         * @returns {Promise<{ ok: true, synced: boolean } | { ok: false, error: string }>}
          */
         async importSnapshot(parsed) {
             const candidate = isPlainObject(parsed) && isPlainObject(parsed.progress)
@@ -685,7 +687,7 @@ const Adaptive = (() => {
             }
 
             state = normalized;
-            state.session = { ...DEFAULT_SESSION };
+            state.session = freshSession();
 
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* quota */ }
 

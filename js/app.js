@@ -149,6 +149,23 @@ const App = (() => {
         });
     }
 
+    /**
+     * Resolve the weakness queue into runnable exercises. Stale entries whose
+     * unit or skill no longer exists are skipped.
+     *
+     * @returns {ExerciseDefinition[]}
+     */
+    function collectWeaknessExercises() {
+        /** @type {ExerciseDefinition[]} */
+        const exercises = [];
+        Adaptive.getWeaknessQueue().forEach(q => {
+            const unit = ALL_UNITS.find(u => u.id === q.unitId);
+            const ex = unit && unit.getExercises().find(e => e.skillId === q.skillId);
+            if (ex) exercises.push({ ...ex, _sourceUnitId: q.unitId });
+        });
+        return exercises;
+    }
+
     /** @param {MathUnit} unit */
     function showUnitIntro(unit) {
         const content = document.getElementById('unit-intro-content');
@@ -216,8 +233,7 @@ const App = (() => {
 
         showPracticeZone() {
             AudioManager.click();
-            // Only show weakness items that map to a real unit
-            const queue = Adaptive.getWeaknessQueue().filter(q => ALL_UNITS.some(u => u.id === q.unitId));
+            const practiceExercises = collectWeaknessExercises();
             const body = document.getElementById('practice-body');
 
             const multTablesHTML = `
@@ -235,9 +251,8 @@ const App = (() => {
                 </div>
             `;
 
-            let weaknessHTML = '';
-            if (queue.length === 0) {
-                weaknessHTML = `
+            const weaknessHTML = practiceExercises.length === 0
+                ? `
                     <div class="practice-section">
                         <h3 class="practice-section-title">🌟 Tricky Skills</h3>
                         <div class="practice-empty">
@@ -245,31 +260,16 @@ const App = (() => {
                             <p>No tricky skills to practice right now!<br>Keep exploring the map to find more.</p>
                         </div>
                     </div>
+                `
+                : `
+                    <div class="practice-section">
+                        <h3 class="practice-section-title">🌟 Tricky Skills</h3>
+                        <p class="practice-section-desc">${practiceExercises.length} skill${practiceExercises.length > 1 ? 's' : ''} to practice!</p>
+                        <button class="btn btn-start" onclick="App.startPracticeExercises()">
+                            <span class="btn-icon">💪</span> Start Practice
+                        </button>
+                    </div>
                 `;
-            } else {
-                /** @type {ExerciseDefinition[]} */
-                const practiceExercises = [];
-                queue.forEach(q => {
-                    const unit = ALL_UNITS.find(u => u.id === q.unitId);
-                    if (unit) {
-                        const exercises = unit.getExercises();
-                        const ex = exercises.find(e => e.skillId === q.skillId);
-                        if (ex) practiceExercises.push(ex);
-                    }
-                });
-
-                if (practiceExercises.length > 0) {
-                    weaknessHTML = `
-                        <div class="practice-section">
-                            <h3 class="practice-section-title">🌟 Tricky Skills</h3>
-                            <p class="practice-section-desc">${practiceExercises.length} skill${practiceExercises.length > 1 ? 's' : ''} to practice!</p>
-                            <button class="btn btn-start" onclick="App.startPracticeExercises()">
-                                <span class="btn-icon">💪</span> Start Practice
-                            </button>
-                        </div>
-                    `;
-                }
-            }
 
             body.innerHTML = multTablesHTML + weaknessHTML;
             showScreen('screen-practice');
@@ -321,17 +321,7 @@ const App = (() => {
 
         startPracticeExercises() {
             lastPractice = { kind: 'weakness' };
-            const queue = Adaptive.getWeaknessQueue();
-            /** @type {ExerciseDefinition[]} */
-            const practiceExercises = [];
-            queue.forEach(q => {
-                const unit = ALL_UNITS.find(u => u.id === q.unitId);
-                if (unit) {
-                    const exercises = unit.getExercises();
-                    const ex = exercises.find(e => e.skillId === q.skillId);
-                    if (ex) practiceExercises.push({ ...ex, _sourceUnitId: q.unitId });
-                }
-            });
+            const practiceExercises = collectWeaknessExercises();
             if (practiceExercises.length > 0) {
                 Engine.startPractice(Engine.Utils.shuffle(practiceExercises).slice(0, 7));
             }

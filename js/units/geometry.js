@@ -155,7 +155,8 @@ const Geometry = {
                 generate(diff) {
                     const hidden = pick(['squares', 'rectangles', 'rhombuses', 'trapezoids']);
                     const shapeEmojis = { squares: '🟥', rectangles: '🟦', rhombuses: '🔷', trapezoids: '🔶' };
-                    const decoys = ['🟡','🟣','🟠','⬜','🟤'];
+                    // Decoys must not be quadrilaterals, or counting "squares"/"rectangles" gets ambiguous
+                    const decoys = ['🟡','🟣','🟠','⚪','🟤'];
                     const totalCells = 25;
                     const answer = R(3, 8);
                     // Build cells deterministically so the count matches the answer

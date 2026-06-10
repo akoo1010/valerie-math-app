@@ -91,7 +91,7 @@ const PlaceValue4 = {
                             ${numStr.split('').map((d, i) => `<div style="width:44px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${i === placeIndex[place] ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};border-radius:8px;font-weight:700;font-size:1.4rem;color:#fff;">${monsterEmojis[i % monsterEmojis.length]}<span>${d}</span></div>`).join('')}
                         </div>`,
                         answer,
-                        options: Engine.Utils.shuffle([answer, ...[0,1,2,3,4,5,6,7,8,9].filter(d => d !== answer && Math.abs(d - answer) <= 4)].slice(0, 4)),
+                        options: Engine.Utils.shuffle([answer, ...Engine.Utils.shuffle([0,1,2,3,4,5,6,7,8,9].filter(d => d !== answer && Math.abs(d - answer) <= 4)).slice(0, 3)]),
                         hint1: `The ${place} place is ${place === 'ones' ? 'the last digit' : place === 'tens' ? 'the second-to-last digit' : place === 'hundreds' ? 'the third digit from the right' : place === 'thousands' ? 'the fourth digit from the right' : 'the fifth digit from the right'}`,
                         hint2: `Look at ${num.toLocaleString()} — count from the right`,
                         hint3: `The digit in the ${place} place is ${answer}`,

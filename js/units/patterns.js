@@ -122,7 +122,11 @@ const Patterns = {
                     ];
                     const p = pick(patterns);
                     const allChoices = ['🔴','🔵','⬛','⬜','🔺','🟢','⭐','❤️'];
-                    const options = Engine.Utils.shuffle([p.next, ...allChoices.filter(x => x !== p.next).slice(0, 3)]);
+                    // Distractors lead with the pattern's other symbol(s) — otherwise the answer
+                    // would be the only option that appears in the pattern at all
+                    const inPattern = [...new Set(p.seq)].filter(x => x !== p.next);
+                    const others = Engine.Utils.shuffle(allChoices.filter(x => x !== p.next && !inPattern.includes(x)));
+                    const options = Engine.Utils.shuffle([p.next, ...[...inPattern, ...others].slice(0, 3)]);
                     return {
                         type: 'multiple-choice',
                         questionText: `What comes next in the shape pattern?`,

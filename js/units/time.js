@@ -92,7 +92,6 @@ const Time = {
                     const h = R(1, 12);
                     // Exclude m=0 to avoid trivial "0 minutes past" question
                     const m = diff >= 2 ? R(1, 11) * 5 : pick([15, 30, 45]);
-                    const answer = h * 60 + m; // answer in total minutes for easier checking
                     return {
                         type: 'input',
                         questionText: `The swim race starts at ${formatTime(h, m)}.<br>How many minutes past ${h > 12 ? h - 12 : h} o'clock is that?`,

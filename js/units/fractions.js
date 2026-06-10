@@ -155,7 +155,8 @@ const Fractions = {
                     const denom = pick([2, 3, 4, 5]);
                     const total = denom * R(2, 4);
                     const numer = R(1, denom - 1);
-                    const answer = (numer / denom) * total;
+                    // total is a multiple of denom, so this stays in integer math (no float dust)
+                    const answer = numer * (total / denom);
                     const items = pick(['beads', 'buttons', 'stars', 'hearts']);
                     const emojis = { beads: '🔵', buttons: '🔘', stars: '⭐', hearts: '❤️' };
                     return {

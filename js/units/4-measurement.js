@@ -53,10 +53,10 @@ const Measurement4 = {
                         result.visual = `<div style="text-align:center">
                             <div style="font-size:2rem;margin-bottom:0.5rem;">📏🐲📏</div>
                             <div style="display:flex;justify-content:center;align-items:center;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;">
-                                ${Array.from({length: Math.min(amount, 6)}, (_, i) => `<div style="background:var(--monster-red);color:#fff;border-radius:12px;padding:0.3rem 0.7rem;font-size:0.9rem;font-weight:700;">${conv.from.slice(0, -1)} ${i + 1}</div>`).join('<span style="font-size:1rem;">+</span>')}
+                                ${Array.from({length: Math.min(amount, 6)}, (_, i) => `<div style="background:var(--monster-red);color:#fff;border-radius:12px;padding:0.3rem 0.7rem;font-size:0.9rem;font-weight:700;">${conv.singular} ${i + 1}</div>`).join('<span style="font-size:1rem;">+</span>')}
                             </div>
                             <p style="margin-top:0.5rem;font-weight:700;color:var(--monster-red);">${amount} ${conv.from} × ${conv.factor} = ? ${conv.to}</p>
-                            <p style="font-size:0.85rem;color:#666;">⚡ Each ${conv.from.slice(0, -1)} = ${conv.factor} ${conv.to}</p>
+                            <p style="font-size:0.85rem;color:#666;">⚡ Each ${conv.singular} = ${conv.factor} ${conv.to}</p>
                         </div>`;
                     }
 

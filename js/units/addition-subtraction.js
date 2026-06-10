@@ -131,7 +131,8 @@ const AdditionSubtraction = {
                 skillId: 'add-sub-regroup',
                 generate(diff) {
                     const a = R(100, 500);
-                    const b = R(100, 400);
+                    let b = R(100, 400);
+                    while (b === a) b = R(100, 400); // avoid a trivial "a − a = 0" subtraction
                     const isAdd = Math.random() < 0.5;
                     const answer = isAdd ? a + b : Math.max(a, b) - Math.min(a, b);
                     const big = Math.max(a, b);
