@@ -1820,28 +1820,38 @@ main {
 }
 
 /* ================================================
-   KENNEY RPG UI SKIN
+   KENNEY UI PACK SKIN
    ================================================ */
 :root {
-    --rpg-panel-light: url("../kenney_ui-pack-rpg-expansion/PNG/panel_beigeLight.png");
-    --rpg-panel-beige: url("../kenney_ui-pack-rpg-expansion/PNG/panel_beige.png");
-    --rpg-panel-blue: url("../kenney_ui-pack-rpg-expansion/PNG/panel_blue.png");
-    --rpg-panel-brown: url("../kenney_ui-pack-rpg-expansion/PNG/panel_brown.png");
-    --rpg-inset-light: url("../kenney_ui-pack-rpg-expansion/PNG/panelInset_beigeLight.png");
-    --rpg-inset-beige: url("../kenney_ui-pack-rpg-expansion/PNG/panelInset_beige.png");
-    --rpg-inset-blue: url("../kenney_ui-pack-rpg-expansion/PNG/panelInset_blue.png");
-    --rpg-inset-brown: url("../kenney_ui-pack-rpg-expansion/PNG/panelInset_brown.png");
-    --rpg-button-blue: url("../kenney_ui-pack-rpg-expansion/PNG/buttonLong_blue.png");
-    --rpg-button-blue-pressed: url("../kenney_ui-pack-rpg-expansion/PNG/buttonLong_blue_pressed.png");
-    --rpg-button-beige: url("../kenney_ui-pack-rpg-expansion/PNG/buttonLong_beige.png");
-    --rpg-button-beige-pressed: url("../kenney_ui-pack-rpg-expansion/PNG/buttonLong_beige_pressed.png");
-    --rpg-button-brown: url("../kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown.png");
-    --rpg-button-brown-pressed: url("../kenney_ui-pack-rpg-expansion/PNG/buttonLong_brown_pressed.png");
-    --rpg-text-dark: #3b2a1d;
-    --rpg-text-muted: #6f5a41;
-    --rpg-text-light: #fff8dc;
-    --rpg-text-light-muted: rgba(255, 248, 220, 0.78);
-    --rpg-shadow: 0 10px 0 rgba(0, 0, 0, 0.22), 0 24px 40px rgba(0, 0, 0, 0.28);
+    --kenney-panel-light: url("../kenney_ui-pack/PNG/Extra/Default/input_rectangle.png");
+    --kenney-panel-beige: url("../kenney_ui-pack/PNG/Grey/Default/button_rectangle_depth_flat.png");
+    --kenney-panel-blue: url("../kenney_ui-pack/PNG/Blue/Default/button_rectangle_depth_flat.png");
+    --kenney-panel-green: url("../kenney_ui-pack/PNG/Green/Default/button_rectangle_depth_flat.png");
+    --kenney-panel-yellow: url("../kenney_ui-pack/PNG/Yellow/Default/button_rectangle_depth_flat.png");
+    --kenney-panel-brown: url("../kenney_ui-pack/PNG/Red/Default/button_rectangle_depth_flat.png");
+    --kenney-inset-light: url("../kenney_ui-pack/PNG/Extra/Default/input_outline_rectangle.png");
+    --kenney-inset-beige: url("../kenney_ui-pack/PNG/Grey/Default/button_rectangle_border.png");
+    --kenney-inset-blue: url("../kenney_ui-pack/PNG/Blue/Default/button_rectangle_border.png");
+    --kenney-inset-green: url("../kenney_ui-pack/PNG/Green/Default/button_rectangle_border.png");
+    --kenney-inset-brown: url("../kenney_ui-pack/PNG/Red/Default/button_rectangle_border.png");
+    --kenney-button-blue: url("../kenney_ui-pack/PNG/Blue/Default/button_rectangle_depth_flat.png");
+    --kenney-button-blue-pressed: url("../kenney_ui-pack/PNG/Blue/Default/button_rectangle_flat.png");
+    --kenney-button-green: url("../kenney_ui-pack/PNG/Green/Default/button_rectangle_depth_flat.png");
+    --kenney-button-green-pressed: url("../kenney_ui-pack/PNG/Green/Default/button_rectangle_flat.png");
+    --kenney-button-beige: url("../kenney_ui-pack/PNG/Grey/Default/button_rectangle_depth_flat.png");
+    --kenney-button-beige-pressed: url("../kenney_ui-pack/PNG/Grey/Default/button_rectangle_flat.png");
+    --kenney-button-brown: url("../kenney_ui-pack/PNG/Red/Default/button_rectangle_depth_flat.png");
+    --kenney-button-brown-pressed: url("../kenney_ui-pack/PNG/Red/Default/button_rectangle_flat.png");
+    --kenney-blue-fill: #2498d2;
+    --kenney-blue-fill-dark: #1e6f9f;
+    --kenney-green-fill: #36b76a;
+    --kenney-red-fill: #e24d61;
+    --kenney-yellow-fill: #f6cf4f;
+    --kenney-text-dark: #143247;
+    --kenney-text-muted: #5e7891;
+    --kenney-text-light: #f7fbff;
+    --kenney-text-light-muted: rgba(247, 251, 255, 0.82);
+    --kenney-shadow: 0 8px 0 rgba(0, 45, 86, 0.18), 0 22px 40px rgba(0, 27, 54, 0.26);
 }
 
 .btn,
@@ -1860,10 +1870,10 @@ main {
     min-height: 49px;
     border: 0;
     background-color: transparent;
-    background-image: var(--rpg-button-blue);
+    background-image: var(--kenney-button-blue);
     background-repeat: no-repeat;
     background-size: 100% 100%;
-    color: var(--rpg-text-light);
+    color: var(--kenney-text-light);
     text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
     box-shadow: none;
     backdrop-filter: none;
@@ -1886,7 +1896,7 @@ main {
 .btn-back:active,
 .feedback-btn:active,
 .mult-table-btn:active {
-    background-image: var(--rpg-button-blue-pressed);
+    background-image: var(--kenney-button-blue-pressed);
     transform: translateY(2px);
     box-shadow: none;
 }
@@ -1897,30 +1907,30 @@ main {
 .btn-backup-import,
 .mult-table-btn,
 .mult-table-btn.mult-table-mixed {
-    background-image: var(--rpg-button-blue);
+    background-image: var(--kenney-button-blue);
     animation: none;
 }
 
 .btn-success,
 .btn-backup-export {
-    background-image: var(--rpg-button-brown);
+    background-image: var(--kenney-button-green);
 }
 
 .btn-success:active,
 .btn-backup-export:active {
-    background-image: var(--rpg-button-brown-pressed);
+    background-image: var(--kenney-button-green-pressed);
 }
 
 .feedback-btn,
 .btn-back {
-    background-image: var(--rpg-button-beige);
-    color: var(--rpg-text-dark);
+    background-image: var(--kenney-button-beige);
+    color: var(--kenney-text-dark);
     text-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
 }
 
 .feedback-btn:active,
 .btn-back:active {
-    background-image: var(--rpg-button-beige-pressed);
+    background-image: var(--kenney-button-beige-pressed);
 }
 
 .btn-small,
@@ -1943,20 +1953,20 @@ main {
 .worked-example-box,
 .break-overlay-content {
     border: 18px solid transparent;
-    border-image-source: var(--rpg-panel-light);
-    border-image-slice: 24 fill;
-    border-image-width: 18px;
+    border-image-source: var(--kenney-panel-light);
+    border-image-slice: 18 fill;
+    border-image-width: 16px;
     border-image-repeat: stretch;
-    background-color: #e8ddc7;
-    color: var(--rpg-text-dark);
-    box-shadow: var(--rpg-shadow);
+    background-color: #eef6fb;
+    color: var(--kenney-text-dark);
+    box-shadow: var(--kenney-shadow);
     text-shadow: none;
 }
 
 .map-header {
-    border-image-source: var(--rpg-panel-blue);
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-blue);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
     max-width: 1200px;
     width: calc(100% - 20px);
     margin: 0 auto 18px;
@@ -1980,11 +1990,11 @@ main {
 .backup-panel-desc,
 .worked-example-content,
 .break-overlay-text {
-    color: var(--rpg-text-muted);
+    color: var(--kenney-text-muted);
 }
 
 .map-header .map-welcome {
-    color: var(--rpg-text-light-muted);
+    color: var(--kenney-text-light-muted);
 }
 
 .stats-badge,
@@ -1996,19 +2006,19 @@ main {
 .practice-empty,
 .exercise-list-item {
     border: 12px solid transparent;
-    border-image-source: var(--rpg-inset-beige);
-    border-image-slice: 22 fill;
-    border-image-width: 12px;
+    border-image-source: var(--kenney-inset-beige);
+    border-image-slice: 16 fill;
+    border-image-width: 10px;
     border-image-repeat: stretch;
-    background-color: #d2bf92;
-    color: var(--rpg-text-dark);
+    background-color: #dfeaf2;
+    color: var(--kenney-text-dark);
     box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.18);
 }
 
 .stats-badge {
-    color: var(--rpg-text-light);
-    border-image-source: var(--rpg-inset-brown);
-    background-color: #806044;
+    color: var(--kenney-text-light);
+    border-image-source: var(--kenney-inset-blue);
+    background-color: #258bc8;
 }
 
 .progress-bar-container,
@@ -2029,14 +2039,14 @@ main {
 .exercise-question,
 .exercise-visual {
     border: 18px solid transparent;
-    border-image-source: var(--rpg-panel-light);
-    border-image-slice: 24 fill;
-    border-image-width: 18px;
+    border-image-source: var(--kenney-panel-light);
+    border-image-slice: 18 fill;
+    border-image-width: 16px;
     border-image-repeat: stretch;
-    background-color: #e8ddc7;
+    background-color: #eef6fb;
     border-radius: 0;
-    box-shadow: var(--rpg-shadow);
-    color: var(--rpg-text-dark);
+    box-shadow: var(--kenney-shadow);
+    color: var(--kenney-text-dark);
     text-shadow: none;
 }
 
@@ -2057,22 +2067,22 @@ main {
 .unit-card.theme-gd,
 .unit-card.theme-dance,
 .world-card-3rd {
-    border-image-source: var(--rpg-panel-blue);
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-blue);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
 }
 
 .unit-card.theme-monster,
 .world-card-4th {
-    border-image-source: var(--rpg-panel-brown);
-    background-color: #8b6743;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-brown);
+    background-color: var(--kenney-red-fill);
+    color: var(--kenney-text-light);
 }
 
 .unit-card.theme-craft {
-    border-image-source: var(--rpg-panel-beige);
-    background-color: #d9c58f;
-    color: var(--rpg-text-dark);
+    border-image-source: var(--kenney-panel-yellow);
+    background-color: var(--kenney-yellow-fill);
+    color: var(--kenney-text-dark);
 }
 
 .unit-card.theme-swim .unit-card-desc,
@@ -2081,21 +2091,21 @@ main {
 .unit-card.theme-monster .unit-card-desc,
 .world-card-3rd .world-card-desc,
 .world-card-4th .world-card-desc {
-    color: var(--rpg-text-light-muted);
+    color: var(--kenney-text-light-muted);
 }
 
 .unit-card.theme-craft .unit-card-desc,
 .unit-card.theme-craft .unit-progress-text,
 .world-card-desc,
 .exercise-question-sub {
-    color: var(--rpg-text-muted);
+    color: var(--kenney-text-muted);
 }
 
 .unit-card.theme-swim .unit-progress-text,
 .unit-card.theme-gd .unit-progress-text,
 .unit-card.theme-dance .unit-progress-text,
 .unit-card.theme-monster .unit-progress-text {
-    color: var(--rpg-text-light-muted);
+    color: var(--kenney-text-light-muted);
 }
 
 .unit-card:hover,
@@ -2113,9 +2123,9 @@ main {
 }
 
 .exercise-header {
-    border-image-source: var(--rpg-panel-blue);
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-blue);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
     margin: 14px auto 0;
     width: min(1040px, calc(100% - 24px));
     padding: 14px 18px;
@@ -2131,10 +2141,10 @@ main {
 }
 
 .exercise-visual {
-    border-image-source: var(--rpg-inset-blue);
-    background-color: #2f496b;
-    color: var(--rpg-text-light);
-    box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.12), var(--rpg-shadow);
+    border-image-source: var(--kenney-inset-blue);
+    background-color: var(--kenney-blue-fill-dark);
+    color: var(--kenney-text-light);
+    box-shadow: inset 0 3px 0 rgba(255, 255, 255, 0.12), var(--kenney-shadow);
 }
 
 .exercise-visual .visual-scaffold {
@@ -2142,15 +2152,15 @@ main {
 }
 
 .worked-example-box {
-    border-image-source: var(--rpg-panel-blue);
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-blue);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
 }
 
 .worked-example-label,
 .worked-example-content,
 .worked-example-content strong {
-    color: var(--rpg-text-light);
+    color: var(--kenney-text-light);
 }
 
 .worked-example-content {
@@ -2158,9 +2168,9 @@ main {
 }
 
 .visual-scaffold {
-    border-image-source: var(--rpg-inset-light);
-    background-color: #e8ddc7;
-    color: var(--rpg-text-dark);
+    border-image-source: var(--kenney-inset-light);
+    background-color: #eef6fb;
+    color: var(--kenney-text-dark);
     border-style: solid;
 }
 
@@ -2171,12 +2181,12 @@ main {
 .btn-answer {
     min-height: 58px;
     border: 14px solid transparent;
-    border-image-source: var(--rpg-inset-blue);
+    border-image-source: var(--kenney-inset-blue);
     border-image-slice: 22 fill;
     border-image-width: 14px;
     border-image-repeat: stretch;
-    background-color: #2f496b;
-    color: var(--rpg-text-light);
+    background-color: var(--kenney-blue-fill-dark);
+    color: var(--kenney-text-light);
     border-radius: 0;
     text-shadow: 0 2px 0 rgba(0, 0, 0, 0.3);
     box-shadow: 0 7px 0 rgba(0, 0, 0, 0.18);
@@ -2190,16 +2200,16 @@ main {
 }
 
 .btn-answer.correct {
-    border-image-source: var(--rpg-inset-beige);
-    background-color: #5fa768;
+    border-image-source: var(--kenney-inset-green);
+    background-color: var(--kenney-green-fill);
     color: #102915;
     text-shadow: none;
 }
 
 .btn-answer.incorrect {
-    border-image-source: var(--rpg-inset-brown);
-    background-color: #9a6c3e;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-inset-brown);
+    background-color: var(--kenney-red-fill);
+    color: var(--kenney-text-light);
 }
 
 .input-answer {
@@ -2212,7 +2222,7 @@ main {
 }
 
 .input-answer:focus {
-    border-image-source: var(--rpg-inset-blue);
+    border-image-source: var(--kenney-inset-blue);
     background-color: #eef5ff;
     color: #203552;
     box-shadow: 0 0 0 4px rgba(69, 183, 209, 0.25);
@@ -2233,14 +2243,14 @@ main {
     bottom: -260px;
     transform: translateX(-50%);
     border: 18px solid transparent;
-    border-image-source: var(--rpg-panel-blue);
+    border-image-source: var(--kenney-panel-blue);
     border-image-slice: 24 fill;
     border-image-width: 18px;
     border-image-repeat: stretch;
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
     border-top: 18px solid transparent;
-    box-shadow: var(--rpg-shadow);
+    box-shadow: var(--kenney-shadow);
 }
 
 .exercise-feedback.show {
@@ -2248,13 +2258,13 @@ main {
 }
 
 .exercise-feedback.correct {
-    border-image-source: var(--rpg-panel-blue);
-    background: #3c5f82;
+    border-image-source: var(--kenney-panel-blue);
+    background: var(--kenney-blue-fill);
 }
 
 .exercise-feedback.incorrect {
-    border-image-source: var(--rpg-panel-brown);
-    background: #8b6743;
+    border-image-source: var(--kenney-panel-brown);
+    background: var(--kenney-red-fill);
 }
 
 .exercise-feedback.incorrect .feedback-detail {
@@ -2262,7 +2272,7 @@ main {
 }
 
 .feedback-detail {
-    color: var(--rpg-text-light-muted);
+    color: var(--kenney-text-light-muted);
     opacity: 1;
 }
 
@@ -2272,12 +2282,12 @@ main {
 
 .results-title,
 .stat-value {
-    color: var(--rpg-text-dark);
+    color: var(--kenney-text-dark);
 }
 
 .results-subtitle,
 .stat-label {
-    color: var(--rpg-text-muted);
+    color: var(--kenney-text-muted);
 }
 
 .practice-content {
@@ -2341,28 +2351,28 @@ main {
     min-height: 42px;
     border-width: 8px;
     border-image-width: 8px;
-    border-image-source: var(--rpg-inset-light);
-    background-color: #e6d9bd;
+    border-image-source: var(--kenney-inset-light);
+    background-color: #edf6fb;
 }
 
 .exercise-list-num {
     border-radius: 0;
-    background-image: url("../kenney_ui-pack-rpg-expansion/PNG/buttonSquare_blue.png");
+    background-image: url("../kenney_ui-pack/PNG/Blue/Default/button_square_depth_flat.png");
     background-size: 100% 100%;
     background-color: transparent;
-    color: var(--rpg-text-light);
+    color: var(--kenney-text-light);
 }
 
 .exercise-list-item.completed .exercise-list-num {
-    background-image: url("../kenney_ui-pack-rpg-expansion/PNG/iconCheck_blue.png");
+    background-image: url("../kenney_ui-pack/PNG/Blue/Default/check_square_color_checkmark.png");
     background-color: transparent;
     color: transparent;
 }
 
 .backup-panel {
-    border-image-source: var(--rpg-panel-blue);
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-blue);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
 }
 
 .backup-panel-title,
@@ -2372,41 +2382,41 @@ main {
 
 .backup-panel-desc,
 .backup-status {
-    color: var(--rpg-text-light-muted);
+    color: var(--kenney-text-light-muted);
 }
 
 .backup-status-success { color: #b8f2a2; }
 .backup-status-error { color: #ffd0a6; }
-.backup-status-info { color: var(--rpg-text-light-muted); }
+.backup-status-info { color: var(--kenney-text-light-muted); }
 
 .session-banner {
     border: 14px solid transparent;
-    border-image-source: var(--rpg-panel-blue);
+    border-image-source: var(--kenney-panel-blue);
     border-image-slice: 24 fill;
     border-image-width: 14px;
     border-image-repeat: stretch;
-    background-color: #3c5f82;
-    color: var(--rpg-text-light);
+    background-color: var(--kenney-blue-fill);
+    color: var(--kenney-text-light);
     border-radius: 0;
     box-shadow: 0 8px 0 rgba(0, 0, 0, 0.18);
 }
 
 .session-banner-struggling,
 .session-banner-fatigued {
-    border-image-source: var(--rpg-panel-brown);
-    background-color: #8b6743;
+    border-image-source: var(--kenney-panel-brown);
+    background-color: var(--kenney-red-fill);
 }
 
 .session-banner-close {
     min-width: 34px;
     min-height: 34px;
-    color: var(--rpg-text-light);
+    color: var(--kenney-text-light);
 }
 
 .break-overlay-content {
-    border-image-source: var(--rpg-panel-brown);
-    background-color: #8b6743;
-    color: var(--rpg-text-light);
+    border-image-source: var(--kenney-panel-brown);
+    background-color: var(--kenney-red-fill);
+    color: var(--kenney-text-light);
 }
 
 .break-overlay-title,
@@ -2451,7 +2461,7 @@ main {
     }
 }
 
-/* Keep RPG boxes for text-heavy screens, not the active problem surface. */
+/* Keep Kenney boxes for text-heavy screens, not the active problem surface. */
 .exercise-question,
 .exercise-visual {
     border: 0;
@@ -2492,7 +2502,7 @@ main {
 }
 
 .practice-title {
-    color: var(--rpg-text-dark);
+    color: var(--kenney-text-dark);
     margin-bottom: 0.35rem;
 }
 
@@ -2515,14 +2525,14 @@ main {
     display: flex;
     align-items: center;
     gap: 10px;
-    color: var(--rpg-text-dark);
+    color: var(--kenney-text-dark);
     text-shadow: none;
     font-size: 1.35rem;
     margin-bottom: 0.35rem;
 }
 
 .practice-section-desc {
-    color: var(--rpg-text-muted);
+    color: var(--kenney-text-muted);
     margin-bottom: 1.2rem;
 }
 
@@ -2539,7 +2549,7 @@ main {
     border: 0;
     background-image: none;
     background: rgba(60, 95, 130, 0.14);
-    color: var(--rpg-text-dark);
+    color: var(--kenney-text-dark);
     border-radius: 8px;
     box-shadow: inset 0 0 0 2px rgba(60, 95, 130, 0.16), 0 4px 0 rgba(67, 48, 31, 0.14);
     text-shadow: none;
@@ -2565,8 +2575,8 @@ main {
     grid-column: 1 / -1;
     min-height: 64px;
     background-image: none;
-    background: linear-gradient(135deg, #3c5f82, #2d7dd2);
-    color: var(--rpg-text-light);
+    background: linear-gradient(135deg, var(--kenney-blue-fill-dark), var(--kenney-blue-fill));
+    color: var(--kenney-text-light);
     border-radius: 8px;
     box-shadow: 0 5px 0 rgba(41, 56, 75, 0.34), 0 12px 24px rgba(45, 125, 210, 0.22);
     text-shadow: 0 2px 0 rgba(0, 0, 0, 0.32);
@@ -2589,7 +2599,7 @@ main {
     border-image-width: 0;
     background: rgba(60, 95, 130, 0.08);
     border-radius: 8px;
-    color: var(--rpg-text-muted);
+    color: var(--kenney-text-muted);
     padding: 42px 18px;
 }
 
