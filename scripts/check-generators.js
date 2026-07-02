@@ -10,6 +10,8 @@ const jsDirs = ['js', 'api', 'scripts'].map(dir => path.join(rootDir, dir));
 const unitDir = path.join(rootDir, 'js', 'units');
 const difficulties = [1, 2, 3];
 const modalities = ['practice', 'visual', 'worked-example'];
+const hintFields = ['hint1', 'hint2', 'hint3'];
+const invalidHintPattern = /\b(?:undefined|NaN|Infinity)\b|\[object Object\]|\$\{/;
 
 function relative(filePath) {
     return path.relative(rootDir, filePath);
@@ -100,12 +102,156 @@ function getOptionValue(option) {
         : option;
 }
 
+function hasOwn(value, key) {
+    return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function isPlainObject(value) {
+    return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
 function sameValue(a, b) {
     return Object.is(a, b);
 }
 
 function stableValue(value) {
     return JSON.stringify(value);
+}
+
+function describeValue(value) {
+    const json = JSON.stringify(value);
+    return json === undefined ? String(value) : json;
+}
+
+function addUnique(values, value) {
+    if (!values.some(existing => sameValue(existing, value))) {
+        values.push(value);
+    }
+}
+
+function wrongAnswerSamples(question) {
+    const samples = [];
+
+    if (Array.isArray(question.options)) {
+        question.options.forEach(option => {
+            const value = getOptionValue(option);
+            if (!sameValue(value, question.answer)) {
+                addUnique(samples, value);
+            }
+        });
+    }
+
+    const answer = question.answer;
+    if (typeof answer === 'number' && Number.isFinite(answer)) {
+        [answer + 1, answer - 1, answer * 10, answer / 10, 0].forEach(value => addUnique(samples, value));
+    } else if (typeof answer === 'boolean') {
+        addUnique(samples, !answer);
+    } else if (typeof answer === 'string') {
+        const alternates = {
+            Yes: 'No',
+            No: 'Yes',
+            '>': '<',
+            '<': '>',
+            '=': '>',
+            Prime: 'Composite',
+            Composite: 'Prime',
+            Even: 'Odd',
+            Odd: 'Even'
+        };
+        addUnique(samples, alternates[answer] || 'wrong');
+        addUnique(samples, '');
+    } else {
+        [0, false, 'wrong'].forEach(value => addUnique(samples, value));
+    }
+
+    return samples.slice(0, 8);
+}
+
+function checkHintText(value, context, label) {
+    const failures = [];
+    if (typeof value !== 'string') {
+        failures.push(`${context}: ${label} must be a string, got ${typeof value}`);
+        return failures;
+    }
+
+    if (value.trim().length === 0) {
+        failures.push(`${context}: ${label} is empty`);
+    }
+
+    const invalidMatch = value.match(invalidHintPattern);
+    if (invalidMatch) {
+        failures.push(`${context}: ${label} contains ${JSON.stringify(invalidMatch[0])}: ${JSON.stringify(value)}`);
+    }
+
+    return failures;
+}
+
+function checkHints(question, context) {
+    const failures = [];
+
+    for (const field of hintFields) {
+        if (!hasOwn(question, field)) {
+            failures.push(`${context}: missing ${field}`);
+            continue;
+        }
+        failures.push(...checkHintText(question[field], context, field));
+    }
+
+    if (hasOwn(question, 'misconceptionHints')) {
+        if (!isPlainObject(question.misconceptionHints)) {
+            failures.push(`${context}: misconceptionHints must be an object`);
+        } else {
+            Object.entries(question.misconceptionHints).forEach(([label, hint]) => {
+                if (label.trim().length === 0) {
+                    failures.push(`${context}: misconceptionHints has an empty label`);
+                }
+                failures.push(...checkHintText(hint, context, `misconceptionHints.${JSON.stringify(label)}`));
+            });
+        }
+    }
+
+    if (hasOwn(question, 'diagnose')) {
+        if (typeof question.diagnose !== 'function') {
+            failures.push(`${context}: diagnose must be a function`);
+            return failures;
+        }
+
+        const seenLabels = new Set();
+        for (const sample of wrongAnswerSamples(question)) {
+            let label;
+            try {
+                label = question.diagnose(sample, question.answer, question);
+            } catch (error) {
+                failures.push(`${context}: diagnose threw for sample ${describeValue(sample)}: ${error.message}`);
+                continue;
+            }
+
+            if (label == null) continue;
+            if (typeof label !== 'string') {
+                failures.push(`${context}: diagnose returned ${typeof label} for sample ${describeValue(sample)}; expected string or null`);
+                continue;
+            }
+            if (label.trim().length === 0) {
+                failures.push(`${context}: diagnose returned an empty label for sample ${describeValue(sample)}`);
+                continue;
+            }
+            if (seenLabels.has(label)) continue;
+            seenLabels.add(label);
+
+            if (!isPlainObject(question.misconceptionHints) || !hasOwn(question.misconceptionHints, label)) {
+                failures.push(`${context}: diagnose returned ${JSON.stringify(label)} but misconceptionHints has no matching targeted hint`);
+                continue;
+            }
+
+            failures.push(...checkHintText(
+                question.misconceptionHints[label],
+                context,
+                `misconceptionHints.${JSON.stringify(label)}`
+            ));
+        }
+    }
+
+    return failures;
 }
 
 function checkQuestion(question, context) {
@@ -122,6 +268,8 @@ function checkQuestion(question, context) {
     if (!Object.prototype.hasOwnProperty.call(question, 'answer')) {
         failures.push(`${context}: missing answer`);
     }
+
+    failures.push(...checkHints(question, context));
 
     if (question.type === 'multiple-choice') {
         if (!Array.isArray(question.options)) {

@@ -15,6 +15,7 @@ A personalized, interactive math learning app for Valerie, aligned with **3rd an
 - **Star-based progress tracking** — earn up to 3 stars per round; complete 50% of a unit's rounds to unlock the next unit
 - **Practice Zone** — missed skills are queued for reinforcement, plus free-play multiplication tables (×1–×12 and mixed)
 - **Cross-device persistence** — progress is saved to the cloud via Vercel KV and syncs across any browser or device
+- **Progress Backup** — export and restore progress + study notes with a JSON backup file
 - **Animations & audio** — confetti celebrations, sound effects, and smooth transitions
 
 ---
@@ -104,7 +105,8 @@ The check script runs `node --check` across JavaScript files, then loads every u
 - Every generator terminates for each difficulty level
 - Multiple-choice options include the correct answer
 - Multiple-choice option values are unique
-- Hints only reference values available when the question is created, or values passed into `diagnose`
+- Hint text and targeted misconception hints are complete and don't contain unresolved generated values
+- Declared `exerciseCount` values match the number of generated exercises
 
 `npm test` runs the same checks.
 
@@ -163,6 +165,8 @@ Progress is saved in two places:
 
 1. **Cloud (Vercel KV)** — loaded first on every page visit, then debounced to avoid excessive writes. Works across any browser or device.
 2. **localStorage** — used as an offline fallback if the network is unavailable.
+
+Valerie's progress can also be exported from the world select screen as a JSON backup file and restored on another device. Backups include unit completion, stars, skill mastery, wrong-answer study notes, misconception counts, the weakness queue, and unlocked units. The per-visit session state is not included.
 
 No user accounts or personal data are collected. All progress is stored under a single key for Valerie.
 

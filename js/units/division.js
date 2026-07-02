@@ -138,7 +138,8 @@ const Division = {
                             return null;
                         },
                         misconceptionHints: {
-                            'reversed-division': `That's the divisor! We need ${product} ÷ ${a}, not the other way around.`
+                            'reversed-division': `That's the divisor! We need ${product} ÷ ${a}, not the other way around.`,
+                            'gave-total-not-quotient': `That's the total before dividing. Think: what number times ${a} equals ${product}?`
                         }
                     };
 
