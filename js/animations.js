@@ -6,6 +6,12 @@ const Animations = (() => {
     let particles = [];
     let animFrame = null;
 
+    // Respect the OS "reduce motion" setting — skip the flashy particle bursts.
+    function motionOff() {
+        return typeof window !== 'undefined' && typeof window.matchMedia === 'function' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    }
+
     function init() {
         canvas = document.getElementById('celebration-canvas');
         if (!canvas) return;
@@ -116,6 +122,7 @@ const Animations = (() => {
 
         // Big celebration burst (end of exercise, all correct)
         celebrate(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             x = x || canvas.width / 2;
             y = y || canvas.height / 2;
@@ -160,6 +167,7 @@ const Animations = (() => {
 
         // Small correct-answer burst
         correctBurst(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             for (let i = 0; i < 20; i++) {
                 const angle = (Math.PI * 2 * i) / 20;
@@ -183,6 +191,7 @@ const Animations = (() => {
 
         // Swimming bubbles
         bubbleBurst(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             for (let i = 0; i < 15; i++) {
                 particles.push({
@@ -205,6 +214,7 @@ const Animations = (() => {
 
         // Paint splatter (arts & crafts theme)
         paintSplatter(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             for (let i = 0; i < 25; i++) {
                 const angle = Math.random() * Math.PI * 2;
@@ -228,6 +238,7 @@ const Animations = (() => {
 
         // GD-style neon burst
         gdBurst(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             for (let i = 0; i < 20; i++) {
                 const angle = (Math.PI * 2 * i) / 20;
@@ -251,6 +262,7 @@ const Animations = (() => {
 
         // Monster theme sparkle burst
         monsterBurst(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             // Expanding ring + star sparks.
             for (let i = 0; i < 24; i++) {
@@ -294,6 +306,7 @@ const Animations = (() => {
 
         // Dance / disco burst
         danceBurst(x, y) {
+            if (motionOff()) return;
             if (!ctxC) init();
             // Disco sparkle — small confetti in all directions
             for (let i = 0; i < 30; i++) {
@@ -337,6 +350,7 @@ const Animations = (() => {
 
         // Emoji rain for big celebrations
         emojiRain(emojis = ['⭐', '🎉', '🏊', '🎨', '🎮']) {
+            if (motionOff()) return;
             if (!ctxC) init();
             for (let i = 0; i < 30; i++) {
                 particles.push({

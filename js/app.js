@@ -52,13 +52,17 @@ const App = (() => {
             repeatLastPractice: () => App.repeatLastPractice()
         });
 
-        await Adaptive.load();
+        // Bring the splash to life immediately — before any network wait — so a
+        // slow or dead connection degrades gracefully instead of freezing on a
+        // static screen.
         Animations.init();
         Animations.createSplashBubbles();
 
         // Initialize audio on first user interaction
         document.addEventListener('click', () => AudioManager.init(), { once: true });
         document.addEventListener('touchstart', () => AudioManager.init(), { once: true });
+
+        await Adaptive.load();
 
         // Update total stars display
         updateStars();
@@ -67,6 +71,27 @@ const App = (() => {
     function updateStars() {
         const el = document.getElementById('total-stars');
         if (el) el.textContent = `⭐ ${Adaptive.getTotalStars()}`;
+    }
+
+    function updateMuteIcon() {
+        const btn = document.getElementById('btn-mute');
+        if (btn) {
+            const m = AudioManager.isMuted();
+            btn.textContent = m ? '🔇' : '🔊';
+            btn.setAttribute('aria-pressed', String(m));
+        }
+    }
+
+    function updateDaily() {
+        const el = document.getElementById('daily-badge');
+        if (!el) return;
+        const d = Adaptive.getDaily();
+        const done = Math.min(d.answeredToday, d.goal);
+        const dots = Adaptive.getRecentDayDots(7)
+            .map(on => `<span class="daily-dot${on ? ' on' : ''}"></span>`).join('');
+        el.innerHTML =
+            `<span class="daily-goal${d.reached ? ' reached' : ''}">🎯 ${done}/${d.goal}${d.reached ? ' ✓' : ''}</span>` +
+            `<span class="daily-dots" title="Days practiced">${dots}</span>`;
     }
 
     /**
@@ -122,7 +147,9 @@ const App = (() => {
             const unlocked = Adaptive.isUnitUnlocked(unit.id);
             const progress = Adaptive.getUnitProgress(unit.id, unit.exerciseCount);
 
-            const card = document.createElement('div');
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.disabled = !unlocked; // locked units drop out of the tab order for free
             card.className = `unit-card theme-${unit.theme} ${unlocked ? '' : 'locked'}`;
             card.innerHTML = `
                 <div class="unit-card-icon">${unit.icon}</div>
@@ -198,6 +225,137 @@ const App = (() => {
         showScreen('screen-unit-intro');
     }
 
+    // --- Grown-Ups view helpers ---
+
+    // Friendly names for misconception labels emitted by unit diagnose() functions
+    // and the generic detector. Anything unmapped falls back to a de-dashed form.
+    const MISCONCEPTION_LABELS = {
+        'off-by-one': 'off by one',
+        'place-value': 'place-value slip',
+        'place-value-confusion': 'place-value confusion',
+        'added-instead-of-multiplied': 'added instead of multiplied',
+        'added-instead': 'added instead of the right operation',
+        'reversed-division': 'divided in the wrong order',
+        'reversed-comparison': 'comparison sign reversed',
+        'reversed-digits': 'digits reversed',
+        'carry-error': 'carrying / regrouping slip',
+        'forgot-decimal-point': 'forgot the decimal point',
+        'rounding-error': 'rounding slip',
+        'exact-not-estimate': 'gave the exact answer, not an estimate',
+        'wrote-numerator-only': 'used the numerator only',
+        'gave-total-not-quotient': 'gave the total instead of sharing it'
+    };
+
+    /** @type {Object.<string, MathUnit>|null} */
+    let _skillIndex = null;
+
+    // Map every declared skillId to its unit (for labels + context on the parent
+    // view). Built once from the same generators the app runs; cheap and cached.
+    function skillIndex() {
+        if (_skillIndex) return _skillIndex;
+        _skillIndex = {};
+        ALL_UNITS.forEach(unit => {
+            let exs;
+            try { exs = unit.getExercises(); } catch (e) { return; }
+            exs.forEach(ex => {
+                if (ex && ex.skillId && !_skillIndex[ex.skillId]) _skillIndex[ex.skillId] = unit;
+            });
+        });
+        return _skillIndex;
+    }
+
+    function friendlyMisconception(label) {
+        return MISCONCEPTION_LABELS[label] || String(label).replace(/[-_]/g, ' ');
+    }
+
+    function humanizeSkill(skillId) {
+        return String(skillId).replace(/[-_]/g, ' ');
+    }
+
+    /** @param {SkillProgress} skill */
+    function topMisconceptionOf(skill) {
+        const m = skill.misconceptions || {};
+        let top = null, count = 0;
+        for (const label in m) {
+            if (m[label] > count) { top = label; count = m[label]; }
+        }
+        return top;
+    }
+
+    function escHtml(value) {
+        return String(value).replace(/[&<>"]/g, c => (
+            { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]
+        ));
+    }
+
+    // Render the parent report from data already in state. Read-only: reads
+    // Adaptive.getState().skills directly (NOT getSkill, which materializes a
+    // zero record on read) and filters to skills she has actually attempted.
+    function renderGrownups() {
+        const state = Adaptive.getState();
+        const skills = state.skills || {};
+        const idx = skillIndex();
+
+        const entries = Object.keys(skills)
+            .map(id => ({ id, skill: skills[id] }))
+            .filter(e => (e.skill.totalCorrect + e.skill.totalWrong) > 0);
+
+        const working = entries
+            .filter(e => !e.skill.mastered && e.skill.totalWrong > 0)
+            .sort((a, b) => b.skill.totalWrong - a.skill.totalWrong)
+            .slice(0, 8);
+
+        const mastered = entries.filter(e => e.skill.mastered);
+
+        let html = '';
+
+        if (entries.length === 0) {
+            html += `<div class="gr-empty">No practice data yet. Once Valerie plays a few rounds, you'll see exactly which skills she's working on — including what she typed when she missed one.</div>`;
+        }
+
+        if (working.length) {
+            html += `<section class="gr-section"><h3 class="gr-section-title">🎯 Working on now</h3>`;
+            working.forEach(({ id, skill }) => {
+                const unit = idx[id];
+                const icon = unit ? unit.icon : (id.startsWith('mult-tables') ? '✖️' : '•');
+                const unitTitle = unit ? unit.title : (id.startsWith('mult-tables') ? 'Times tables' : 'Practice');
+                const top = topMisconceptionOf(skill);
+                const wrongs = (skill.wrongAnswers || []).slice(-3).reverse();
+                html += `
+                    <div class="gr-skill">
+                        <div class="gr-skill-head">
+                            <span class="gr-skill-icon" aria-hidden="true">${icon}</span>
+                            <span class="gr-skill-name">${escHtml(humanizeSkill(id))}</span>
+                            <span class="gr-skill-stats"><span class="gr-ok">✓ ${skill.totalCorrect}</span><span class="gr-no">✗ ${skill.totalWrong}</span></span>
+                        </div>
+                        <div class="gr-skill-meta">${escHtml(unitTitle)}</div>
+                        ${top ? `<div class="gr-misc">💡 Often: ${escHtml(friendlyMisconception(top))}</div>` : ''}
+                        ${wrongs.length ? `<div class="gr-wrongs">${wrongs.map(w => `<span class="gr-wrong">wrote <b>${escHtml(w.userAnswer)}</b> · answer <b>${escHtml(w.correctAnswer)}</b></span>`).join('')}</div>` : ''}
+                    </div>`;
+            });
+            html += `</section>`;
+        }
+
+        html += `<section class="gr-section"><h3 class="gr-section-title">🌟 Solid</h3>`;
+        if (mastered.length) {
+            const byUnit = {};
+            mastered.forEach(({ id }) => {
+                const u = idx[id];
+                const key = u ? u.id : '_other';
+                if (!byUnit[key]) byUnit[key] = { icon: u ? u.icon : '✔️', title: u ? u.title : 'Times tables', count: 0 };
+                byUnit[key].count++;
+            });
+            html += `<p class="gr-solid-count">Valerie has mastered <b>${mastered.length}</b> skill${mastered.length === 1 ? '' : 's'} (3 correct in a row).</p>`;
+            html += `<div class="gr-chips">${Object.values(byUnit).map(g => `<span class="gr-chip">${g.icon} ${escHtml(g.title)} <b>×${g.count}</b></span>`).join('')}</div>`;
+        } else {
+            html += `<p class="gr-solid-count">No skills mastered yet — three correct in a row on a skill earns it.</p>`;
+        }
+        html += `</section>`;
+
+        const report = document.getElementById('grownups-report');
+        if (report) report.innerHTML = html;
+    }
+
     return {
         init,
         /** @returns {MathUnit[]} */
@@ -214,7 +372,14 @@ const App = (() => {
             if (grade) currentGrade = grade;
             renderMap();
             updateStars();
+            updateDaily();
+            updateMuteIcon();
             showScreen('screen-map');
+        },
+
+        toggleMute() {
+            AudioManager.toggleMute();
+            updateMuteIcon();
         },
 
         /** @param {string} unitId */
@@ -229,6 +394,12 @@ const App = (() => {
             if (confirm('Leave this exercise? Your progress on this set will be lost.')) {
                 App.showMap();
             }
+        },
+
+        showGrownups() {
+            AudioManager.click();
+            renderGrownups();
+            showScreen('screen-grownups');
         },
 
         showPracticeZone() {

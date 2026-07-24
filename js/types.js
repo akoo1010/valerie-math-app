@@ -146,7 +146,21 @@
  * @property {WeaknessQueueItem[]} weaknessQueue
  * @property {number} totalStars
  * @property {string[]} unlockedUnits
+ * @property {number} updatedAt ms timestamp of the last save; resolves cross-device / offline conflicts
+ * @property {DailyProgress} daily
  * @property {SessionSnapshot} session
+ */
+
+/**
+ * Persisted per-day goal tracking (unlike the per-visit session).
+ *
+ * @typedef {Object} DailyProgress
+ * @property {string|null} date 'YYYY-MM-DD' the counters belong to
+ * @property {number} answeredToday
+ * @property {number} correctToday
+ * @property {number} goal questions/day that count as "done for today"
+ * @property {boolean} goalCelebrated whether today's finish-line band has shown
+ * @property {string[]} recentDays dates practiced; the 7 most recent drive the dots
  */
 
 /**

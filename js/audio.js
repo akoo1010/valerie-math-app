@@ -7,6 +7,9 @@ const AudioManager = (() => {
     let sampleLoadStarted = false;
     const sampleBuffers = {};
 
+    let muted = false;
+    try { muted = localStorage.getItem('valerie_muted') === '1'; } catch (e) { /* private mode */ }
+
     const SAMPLE_BASE = 'kenney_interface-sounds/Audio/';
     const SAMPLE_FILES = {
         // Chosen by decoding the pack and comparing duration/loudness/brightness:
@@ -71,6 +74,7 @@ const AudioManager = (() => {
     }
 
     function playSample(name, volume = 0.4, playbackRate = 1) {
+        if (muted) return false;
         const ac = getCtx();
         const buffer = sampleBuffers[name];
         if (!ac || !buffer) return false;
@@ -87,6 +91,7 @@ const AudioManager = (() => {
     }
 
     function playTone(freq, duration, type = 'sine', volume = 0.3, delay = 0) {
+        if (muted) return;
         const ac = getCtx();
         if (!ac) return;
 
@@ -103,6 +108,7 @@ const AudioManager = (() => {
     }
 
     function playNoise(duration, volume = 0.1) {
+        if (muted) return;
         const ac = getCtx();
         if (!ac) return;
 
@@ -128,6 +134,14 @@ const AudioManager = (() => {
 
     return {
         init() { getCtx(); },
+
+        // Mute toggle — persisted so it survives reloads.
+        toggleMute() {
+            muted = !muted;
+            try { localStorage.setItem('valerie_muted', muted ? '1' : '0'); } catch (e) { /* private mode */ }
+            return muted;
+        },
+        isMuted() { return muted; },
 
         // Correct answer: short positive confirmation
         correct() {

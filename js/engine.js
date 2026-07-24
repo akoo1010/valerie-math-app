@@ -217,6 +217,12 @@ const Engine = (() => {
         input.id = 'answer-input';
         input.placeholder = '?';
         input.autocomplete = 'off';
+        // Show the right on-screen keyboard on tablets/phones (this is the dominant device).
+        input.inputMode = Number.isInteger(question.answer) ? 'numeric' : 'decimal';
+        input.enterKeyHint = 'go';
+        // A focused number input changes its value on scroll-wheel; on desktop that
+        // silently rewrites a typed answer when she scrolls the question into view.
+        input.addEventListener('wheel', (e) => e.preventDefault(), { passive: false });
         div.appendChild(input);
 
         if (question.inputSuffix) {
@@ -231,7 +237,15 @@ const Engine = (() => {
         const btn = createCheckButton(() => {
             if (submitting || answered) return;
             const val = parseFloat(input.value);
-            if (isNaN(val)) return;
+            if (isNaN(val)) {
+                // Don't silently do nothing on an empty field — that reads as broken.
+                // Nudge and refocus; costs no attempt.
+                input.classList.remove('nudge');
+                void input.offsetWidth; // reflow so the animation can restart
+                input.classList.add('nudge');
+                input.focus();
+                return;
+            }
             submitting = true;
             btn.disabled = true;
             AudioManager.click();
@@ -242,9 +256,15 @@ const Engine = (() => {
         });
         div.appendChild(btn);
 
-        // Allow Enter key
+        // Allow Enter to submit. Critically, stop the SUBMIT keypress from also
+        // bubbling to the document-level advance handler — otherwise the same
+        // Enter that raises the feedback bar would immediately dismiss it
+        // (skipping the celebration on a correct answer, and the hint on a wrong
+        // one). Once submitting/answered, let Enter bubble so it advances/retries.
         input.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') btn.click();
+            if (e.key !== 'Enter') return;
+            if (!submitting && !answered) e.stopPropagation();
+            btn.click();
         });
 
         body.appendChild(div);
@@ -375,6 +395,9 @@ const Engine = (() => {
             handleWrong(question, userAnswer);
             if (wrongAttempts >= 3) answered = true;
         }
+        // Advance the bar and repaint the ⭐ counter the instant the question is
+        // resolved (while the feedback bar is still up), instead of one question late.
+        if (answered) updateProgress(true);
         return isCorrect;
     }
 
@@ -425,18 +448,21 @@ const Engine = (() => {
         wrongAttempts++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
         const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
-        Adaptive.recordWrong(skillId, unitId, userAnswer, question);
+        // wrongAttempts was just incremented, so === 1 means this is the first miss.
+        const result = Adaptive.recordWrong(skillId, unitId, userAnswer, question, wrongAttempts === 1);
 
         AudioManager.incorrect();
 
-        // Misconception-aware hint selection
+        // Misconception-aware hint selection. Prefer the misconception diagnosed
+        // on THIS answer (so a brand-new error gets a hint about that error), then
+        // fall back to the skill's all-time most common one.
         let hintText = '';
-        const topMisconception = Adaptive.getTopMisconception(skillId);
+        const targetMisconception = (result && result.lastMisconception) || Adaptive.getTopMisconception(skillId);
 
         if (wrongAttempts === 1 && question.hint1) {
             // Use targeted hint if available for this misconception
-            if (topMisconception && question.misconceptionHints && question.misconceptionHints[topMisconception]) {
-                hintText = question.misconceptionHints[topMisconception];
+            if (targetMisconception && question.misconceptionHints && question.misconceptionHints[targetMisconception]) {
+                hintText = question.misconceptionHints[targetMisconception];
             } else {
                 hintText = question.hint1;
             }
@@ -490,6 +516,28 @@ const Engine = (() => {
     function hideFeedback() {
         const fb = document.getElementById('exercise-feedback');
         fb.className = 'exercise-feedback';
+        // Remove the old "Continue" button. Leaving it in the DOM lets it keep
+        // focus off-screen, so a stray Enter/Space on the NEXT question would
+        // re-fire nextAfterFeedback and silently skip a question.
+        fb.innerHTML = '';
+    }
+
+    // Enter / Space advances when the feedback bar is up — so the answer loop is
+    // keyboard-driven on a laptop instead of forcing a mouse hop every question.
+    // Installed once; scoped by the .show class so it never fires elsewhere.
+    if (typeof document !== 'undefined') {
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            // Only while the exercise screen is active — otherwise a feedback bar
+            // left showing after an early exit would let Enter/Space on the map
+            // silently advance a hidden question (and swallow the key).
+            const screen = document.getElementById('screen-exercise');
+            if (!screen || !screen.classList.contains('active')) return;
+            const fb = document.getElementById('exercise-feedback');
+            if (!fb || !fb.classList.contains('show')) return;
+            const btn = fb.querySelector('.feedback-btn');
+            if (btn) { e.preventDefault(); btn.click(); }
+        });
     }
 
     /** @param {SessionMessage} msg */
@@ -541,12 +589,16 @@ const Engine = (() => {
         document.getElementById('screen-exercise').appendChild(overlay);
     }
 
-    function updateProgress() {
+    /**
+     * @param {boolean} [resolved] true once the current question is answered, so
+     *   the bar counts it complete (and reaches 100% on the last question).
+     */
+    function updateProgress(resolved = false) {
         const bar = document.getElementById('exercise-progress-bar');
         const text = document.getElementById('exercise-progress-text');
         const stars = document.getElementById('exercise-stars');
         const total = currentExercises.length;
-        bar.style.width = `${(currentExIndex / total) * 100}%`;
+        bar.style.width = `${((currentExIndex + (resolved ? 1 : 0)) / total) * 100}%`;
         text.textContent = `Skill ${currentExIndex + 1} of ${total}`;
         stars.textContent = `⭐ ${correctCount}`;
     }
@@ -634,6 +686,8 @@ const Engine = (() => {
         nextAfterFeedback(wasCorrect) {
             hideFeedback();
             if (wasCorrect || wrongAttempts >= 3) {
+                // One question resolved (correct or answer revealed) — count it toward today's goal.
+                Adaptive.recordDailyQuestion(wasCorrect);
                 currentExIndex++;
                 if (currentExIndex >= currentExercises.length) {
                     this.showResults();
@@ -673,6 +727,18 @@ const Engine = (() => {
                 AudioManager.star();
             }
 
+            // Daily finish-line: once per day, when she's reached today's goal.
+            const daily = Adaptive.getDaily();
+            const showDailyBand = daily.reached && !daily.goalCelebrated;
+            if (showDailyBand) {
+                Adaptive.markGoalCelebrated();
+                AudioManager.fanfare();
+                setTimeout(() => Animations.emojiRain(), 500);
+            }
+            const dailyBandHTML = showDailyBand
+                ? `<div class="daily-goal-band">🎯 Daily goal complete — ${daily.answeredToday} questions today! See you tomorrow, Valerie! 🌟</div>`
+                : '';
+
             // Render results
             const content = document.getElementById('results-content');
             const titles = {
@@ -686,6 +752,7 @@ const Engine = (() => {
                 <div class="results-icon">${starsEarned >= 2 ? '🎉' : '🌟'}</div>
                 <h2 class="results-title">${titles[starsEarned]}</h2>
                 <p class="results-subtitle">${currentUnit.title}</p>
+                ${dailyBandHTML}
                 <div class="results-stars">
                     ${[1,2,3].map(i => `<span class="result-star ${i <= starsEarned ? 'earned' : ''}" style="animation-delay: ${i * 0.2}s">⭐</span>`).join('')}
                 </div>

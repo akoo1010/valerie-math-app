@@ -26,6 +26,22 @@ const Adaptive = (() => {
         };
     }
 
+    /**
+     * Per-day goal tracking. Unlike the session (per-visit, discarded on load),
+     * this persists so "today" survives a reload and drives the day-dots.
+     * @returns {DailyProgress}
+     */
+    function freshDaily() {
+        return {
+            date: null,          // 'YYYY-MM-DD' the counters below belong to
+            answeredToday: 0,
+            correctToday: 0,
+            goal: 20,            // questions/day that count as "done for today"
+            goalCelebrated: false, // so the finish-line band shows once per day
+            recentDays: []       // dates practiced; the 7 most recent drive the dots
+        };
+    }
+
     /** @returns {SkillProgress} */
     function createDefaultSkill() {
         return {
@@ -52,6 +68,8 @@ const Adaptive = (() => {
             weaknessQueue: [],
             totalStars: 0,
             unlockedUnits: [...DEFAULT_UNLOCKED],
+            updatedAt: 0, // ms timestamp of the last save; used to resolve device/offline conflicts
+            daily: freshDaily(),
             session: freshSession()
         };
     }
@@ -179,6 +197,23 @@ const Adaptive = (() => {
             }));
     }
 
+    function normalizeDaily(value) {
+        if (!isPlainObject(value)) return freshDaily();
+        const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+        const recentDays = Array.isArray(value.recentDays)
+            ? [...new Set(value.recentDays.filter(isDate))].slice(-30)
+            : [];
+        return {
+            date: isDate(value.date) ? value.date : null,
+            answeredToday: toNonNegativeInteger(value.answeredToday),
+            correctToday: toNonNegativeInteger(value.correctToday),
+            goal: (typeof value.goal === 'number' && Number.isFinite(value.goal) && value.goal > 0)
+                ? clampInteger(value.goal, 5, 100) : 20,
+            goalCelebrated: value.goalCelebrated === true,
+            recentDays
+        };
+    }
+
     function normalizeSession(value) {
         if (!isPlainObject(value)) return freshSession();
         const sessionState = ['normal', 'struggling', 'cruising', 'fatigued'].includes(value.sessionState)
@@ -229,12 +264,15 @@ const Adaptive = (() => {
         normalized.weaknessQueue = normalizeWeaknessQueue(value.weaknessQueue);
         normalized.totalStars = toNonNegativeInteger(value.totalStars);
         normalized.unlockedUnits = [...new Set([...DEFAULT_UNLOCKED, ...normalizeStringArray(value.unlockedUnits)])];
+        normalized.updatedAt = toNonNegativeInteger(value.updatedAt, 0);
+        normalized.daily = normalizeDaily(value.daily);
         normalized.session = normalizeSession(value.session);
 
         return normalized;
     }
 
     function save() {
+        state.updatedAt = Date.now(); // stamp before persisting so both copies carry the same recency
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         } catch (e) { /* quota exceeded */ }
@@ -250,42 +288,74 @@ const Adaptive = (() => {
         }, 1000);
     }
 
-    /**
-     * @param {unknown} parsed
-     * @returns {boolean}
-     */
-    function applyParsed(parsed) {
-        const normalized = normalizeProgressState(parsed);
-        if (!normalized) return false;
-        state = normalized;
-        return true;
+    /** @returns {Promise<ProgressState|null>} */
+    async function loadFromServer() {
+        // Time-box the load so a hanging or captive network can't freeze boot.
+        const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
+        const timer = controller ? setTimeout(() => controller.abort(), 3000) : null;
+        try {
+            const res = await fetch('/api/progress', controller ? { signal: controller.signal } : undefined);
+            if (res.ok) {
+                return normalizeProgressState(await res.json());
+            }
+        } catch (e) { /* network error or 3s timeout */ }
+        finally {
+            if (timer) clearTimeout(timer);
+        }
+        return null;
     }
 
-    // Returns a Promise that resolves when progress is loaded (from API or localStorage)
-    async function load() {
-        // Try API first (cross-browser persistence)
-        try {
-            const res = await fetch('/api/progress');
-            if (res.ok) {
-                const parsed = await res.json();
-                if (applyParsed(parsed)) {
-                    state.session = freshSession();
-                    // Keep localStorage in sync
-                    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
-                    return;
-                }
-            }
-        } catch (e) { /* network error — fall through to localStorage */ }
-
-        // Fallback: localStorage
+    /** @returns {ProgressState|null} */
+    function loadFromLocal() {
         try {
             const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
-                applyParsed(JSON.parse(saved));
-            }
+            if (saved) return normalizeProgressState(JSON.parse(saved));
         } catch (e) { /* parse error */ }
+        return null;
+    }
+
+    /**
+     * Push the current in-memory state up to the API immediately, bypassing the
+     * save debounce. Used on load when the local copy is newer than the server's
+     * (e.g. an offline session whose debounced POSTs never reached KV) so the
+     * server catches up instead of overwriting local progress on the next visit.
+     */
+    function syncUp() {
+        try {
+            fetch('/api/progress', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(state)
+            }).catch(() => { /* ignore network errors */ });
+        } catch (e) { /* ignore */ }
+    }
+
+    /**
+     * Resolve progress from BOTH the API and localStorage, keeping whichever was
+     * written most recently (by `updatedAt`). This prevents a stale server copy
+     * from clobbering an offline session's progress — and vice versa. Resolves
+     * once the winning copy is applied.
+     *
+     * @returns {Promise<void>}
+     */
+    async function load() {
+        const serverState = await loadFromServer();
+        const localState = loadFromLocal();
+
+        const localNewer = !!localState &&
+            (!serverState || (localState.updatedAt || 0) > (serverState.updatedAt || 0));
+        const chosen = localNewer ? localState : (serverState || localState);
+
+        if (chosen) {
+            state = chosen;
+            // Mirror the winning copy into localStorage.
+            try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* quota */ }
+            // Local was ahead of the server — bring the server up to date.
+            if (localNewer) syncUp();
+        }
 
         state.session = freshSession();
+        rolloverDaily(); // start "today" fresh if the saved copy is from a previous day
     }
 
     /**
@@ -297,6 +367,26 @@ const Adaptive = (() => {
             state.skills[skillId] = createDefaultSkill();
         }
         return state.skills[skillId];
+    }
+
+    /**
+     * Fade the scaffold: decrement the skill's largest misconception count (and
+     * drop it at zero). Called on every correct answer so a recovered skill can
+     * graduate back out of 'visual' / 'worked-example' modality instead of being
+     * pinned there permanently by an increment-only counter.
+     *
+     * @param {SkillProgress} skill
+     */
+    function decayTopMisconception(skill) {
+        const m = skill.misconceptions;
+        let top = null, topCount = 0;
+        for (const label in m) {
+            if (m[label] > topCount) { top = label; topCount = m[label]; }
+        }
+        if (top) {
+            if (m[top] <= 1) delete m[top];
+            else m[top] -= 1;
+        }
     }
 
     /**
@@ -322,14 +412,13 @@ const Adaptive = (() => {
      */
     function detectGenericMisconception(userAnswer, correctAnswer, skillId) {
         if (typeof userAnswer !== 'number' || typeof correctAnswer !== 'number') return null;
+        // Only label errors we can actually verify from (userAnswer, correctAnswer)
+        // alone. The old 'added-instead-of-multiplied' / 'reversed-division'
+        // branches fired on ANY undershoot / any nonzero wrong answer without
+        // checking the operands, mislabelling most misses — units that can check
+        // the operands return those labels from their own diagnose() instead.
         if (Math.abs(userAnswer - correctAnswer) === 1) return 'off-by-one';
-        if (skillId.startsWith('mult') && userAnswer < correctAnswer && userAnswer > 0) {
-            return 'added-instead-of-multiplied';
-        }
         if (userAnswer === correctAnswer * 10 || userAnswer * 10 === correctAnswer) return 'place-value';
-        if (skillId.startsWith('div') && correctAnswer !== 0 && userAnswer !== 0) {
-            return 'reversed-division';
-        }
         return null;
     }
 
@@ -354,6 +443,27 @@ const Adaptive = (() => {
         }
 
         s.sessionState = 'normal';
+    }
+
+    // Local calendar date as 'YYYY-MM-DD'.
+    function todayStr() {
+        const d = new Date();
+        const m = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${d.getFullYear()}-${m}-${day}`;
+    }
+
+    // Reset today's counters when the calendar day changes. Does not persist by
+    // itself — the caller saves, or the next save picks it up.
+    function rolloverDaily() {
+        const daily = state.daily;
+        const today = todayStr();
+        if (daily.date !== today) {
+            daily.date = today;
+            daily.answeredToday = 0;
+            daily.correctToday = 0;
+            daily.goalCelebrated = false;
+        }
     }
 
     function recordSessionResult(isCorrect) {
@@ -391,6 +501,9 @@ const Adaptive = (() => {
             skill.lastAttempt = Date.now();
             recordSessionResult(true);
 
+            // Fade any logged misconception so scaffolding lifts as she recovers.
+            decayTopMisconception(skill);
+
             // Check mastery
             if (skill.streak >= MASTERY_STREAK) {
                 skill.mastered = true;
@@ -423,8 +536,26 @@ const Adaptive = (() => {
          * @param {AnswerValue} userAnswer
          * @param {ExerciseQuestion} questionData
          */
-        recordWrong(skillId, unitId, userAnswer, questionData) {
+        recordWrong(skillId, unitId, userAnswer, questionData, isFirstAttempt = true) {
             const skill = getSkill(skillId);
+
+            // Only the FIRST wrong attempt on a question mutates adaptive state.
+            // The engine allows up to 3 attempts per question and re-invokes this
+            // on each; counting every retry would record one miss as several
+            // distinct wrongs — demoting difficulty mid-question, inflating
+            // totalWrong/misconception counts, and tripping the scaffold-modality
+            // escalations off a single bad guess. Retries return the current
+            // snapshot without changing anything.
+            if (!isFirstAttempt) {
+                return {
+                    streak: skill.streak,
+                    difficulty: skill.difficulty,
+                    hintLevel: Math.min(skill.totalWrong, 3),
+                    misconceptions: skill.misconceptions,
+                    lastMisconception: null
+                };
+            }
+
             skill.streak = 0; // Reset streak
             skill.consecutiveCorrect = 0;
             skill.consecutiveWrong++;
@@ -433,7 +564,10 @@ const Adaptive = (() => {
             skill.lastAttempt = Date.now();
             recordSessionResult(false);
 
-            // Misconception detection
+            // Misconception detection. `label` is hoisted so it can be returned
+            // to the engine, which uses the misconception diagnosed on THIS answer
+            // to pick a targeted hint (rather than the skill's all-time favorite).
+            let label = null;
             if (userAnswer !== undefined && questionData) {
                 skill.wrongAnswers.push({
                     userAnswer,
@@ -445,7 +579,6 @@ const Adaptive = (() => {
                 }
 
                 // Use exercise-specific diagnose if provided, else generic
-                let label = null;
                 if (questionData.diagnose) {
                     label = questionData.diagnose(userAnswer, questionData.answer, questionData);
                 } else {
@@ -478,7 +611,8 @@ const Adaptive = (() => {
                 streak: 0,
                 difficulty: skill.difficulty,
                 hintLevel: Math.min(skill.totalWrong, 3),
-                misconceptions: skill.misconceptions
+                misconceptions: skill.misconceptions,
+                lastMisconception: label
             };
         },
 
@@ -559,6 +693,70 @@ const Adaptive = (() => {
         // Get total stars
         getTotalStars() {
             return state.totalStars;
+        },
+
+        // --- Daily goal API ---
+        /**
+         * Count one resolved question toward today's goal. Call once per question
+         * (not per attempt). Returns today's progress and whether THIS question
+         * tipped her across the goal.
+         *
+         * @param {boolean} wasCorrect
+         */
+        recordDailyQuestion(wasCorrect) {
+            rolloverDaily();
+            const daily = state.daily;
+            const before = daily.answeredToday;
+            daily.answeredToday++;
+            if (wasCorrect) daily.correctToday++;
+            if (!daily.recentDays.includes(daily.date)) {
+                daily.recentDays.push(daily.date);
+                if (daily.recentDays.length > 30) daily.recentDays = daily.recentDays.slice(-30);
+            }
+            save();
+            return {
+                answeredToday: daily.answeredToday,
+                goal: daily.goal,
+                justReached: before < daily.goal && daily.answeredToday >= daily.goal
+            };
+        },
+
+        /** @returns {{date:string|null, answeredToday:number, correctToday:number, goal:number, goalCelebrated:boolean, reached:boolean}} */
+        getDaily() {
+            rolloverDaily();
+            const d = state.daily;
+            return {
+                date: d.date,
+                answeredToday: d.answeredToday,
+                correctToday: d.correctToday,
+                goal: d.goal,
+                goalCelebrated: d.goalCelebrated,
+                reached: d.answeredToday >= d.goal
+            };
+        },
+
+        // Mark today's goal celebration as shown, so the finish-line band appears once.
+        markGoalCelebrated() {
+            state.daily.goalCelebrated = true;
+            save();
+        },
+
+        /**
+         * Booleans for the last `n` calendar days (oldest first), true if practiced.
+         * @param {number} [n]
+         * @returns {boolean[]}
+         */
+        getRecentDayDots(n = 7) {
+            const practiced = new Set(state.daily.recentDays);
+            const base = new Date();
+            const out = [];
+            for (let i = n - 1; i >= 0; i--) {
+                const d = new Date(base.getFullYear(), base.getMonth(), base.getDate() - i);
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                out.push(practiced.has(`${d.getFullYear()}-${m}-${day}`));
+            }
+            return out;
         },
 
         // Get encouragement message based on performance
@@ -688,6 +886,7 @@ const Adaptive = (() => {
 
             state = normalized;
             state.session = freshSession();
+            state.updatedAt = Date.now(); // a restore is the newest write, so it wins on the next load
 
             try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* quota */ }
 

@@ -131,6 +131,25 @@ function normalizeWeaknessQueue(value) {
         }));
 }
 
+function normalizeDaily(value) {
+    const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+    if (!isPlainObject(value)) {
+        return { date: null, answeredToday: 0, correctToday: 0, goal: 20, goalCelebrated: false, recentDays: [] };
+    }
+    const recentDays = Array.isArray(value.recentDays)
+        ? [...new Set(value.recentDays.filter(isDate))].slice(-30)
+        : [];
+    return {
+        date: isDate(value.date) ? value.date : null,
+        answeredToday: toNonNegativeInteger(value.answeredToday),
+        correctToday: toNonNegativeInteger(value.correctToday),
+        goal: (typeof value.goal === 'number' && Number.isFinite(value.goal) && value.goal > 0)
+            ? clampInteger(value.goal, 5, 100) : 20,
+        goalCelebrated: value.goalCelebrated === true,
+        recentDays
+    };
+}
+
 function normalizeSession(value) {
     const defaultSession = {
         currentStreak: 0,
@@ -196,6 +215,8 @@ function normalizeProgressPayload(value) {
         weaknessQueue: normalizeWeaknessQueue(value.weaknessQueue),
         totalStars: toNonNegativeInteger(value.totalStars),
         unlockedUnits: [...new Set([...DEFAULT_UNLOCKED, ...unlockedUnits])],
+        updatedAt: toNonNegativeInteger(value.updatedAt, 0),
+        daily: normalizeDaily(value.daily),
         session: normalizeSession(value.session)
     };
 }

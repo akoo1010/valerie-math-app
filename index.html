@@ -11,7 +11,7 @@
     <!-- Load Google Fonts async to avoid render-blocking -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap"></noscript>
-    <link rel="stylesheet" href="css/styles.css?v=20260702-kenney-ui-pack">
+    <link rel="stylesheet" href="css/styles.css?v=20260723-uxbatch2">
 </head>
 <body>
 <main>
@@ -33,37 +33,51 @@
         <h2 class="world-select-title">Choose Your World!</h2>
         <p class="world-select-subtitle">Hi Valerie! Where do you want to explore?</p>
         <div class="world-cards">
-            <div class="world-card world-card-3rd" onclick="App.showMap('3rd')">
+            <button type="button" class="world-card world-card-3rd" onclick="App.showMap('3rd')">
                 <div class="world-card-icon">🧜‍♀️</div>
                 <div class="world-card-title">3rd Grade</div>
                 <div class="world-card-desc">Ocean, Dash & Craft World</div>
-            </div>
-            <div class="world-card world-card-4th" onclick="App.showMap('4th')">
+            </button>
+            <button type="button" class="world-card world-card-4th" onclick="App.showMap('4th')">
                 <div class="world-card-icon">🐾</div>
                 <div class="world-card-title">4th Grade</div>
                 <div class="world-card-desc">Monster & Dance World</div>
-            </div>
+            </button>
         </div>
 
-        <section class="backup-panel" aria-label="Progress backup">
-            <div class="backup-panel-header">
-                <span class="backup-panel-icon" aria-hidden="true">📦</span>
-                <div class="backup-panel-text">
-                    <h3 class="backup-panel-title">Progress Backup</h3>
-                    <p class="backup-panel-desc">Save Valerie's progress + study notes as a file, or restore on another device.</p>
+        <button class="grownups-link" onclick="App.showGrownups()">
+            <span aria-hidden="true">👋</span> For grown-ups
+        </button>
+    </div>
+
+    <!-- Grown-Ups Screen (parent view + backup) -->
+    <div id="screen-grownups" class="screen">
+        <button class="btn-back" onclick="App.showWorldSelect()">&#8592; Back</button>
+        <div class="grownups-content">
+            <h2 class="grownups-title">👋 For Grown-Ups</h2>
+            <p class="grownups-subtitle">What Valerie's been working on — pulled from her practice, just for you.</p>
+            <div id="grownups-report"><!-- populated by JS --></div>
+
+            <section class="backup-panel" aria-label="Progress backup">
+                <div class="backup-panel-header">
+                    <span class="backup-panel-icon" aria-hidden="true">📦</span>
+                    <div class="backup-panel-text">
+                        <h3 class="backup-panel-title">Progress Backup</h3>
+                        <p class="backup-panel-desc">Save Valerie's progress + study notes as a file, or restore on another device.</p>
+                    </div>
                 </div>
-            </div>
-            <div class="backup-panel-actions">
-                <button class="btn btn-backup btn-backup-export" onclick="App.exportBackup()">
-                    <span class="btn-icon">⬇️</span> Export
-                </button>
-                <button class="btn btn-backup btn-backup-import" onclick="App.importBackup()">
-                    <span class="btn-icon">⬆️</span> Import
-                </button>
-                <input type="file" id="backup-file-input" accept="application/json,.json" hidden onchange="App.handleBackupFile(event)">
-            </div>
-            <div class="backup-status" id="backup-status" role="status" aria-live="polite"></div>
-        </section>
+                <div class="backup-panel-actions">
+                    <button class="btn btn-backup btn-backup-export" onclick="App.exportBackup()">
+                        <span class="btn-icon">⬇️</span> Export
+                    </button>
+                    <button class="btn btn-backup btn-backup-import" onclick="App.importBackup()">
+                        <span class="btn-icon">⬆️</span> Import
+                    </button>
+                    <input type="file" id="backup-file-input" accept="application/json,.json" hidden onchange="App.handleBackupFile(event)">
+                </div>
+                <div class="backup-status" id="backup-status" role="status" aria-live="polite"></div>
+            </section>
+        </div>
     </div>
 
     <!-- World Map Screen -->
@@ -75,7 +89,9 @@
                 <p class="map-welcome" id="map-welcome">Hi Valerie! Choose a world to explore!</p>
             </div>
             <div class="map-header-right">
+                <div class="daily-badge" id="daily-badge" title="Today's goal and days practiced"></div>
                 <div class="stats-badge" id="total-stars">⭐ 0</div>
+                <button class="btn-mute" id="btn-mute" onclick="App.toggleMute()" title="Sound on/off" aria-label="Toggle sound" aria-pressed="false">🔊</button>
                 <button class="btn btn-small btn-practice" onclick="App.showPracticeZone()">🔄 Practice Zone</button>
             </div>
         </div>
@@ -136,10 +152,10 @@
     <!-- Scripts — defer so they don't block rendering.
          The ?v= query busts caches poisoned by an old deploy that served /js and /css
          with a 1-year immutable Cache-Control; bump the value to force-refresh assets. -->
-    <script defer src="js/audio.js?v=20260702-kenney-audio"></script>
-    <script defer src="js/animations.js?v=20260610"></script>
-    <script defer src="js/adaptive.js?v=20260610"></script>
-    <script defer src="js/engine.js?v=20260610"></script>
+    <script defer src="js/audio.js?v=20260723-uxbatch"></script>
+    <script defer src="js/animations.js?v=20260723-uxbatch"></script>
+    <script defer src="js/adaptive.js?v=20260723-uxbatch"></script>
+    <script defer src="js/engine.js?v=20260723-uxbatch2"></script>
     <script defer src="js/units/multiplication.js?v=20260610"></script>
     <script defer src="js/units/multiplication-1digit.js?v=20260610"></script>
     <script defer src="js/units/addition-subtraction.js?v=20260610"></script>
@@ -167,6 +183,6 @@
     <script defer src="js/units/4-area-perimeter.js?v=20260610"></script>
     <script defer src="js/units/4-measurement.js?v=20260610"></script>
     <script defer src="js/units/4-plane-figures.js?v=20260610"></script>
-    <script defer src="js/app.js?v=20260610"></script>
+    <script defer src="js/app.js?v=20260723-uxbatch"></script>
 </body>
 </html>
