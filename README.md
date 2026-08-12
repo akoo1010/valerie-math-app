@@ -2,7 +2,7 @@
 
 A personalized, interactive math learning app for Valerie, aligned with **3rd and 4th grade math topics**. Designed to make math fun through themes she loves — swimming 🏊‍♀️, Geometry Dash 🎮, and arts & crafts 🎨.
 
-**Live app:** [valerie-math-app.vercel.app](https://valerie-math-app.vercel.app)
+**Live app:** [valerie-math.vercel.app](https://valerie-math.vercel.app)
 
 ---
 
@@ -156,6 +156,13 @@ The check script runs `node --check` across JavaScript files, then loads every u
 - **Vercel** — hosting and serverless functions
 - **Vercel KV (Upstash Redis)** — cloud persistence for cross-device progress sync
 - **Google Fonts** — Fredoka One & Nunito
+
+---
+
+## 🎨 Assets & Credits
+
+- **UI & Sound Effects** — Created by [Kenney](https://www.kenney.nl) (Creative Commons Zero, CC0)
+
 
 ---
 
