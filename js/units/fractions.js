@@ -219,7 +219,7 @@ const Fractions = {
                         subText: `${whole} = ?/${denom}`,
                         visual: `<div style="font-size:2rem;font-weight:700;color:var(--craft-pink);">${whole} = <span style="color:var(--craft-yellow)">?</span>/${denom}</div>`,
                         answer: numer,
-                        hint1: `How many ${denom}ths make ${whole} whole?`,
+                        hint1: `How many ${{1: 'wholes', 2: 'halves', 3: 'thirds', 4: 'fourths'}[denom]} make ${whole} whole${whole === 1 ? '' : 's'}?`,
                         hint2: `${whole} × ${denom} = ?`,
                         hint3: `${whole} = ${numer}/${denom}`
                     };

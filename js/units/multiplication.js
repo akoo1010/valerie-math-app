@@ -35,7 +35,7 @@ const MultiplicationIntro = {
                         hint3: `${rows} × ${cols} = ${answer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === rows + cols) return 'added-instead-of-multiplied';
-                            if (userAnswer === rows || userAnswer === cols) return 'counted-one-group';
+                            if (userAnswer === cols) return 'counted-one-group'; // one lane's worth of swimmers
                             return null;
                         },
                         misconceptionHints: {
@@ -169,7 +169,9 @@ const MultiplicationIntro = {
                         visual: `<div style="font-size: 1.4rem; font-weight: 700; letter-spacing: 2px;">${display}</div>`,
                         answer,
                         hint1: `We're counting by ${skipBy}s: ${skipBy}, ${skipBy * 2}, ${skipBy * 3}...`,
-                        hint2: `The number before is ${sequence[hideIndex - 1]} and after is ${sequence[hideIndex + 1] || '...'}.`,
+                        hint2: hideIndex < steps - 1
+                            ? `The number before is ${sequence[hideIndex - 1]} and after is ${sequence[hideIndex + 1]}.`
+                            : `The number before is ${sequence[hideIndex - 1]}. Add ${skipBy} more!`,
                         hint3: `The missing number is ${answer}`
                     };
                 }

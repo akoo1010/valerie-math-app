@@ -156,11 +156,13 @@ const Patterns = {
                     const applyRule = (n) => rule.op === '+' ? n + rule.val : rule.op === '*' ? n * rule.val : n - rule.val;
                     // For subtract, ensure all inputs and test stay >= rule.val so outputs are non-negative
                     const minIn = rule.op === '-' ? rule.val + 1 : 1;
-                    const inputs = [R(minIn, minIn + 4), R(minIn + 2, minIn + 7), R(minIn + 4, minIn + 9)];
-                    // Ensure testInput is not already shown in the I/O table (otherwise the answer is given away)
-                    let testInput;
-                    let tries = 0;
-                    do { testInput = R(minIn + 1, minIn + 11); tries++; } while (inputs.includes(testInput) && tries < 20);
+                    // Three DISTINCT inputs: with repeats the table can show a single
+                    // IN→OUT pair, which fits both an "adds" and a "multiplies" rule.
+                    const inputs = Engine.Utils.shuffle(Array.from({length: 10}, (_, i) => minIn + i))
+                        .slice(0, 3)
+                        .sort((x, y) => x - y);
+                    // testInput must not already be in the I/O table (otherwise the answer is given away)
+                    const testInput = pick(Array.from({length: 11}, (_, i) => minIn + 1 + i).filter(n => !inputs.includes(n)));
                     const answer = applyRule(testInput);
                     return {
                         type: 'input',

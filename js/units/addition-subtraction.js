@@ -20,6 +20,10 @@ const AdditionSubtraction = {
                     const a = diff >= 2 ? R(100, 500) : R(10, 99);
                     const b = diff >= 2 ? R(100, 500) : R(10, 99);
                     const answer = a + b;
+                    const onesSum = (a % 10) + (b % 10);
+                    const onesCarry = onesSum >= 10 ? 1 : 0;
+                    const tensSum = Math.floor(a / 10) % 10 + Math.floor(b / 10) % 10 + onesCarry;
+                    const tensCarry = tensSum >= 10 ? 1 : 0;
                     const colors = ['#ff8fab', '#cdb4db', '#b8f2e6', '#fde68a', '#ff7f7f'];
                     const result = {
                         type: 'input',
@@ -39,14 +43,17 @@ const AdditionSubtraction = {
                         hint3: `${a} + ${b} = ${answer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === Math.abs(a - b)) return 'subtracted-instead-of-added';
-                            if (Math.abs(userAnswer - answer) <= 1) return 'off-by-one';
-                            if (userAnswer === answer - 10 || userAnswer === answer + 10) return 'place-value';
+                            if (Math.abs(userAnswer - answer) === 1) return 'off-by-one';
+                            // A dropped carry makes the answer exactly 10 (or 100) too small.
+                            if ((onesCarry && userAnswer === answer - 10) || (tensCarry && userAnswer === answer - 100)) return 'carry-error';
+                            if ([10, 100].includes(Math.abs(userAnswer - answer))) return 'place-value';
                             return null;
                         },
                         misconceptionHints: {
                             'subtracted-instead-of-added': `Careful! "Get more" means we add, not subtract. Try ${a} + ${b}.`,
                             'place-value': `Watch your place values! Line up ones, tens, and hundreds carefully.`,
-                            'off-by-one': `So close! Double-check your carrying — did you remember to carry the 1?`
+                            'carry-error': `So close! Did you remember to carry the 1 to the next column?`,
+                            'off-by-one': `So close! Re-add the ones column carefully.`
                         }
                     };
 
@@ -54,7 +61,12 @@ const AdditionSubtraction = {
                         const weA = R(10, 30), weB = R(10, 30);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} + ${weB} = ?</p><p>Ones: ${weA % 10} + ${weB % 10} = ${(weA % 10) + (weB % 10)}${(weA % 10) + (weB % 10) >= 10 ? ' (carry the 1!)' : ''}</p><p>Tens: ${Math.floor(weA/10)} + ${Math.floor(weB/10)}${(weA % 10) + (weB % 10) >= 10 ? ' + 1' : ''} = ${Math.floor((weA + weB)/10)}</p><p>Answer: <strong>${weA + weB}</strong></p></div>`;
                     } else if (modality === 'visual') {
-                        result.visual += `<div class="visual-scaffold"><p>Break it down by place value:</p><div>Ones: ${a % 10} + ${b % 10} = ${(a % 10) + (b % 10)}</div><div>Tens: ${Math.floor((a % 100) / 10)} + ${Math.floor((b % 100) / 10)} = ${Math.floor((a % 100) / 10) + Math.floor((b % 100) / 10)}</div><div><strong>${a} + ${b} = ${answer}</strong></div></div>`;
+                        // Column sums include the carried 1, and the total is left for her to build.
+                        result.visual += `<div class="visual-scaffold"><p>Break it down by place value:</p>`
+                            + `<div>Ones: ${a % 10} + ${b % 10} = ${onesSum}${onesCarry ? ' (carry the 1!)' : ''}</div>`
+                            + `<div>Tens: ${Math.floor(a / 10) % 10} + ${Math.floor(b / 10) % 10}${onesCarry ? ' + 1 carried' : ''} = ${tensSum}${tensCarry ? ' (carry the 1!)' : ''}</div>`
+                            + (answer >= 100 ? `<div>Hundreds: ${Math.floor(a / 100)} + ${Math.floor(b / 100)}${tensCarry ? ' + 1 carried' : ''} = ${Math.floor(a / 100) + Math.floor(b / 100) + tensCarry}</div>` : '')
+                            + `<div><strong>${a} + ${b} = ?</strong></div></div>`;
                     }
 
                     return result;
@@ -130,10 +142,18 @@ const AdditionSubtraction = {
             {
                 skillId: 'add-sub-regroup',
                 generate(diff) {
-                    const a = R(100, 500);
-                    let b = R(100, 400);
-                    while (b === a) b = R(100, 400); // avoid a trivial "a − a = 0" subtraction
                     const isAdd = Math.random() < 0.5;
+                    // The prompt promises regrouping, so only keep pairs that need a
+                    // carry (add) or a borrow (subtract) in the ones or tens column.
+                    const digit = (n, place) => Math.floor(n / place) % 10;
+                    const needsRegroup = (x, y) => isAdd
+                        ? digit(x, 1) + digit(y, 1) >= 10 || digit(x, 10) + digit(y, 10) >= 10
+                        : digit(Math.max(x, y), 1) < digit(Math.min(x, y), 1) || digit(Math.max(x, y), 10) < digit(Math.min(x, y), 10);
+                    let a, b;
+                    do {
+                        a = R(100, 500);
+                        b = R(100, 400);
+                    } while (b === a || !needsRegroup(a, b)); // b === a would be a trivial "a − a = 0"
                     const answer = isAdd ? a + b : Math.max(a, b) - Math.min(a, b);
                     const big = Math.max(a, b);
                     const small = Math.min(a, b);

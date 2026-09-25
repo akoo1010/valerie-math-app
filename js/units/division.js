@@ -24,7 +24,7 @@ const Division = {
                         type: 'input',
                         questionText: `${total} swimmers need to split into ${teams} equal relay teams.<br>How many swimmers per team?`,
                         visual: `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
-                            ${Array.from({length: Math.min(total, 20)}, () => '<span style="font-size:1.3rem">🏊</span>').join('')}
+                            ${Array.from({length: total}, () => '<span style="font-size:1.3rem">🏊</span>').join('')}
                         </div>`,
                         answer: perTeam,
                         hint1: `Divide the total swimmers by the number of teams`,
@@ -62,12 +62,12 @@ const Division = {
                         type: 'input',
                         questionText: `Share ${total} pairs of goggles equally among ${friends} friends.<br>How many does each friend get?`,
                         visual: `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-                            ${Array.from({length: Math.min(total, 18)}, () => '<span style="font-size:1.2rem">🥽</span>').join('')}
+                            ${Array.from({length: total}, () => '<span style="font-size:1.2rem">🥽</span>').join('')}
                         </div>`,
                         answer: each,
                         hint1: `Division means sharing equally!`,
-                        hint2: `${total} goggles ÷ ${friends} friends = ?`,
-                        hint3: `Each friend gets ${each} goggles`
+                        hint2: `${total} pairs ÷ ${friends} friends = ?`,
+                        hint3: `Each friend gets ${each} pairs of goggles`
                     };
                 }
             },
