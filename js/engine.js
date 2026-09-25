@@ -406,7 +406,7 @@ const Engine = (() => {
         correctCount++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
         const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
-        Adaptive.recordCorrect(skillId, unitId);
+        Adaptive.recordCorrect(skillId, unitId, wrongAttempts === 0);
 
         AudioManager.correct();
 

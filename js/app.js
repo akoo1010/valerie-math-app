@@ -66,6 +66,13 @@ const App = (() => {
 
         // Update total stars display
         updateStars();
+
+        // If she tapped through to the map while progress was still loading, it
+        // was drawn from the empty placeholder state — redraw with the real data.
+        if (document.getElementById('screen-map')?.classList.contains('active')) {
+            renderMap();
+            updateDaily();
+        }
     }
 
     function updateStars() {

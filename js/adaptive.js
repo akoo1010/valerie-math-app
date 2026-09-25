@@ -78,6 +78,11 @@ const Adaptive = (() => {
     let state = createDefaultState();
 
     let _saveTimer = null;
+    // False until load() settles. The splash stays interactive while the cloud
+    // copy is fetched, so an answer given in that window would otherwise persist
+    // the empty default state with a fresh updatedAt — which load() then picks as
+    // "newest" and pushes to the server, wiping her real progress.
+    let _loaded = false;
 
     function isPlainObject(value) {
         return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -272,6 +277,7 @@ const Adaptive = (() => {
     }
 
     function save() {
+        if (!_loaded) return; // see _loaded: never persist the pre-load placeholder state
         state.updatedAt = Date.now(); // stamp before persisting so both copies carry the same recency
         try {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -356,6 +362,7 @@ const Adaptive = (() => {
 
         state.session = freshSession();
         rolloverDaily(); // start "today" fresh if the saved copy is from a previous day
+        _loaded = true;
     }
 
     /**
@@ -491,8 +498,9 @@ const Adaptive = (() => {
          *
          * @param {string} skillId
          * @param {string} unitId
+         * @param {boolean} [isFirstAttempt] false when she got it right on a retry
          */
-        recordCorrect(skillId, unitId) {
+        recordCorrect(skillId, unitId, isFirstAttempt = true) {
             const skill = getSkill(skillId);
             skill.streak++;
             skill.consecutiveCorrect++;
@@ -502,7 +510,10 @@ const Adaptive = (() => {
             recordSessionResult(true);
 
             // Fade any logged misconception so scaffolding lifts as she recovers.
-            decayTopMisconception(skill);
+            // Only on a first-try correct: a retry-correct on the same question
+            // would otherwise erase the misconception that question just logged,
+            // so the visual scaffold (2+ misconceptions) could never engage.
+            if (isFirstAttempt) decayTopMisconception(skill);
 
             // Check mastery
             if (skill.streak >= MASTERY_STREAK) {
