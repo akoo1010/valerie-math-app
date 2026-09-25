@@ -88,7 +88,7 @@ const PlaceValue4 = {
                         type: 'multiple-choice',
                         questionText: `In the number <strong>${num.toLocaleString()}</strong>, what digit is in the <strong>${place}</strong> place?`,
                         visual: `<div style="display:flex;gap:4px;justify-content:center;">
-                            ${numStr.split('').map((d, i) => `<div style="width:44px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${i === placeIndex[place] ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};border-radius:8px;font-weight:700;font-size:1.4rem;color:#fff;">${monsterEmojis[i % monsterEmojis.length]}<span>${d}</span></div>`).join('')}
+                            ${numStr.split('').map((d, i) => `<div style="width:44px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${modality === 'visual' && i === placeIndex[place] ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};border-radius:8px;font-weight:700;font-size:1.4rem;color:#fff;">${monsterEmojis[i % monsterEmojis.length]}<span>${d}</span></div>`).join('')}
                         </div>`,
                         answer,
                         options: Engine.Utils.shuffle([answer, ...Engine.Utils.shuffle([0,1,2,3,4,5,6,7,8,9].filter(d => d !== answer && Math.abs(d - answer) <= 4)).slice(0, 3)]),
@@ -215,7 +215,13 @@ const PlaceValue4 = {
                         const upper = lower + roundTo;
                         const midpoint = lower + roundTo / 2;
                         const goesUp = num >= midpoint;
-                        result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
+                        if (num % roundTo === 0) {
+                            // Already on a multiple: nothing to round, so skip the up/down number line
+                            result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
+                            <p>🐾 <strong>${num.toLocaleString()}</strong> is already a multiple of ${roundTo.toLocaleString()} — it stays <span style="color:var(--monster-yellow);font-weight:700;">${answer.toLocaleString()}</span> ⚡</p>
+                        </div>`;
+                        } else {
+                            result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <p>🐾 Is <strong>${num.toLocaleString()}</strong> closer to ${lower.toLocaleString()} or ${upper.toLocaleString()}?</p>
                             <div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;">
                                 <span style="font-weight:700;color:var(--monster-blue);">${lower.toLocaleString()} 🦖</span>
@@ -224,6 +230,7 @@ const PlaceValue4 = {
                             </div>
                             <p style="margin-top:6px;">${num.toLocaleString()} is ${goesUp ? 'at or past' : 'before'} the midpoint → round <strong>${goesUp ? 'UP' : 'DOWN'}</strong> to <span style="color:var(--monster-yellow);font-weight:700;">${answer.toLocaleString()}</span> ⚡</p>
                         </div>`;
+                        }
                     }
 
                     return result;
@@ -270,7 +277,7 @@ const PlaceValue4 = {
                         answer: correct,
                         options,
                         hint1: `Find the smallest number first, then the next smallest...`,
-                        hint2: `Compare the thousands digits first, then hundreds, then tens...`,
+                        hint2: `A number with more digits is bigger. If they have the same number of digits, compare the leftmost digits first, then move right...`,
                         hint3: `The correct order is: ${correct}`,
                         diagnose(userAnswer) {
                             if (userAnswer === descending) return 'ordered-greatest-to-least';

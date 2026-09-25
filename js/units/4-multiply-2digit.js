@@ -156,8 +156,10 @@ const Multiply2Digit4 = {
                         hint2: `Step 2: Multiply ${a} by ${Math.floor(b / 10) * 10} (tens). Then add both products!`,
                         hint3: `${a} × ${b} = ${Engine.Utils.fmt(answer)}`,
                         diagnose(userAnswer) {
-                            // Common: forgot to add the zero when multiplying by tens
-                            if (userAnswer === a * (b % 10) + a * Math.floor(b / 10)) return 'forgot-tens-zero';
+                            // Common: forgot to add the zero when multiplying by tens.
+                            // For b = 19 that value equals a × 10 (the tens partial alone), so it isn't evidence of a missing zero.
+                            const forgotZero = a * (b % 10) + a * Math.floor(b / 10);
+                            if (userAnswer === forgotZero && forgotZero !== a * Math.floor(b / 10) * 10) return 'forgot-tens-zero';
                             return null;
                         },
                         misconceptionHints: {
@@ -197,10 +199,11 @@ const Multiply2Digit4 = {
                     const result = {
                         type: 'multiple-choice',
                         questionText: `🎤 Estimate! Round each number to the nearest 10, then multiply.<br>${a} × ${b} ≈ ?`,
+                        // Rounded values only in visual modality — elsewhere the rounding is the skill being practiced
                         visual: `<div style="display:flex;gap:12px;justify-content:center;align-items:center;font-size:1.2rem;">
-                            <div style="text-align:center;color:var(--dance-pink);"><strong>${a}</strong><br><span style="font-size:0.8rem;">≈ ${estA}</span></div>
+                            <div style="text-align:center;color:var(--dance-pink);"><strong>${a}</strong>${modality === 'visual' ? `<br><span style="font-size:0.8rem;">≈ ${estA}</span>` : ''}</div>
                             <div style="font-size:1.5rem;color:var(--dance-gold);">×</div>
-                            <div style="text-align:center;color:var(--dance-cyan);"><strong>${b}</strong><br><span style="font-size:0.8rem;">≈ ${estB}</span></div>
+                            <div style="text-align:center;color:var(--dance-cyan);"><strong>${b}</strong>${modality === 'visual' ? `<br><span style="font-size:0.8rem;">≈ ${estB}</span>` : ''}</div>
                         </div>`,
                         answer,
                         options: Engine.Utils.roundedMultipleChoice(answer, 100),
@@ -388,10 +391,11 @@ const Multiply2Digit4 = {
                         diagnose(userAnswer) {
                             // Only multiplied by ones digit (equivalent to missing the tens partial)
                             if (userAnswer === a * bOnes) return 'only-ones-digit';
+                            // Missed the ones partial product. Checked before forgot-tens-zero: for b = 19
+                            // both values equal a × 10, and that answer is the tens partial alone.
+                            if (userAnswer === answer - part2) return 'missed-ones-partial';
                             // Forgot to shift the tens partial product (treated tens digit as ones)
                             if (userAnswer === part2 + a * Math.floor(b / 10)) return 'forgot-tens-zero';
-                            // Missed the ones partial product
-                            if (userAnswer === answer - part2) return 'missed-ones-partial';
                             return null;
                         },
                         misconceptionHints: {

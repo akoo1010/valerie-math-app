@@ -103,7 +103,7 @@ const Division4 = {
 
                     if (modality === 'visual') {
                         const dragonGroups = [];
-                        for (let i = 0; i < Math.min(b, 8); i++) {
+                        for (let i = 0; i < b; i++) {
                             dragonGroups.push(`<div style="display:inline-block;margin:3px;padding:4px 8px;background:rgba(220,50,50,0.1);border-radius:6px;font-size:0.95rem;">🐲 ${'🧪'.repeat(Math.min(quotient, 8))}${quotient > 8 ? ` ×${quotient}` : ''}</div>`);
                         }
                         const remainderPotions = '🧪'.repeat(remainder);
@@ -155,8 +155,11 @@ const Division4 = {
                             if (userAnswer === remainder) return 'gave-remainder';
                             return null;
                         },
-                        misconceptionHints: {
+                        // Only the current scenario's hints — a boats hint on a bags question (or vice versa) states the wrong answer
+                        misconceptionHints: needExtra ? {
                             'forgot-extra': `You found the quotient (${quotient}), but ${remainder} monster(s) would be left without a boat! You need one more boat.`,
+                            'gave-remainder': `${remainder} is the remainder, not the answer! Think about what the question is really asking.`
+                        } : {
                             'rounded-up-wrong': `We only want FULL bags. The ${remainder} leftover treats don't fill a bag, so the answer is ${quotient}, not ${quotient + 1}.`,
                             'gave-remainder': `${remainder} is the remainder, not the answer! Think about what the question is really asking.`
                         }
@@ -169,7 +172,7 @@ const Division4 = {
                     }
 
                     if (modality === 'visual') {
-                        const boatIcons = Array(quotient).fill(needExtra ? '⛵🐲🐲' : '🎒').join(' ');
+                        const boatIcons = Array(quotient).fill(needExtra ? '⛵' + '🐲'.repeat(b) : '🎒').join(' ');
                         const extraIcon = needExtra ? ` ⛵${'🐲'.repeat(remainder)}` : ` + ${'🐾'.repeat(remainder)} leftover`;
                         result.visual = `<div style="text-align:center;font-size:1.2rem;">
                             <div style="margin-bottom:8px;font-weight:700;color:var(--monster-blue);">${a} ÷ ${b} = ${quotient} R ${remainder}</div>
@@ -423,12 +426,23 @@ const Division4 = {
                     };
 
                     if (modality === 'worked-example') {
+                        // Fresh numbers of the same type, so the example doesn't solve the actual question
+                        let exA, exB, exAns;
+                        do {
+                            if (type === 'basic') {
+                                exB = R(2, 9); exAns = R(10, 50); exA = exB * exAns;
+                            } else if (type === 'remainder') {
+                                exB = R(3, 8); exAns = R(5, 30); exA = exB * exAns + R(1, exB - 1);
+                            } else {
+                                exB = R(2, 6); exAns = R(50, 200); exA = exB * exAns;
+                            }
+                        } while (exA === a && exB === b);
                         if (type === 'basic') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${a} ÷ ${b}</p><p>Think: ${b} × ? = ${a}</p><p>${b} × ${answer} = ${a} ✓</p><p>Answer: <strong>${answer}</strong></p></div>`;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${exA} ÷ ${exB}</p><p>Think: ${exB} × ? = ${exA}</p><p>${exB} × ${exAns} = ${exA} ✓</p><p>Answer: <strong>${exAns}</strong></p></div>`;
                         } else if (type === 'remainder') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${a} ÷ ${b}</p><p>Find the largest multiple of ${b} that fits in ${a}</p><p>${b} × ${answer} = ${b * answer} (remainder ${a - b * answer})</p><p>Quotient: <strong>${answer}</strong></p></div>`;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${exA} ÷ ${exB}</p><p>Find the largest multiple of ${exB} that fits in ${exA}</p><p>${exB} × ${exAns} = ${exB * exAns} (remainder ${exA - exB * exAns})</p><p>Quotient: <strong>${exAns}</strong></p></div>`;
                         } else {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${Engine.Utils.fmt(a)} ÷ ${b}</p><p>Use long division: divide, multiply, subtract, bring down</p><p>Answer: <strong>${Engine.Utils.fmt(answer)}</strong></p></div>`;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${Engine.Utils.fmt(exA)} ÷ ${exB}</p><p>Use long division: divide, multiply, subtract, bring down</p><p>Answer: <strong>${Engine.Utils.fmt(exAns)}</strong></p></div>`;
                         }
                     }
 

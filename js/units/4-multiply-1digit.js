@@ -45,7 +45,7 @@ const Multiply1Digit4 = {
                         },
                         misconceptionHints: {
                             'added-instead-of-multiplied': `We need to multiply, not add! ${a} × ${b} means ${b} groups of ${a}.`,
-                            'off-by-one-group': `Almost! Double-check your carrying when you multiply each digit.`
+                            'off-by-one-group': `Almost! Your answer is off by exactly one group of ${a} or ${b}. Check each part: ${Math.floor(a / 10) * 10} × ${b} and ${a % 10} × ${b}.`
                         }
                     };
 
@@ -115,8 +115,8 @@ const Multiply1Digit4 = {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;color:var(--monster-blue);font-weight:700;margin-bottom:8px;">🐲 Destroy the dragon digit by digit!</div>
                             <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                                <div style="background:rgba(239,68,68,0.15);border:2px solid var(--monster-red);border-radius:8px;padding:8px 10px;font-weight:700;">${hu}00 × ${b} = ${hu * 100 * b}</div>
-                                <div style="background:rgba(59,130,246,0.15);border:2px solid var(--monster-blue);border-radius:8px;padding:8px 10px;font-weight:700;">${te}0 × ${b} = ${te * 10 * b}</div>
+                                <div style="background:rgba(239,68,68,0.15);border:2px solid var(--monster-red);border-radius:8px;padding:8px 10px;font-weight:700;">${hu * 100} × ${b} = ${hu * 100 * b}</div>
+                                <div style="background:rgba(59,130,246,0.15);border:2px solid var(--monster-blue);border-radius:8px;padding:8px 10px;font-weight:700;">${te * 10} × ${b} = ${te * 10 * b}</div>
                                 <div style="background:rgba(250,204,21,0.15);border:2px solid var(--monster-yellow);border-radius:8px;padding:8px 10px;font-weight:700;">${on} × ${b} = ${on * b}</div>
                             </div>
                             <div style="margin-top:10px;font-weight:700;color:var(--monster-blue);font-size:1.1rem;">👾 Add them all up! → ?</div>
@@ -174,9 +174,9 @@ const Multiply1Digit4 = {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;color:var(--monster-purple);font-weight:700;margin-bottom:8px;">🦖 Break it apart!</div>
                             <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                                <div style="background:rgba(124,58,237,0.15);border:2px solid var(--monster-purple);border-radius:8px;padding:8px 10px;font-weight:700;">${th},000 × ${b} = ${Engine.Utils.fmt(th * 1000 * b)}</div>
-                                <div style="background:rgba(239,68,68,0.15);border:2px solid var(--monster-red);border-radius:8px;padding:8px 10px;font-weight:700;">${hu}00 × ${b} = ${Engine.Utils.fmt(hu * 100 * b)}</div>
-                                <div style="background:rgba(59,130,246,0.15);border:2px solid var(--monster-blue);border-radius:8px;padding:8px 10px;font-weight:700;">${te}0 × ${b} = ${te * 10 * b}</div>
+                                <div style="background:rgba(124,58,237,0.15);border:2px solid var(--monster-purple);border-radius:8px;padding:8px 10px;font-weight:700;">${Engine.Utils.fmt(th * 1000)} × ${b} = ${Engine.Utils.fmt(th * 1000 * b)}</div>
+                                <div style="background:rgba(239,68,68,0.15);border:2px solid var(--monster-red);border-radius:8px;padding:8px 10px;font-weight:700;">${hu * 100} × ${b} = ${Engine.Utils.fmt(hu * 100 * b)}</div>
+                                <div style="background:rgba(59,130,246,0.15);border:2px solid var(--monster-blue);border-radius:8px;padding:8px 10px;font-weight:700;">${te * 10} × ${b} = ${te * 10 * b}</div>
                                 <div style="background:rgba(250,204,21,0.15);border:2px solid var(--monster-yellow);border-radius:8px;padding:8px 10px;font-weight:700;">${on} × ${b} = ${on * b}</div>
                             </div>
                             <div style="margin-top:10px;font-weight:700;color:var(--monster-green);font-size:1.2rem;">🐾 Add them up! → ?</div>
@@ -252,12 +252,13 @@ const Multiply1Digit4 = {
                     const result = {
                         type: 'multiple-choice',
                         questionText: `🗡️ Estimate! Round ${a} to the nearest ${roundTo}, then multiply by ${b}.`,
+                        // Don't show the rounded value here — rounding is the skill (visual modality replaces this with a scaffold)
                         visual: `<div style="text-align:center;color:var(--monster-yellow);font-size:1.4rem;font-weight:700;">
-                            <div>${a} ≈ ${estA}</div>
-                            <div style="margin-top:4px;">${estA} × ${b} = ?</div>
+                            <div>${a} × ${b} ≈ ?</div>
                         </div>`,
                         answer,
-                        options: Engine.Utils.multipleChoice(answer),
+                        // Distractors are (estA ± roundTo) × b etc., so every option is a plausible rounded estimate
+                        options: Engine.Utils.roundedMultipleChoice(answer, roundTo * b),
                         hint1: `Round ${a} to the nearest ${roundTo}: ${estA}`,
                         hint2: `Now multiply: ${estA} × ${b} = ?`,
                         hint3: `${estA} × ${b} = ${Engine.Utils.fmt(answer)}`,
@@ -394,8 +395,9 @@ const Multiply1Digit4 = {
                         hint3: `${a} × ${b} = ${Engine.Utils.fmt(answer)}`,
                         diagnose(userAnswer) {
                             if (userAnswer === a + b) return 'added-instead';
-                            if (Math.abs(userAnswer - answer) <= 10 && userAnswer !== answer) return 'carry-error';
+                            // Before carry-error: when a = 10, one group off is also within 10
                             if (userAnswer === a * (b - 1) || userAnswer === a * (b + 1)) return 'off-by-one-group';
+                            if (Math.abs(userAnswer - answer) <= 10 && userAnswer !== answer) return 'carry-error';
                             return null;
                         },
                         misconceptionHints: {
