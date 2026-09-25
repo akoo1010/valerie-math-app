@@ -21,6 +21,12 @@ const FactorsMultiples4 = {
             return factors;
         }
 
+        // 1st, 2nd, 3rd, 4th ... 11th, 12th, 13th
+        function ordinal(k) {
+            const suffix = (k % 100 >= 11 && k % 100 <= 13) ? 'th' : ({1: 'st', 2: 'nd', 3: 'rd'}[k % 10] || 'th');
+            return `${k}${suffix}`;
+        }
+
         return [
             // 1. List all factor pairs
             {
@@ -52,7 +58,10 @@ const FactorsMultiples4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Factors of 12</p><p>1×12, 2×6, 3×4</p><p>Factors: 1, 2, 3, 4, 6, 12 = <strong>6 factors</strong></p></div>`;
+                        // The 12 example has 6 factors — switch if that's this question's answer too (12, 18, 20)
+                        result.workedExample = answer === 6
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Factors of 16</p><p>1×16, 2×8, 4×4</p><p>Factors: 1, 2, 4, 8, 16 = <strong>5 factors</strong> (4 × 4 counts once!)</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Factors of 12</p><p>1×12, 2×6, 3×4</p><p>Factors: 1, 2, 3, 4, 6, 12 = <strong>6 factors</strong></p></div>`;
                     }
 
                     return result;
@@ -88,7 +97,7 @@ const FactorsMultiples4 = {
                         answer,
                         options: [{label: 'Yes — it divides evenly!', value: 'Yes'}, {label: 'No — there\'s a remainder!', value: 'No'}],
                         hint1: `Does ${n} ÷ ${testNum} have a remainder?`,
-                        hint2: `${n} ÷ ${testNum} = ${(n / testNum).toFixed(2)}`,
+                        hint2: `${n} ÷ ${testNum} = ${Math.floor(n / testNum)} R ${n % testNum}`,
                         hint3: `${n} ÷ ${testNum} = ${n % testNum === 0 ? n / testNum + ' (no remainder!)' : Math.floor(n / testNum) + ' R ' + (n % testNum)}, so ${answer}!`,
                         diagnose(userAnswer) {
                             if (answer === 'Yes' && userAnswer === 'No') return 'confused-factor-multiple';
@@ -101,14 +110,16 @@ const FactorsMultiples4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Is 4 a factor of 20?</p><p>20 ÷ 4 = 5 (no remainder)</p><p>Yes! 4 IS a factor of 20.</p></div>`;
+                        result.workedExample = (testNum === 4 && n === 20)
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Is 3 a factor of 18?</p><p>18 ÷ 3 = 6 (no remainder)</p><p>Yes! 3 IS a factor of 18.</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Is 4 a factor of 20?</p><p>20 ÷ 4 = 5 (no remainder)</p><p>Yes! 4 IS a factor of 20.</p></div>`;
                     }
 
                     if (modality === 'visual') {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🕺 Dance Division Check 🕺</div>
                             <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
-                                ${Array.from({length: Math.min(n, 30)}, (_, i) => `<div style="width:18px;height:18px;border-radius:50%;background:${(i + 1) % testNum === 0 ? 'var(--dance-pink)' : 'var(--dance-cyan)'};opacity:0.8;"></div>`).join('')}
+                                ${Array.from({length: n}, (_, i) => `<div style="width:18px;height:18px;border-radius:50%;background:${(i + 1) % testNum === 0 ? 'var(--dance-pink)' : 'var(--dance-cyan)'};opacity:0.8;"></div>`).join('')}
                             </div>
                             <div style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);">Can ${n} dots be split into equal groups of ${testNum}?</div>
                         </div>`;
@@ -128,30 +139,35 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 What is the ${position}th multiple of ${n}?`,
+                        questionText: `🕺 What is the ${ordinal(position)} multiple of ${n}?`,
+                        // Show the first few multiples, then a "?" box — never the answer itself
                         visual: `<div style="text-align:center;">
                             <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-                                ${Array.from({length: Math.min(position, 5)}, (_, i) => `<div style="padding:6px 12px;background:rgba(236,72,153,0.1);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${n * (i + 1)}</div>`).join('')}
-                                ${position > 5 ? '<span style="font-size:1.3rem;color:var(--dance-gold);">...</span><div style="padding:6px 12px;background:rgba(34,211,238,0.2);border:2px solid var(--dance-cyan);border-radius:8px;font-weight:800;color:var(--dance-cyan);">?</div>' : ''}
+                                ${Array.from({length: Math.min(position - 1, 4)}, (_, i) => `<div style="padding:6px 12px;background:rgba(236,72,153,0.1);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${n * (i + 1)}</div>`).join('')}
+                                ${position - 1 > 4 ? '<span style="font-size:1.3rem;color:var(--dance-gold);">...</span>' : ''}<div style="padding:6px 12px;background:rgba(34,211,238,0.2);border:2px solid var(--dance-cyan);border-radius:8px;font-weight:800;color:var(--dance-cyan);">?</div>
                             </div>
                         </div>`,
                         answer,
-                        hint1: `The ${position}th multiple means ${n} × ${position}`,
+                        hint1: `The ${ordinal(position)} multiple means ${n} × ${position}`,
                         hint2: `${n} × ${position} = ?`,
-                        hint3: `The ${position}th multiple of ${n} is ${answer}`,
+                        hint3: `The ${ordinal(position)} multiple of ${n} is ${answer}`,
                         diagnose(userAnswer) {
-                            if (factors.includes(userAnswer) && userAnswer !== answer) return 'gave-factor-not-multiple';
+                            // n itself is the 1st multiple of n, so it isn't a "factor, not a multiple" slip
+                            if (factors.includes(userAnswer) && userAnswer !== n) return 'gave-factor-not-multiple';
                             if (userAnswer === n + position) return 'added-instead-of-multiplied';
                             return null;
                         },
                         misconceptionHints: {
-                            'gave-factor-not-multiple': `That's a FACTOR of ${n}, not a multiple! A multiple is ${n} × something. The ${position}th multiple = ${n} × ${position}.`,
-                            'added-instead-of-multiplied': `It looks like you added ${n} + ${position} = ${n + position}. The ${position}th MULTIPLE means ${n} × ${position} = ${answer}.`
+                            'gave-factor-not-multiple': `That's a FACTOR of ${n}, not a multiple! A multiple is ${n} × something. The ${ordinal(position)} multiple = ${n} × ${position}.`,
+                            'added-instead-of-multiplied': `It looks like you added ${n} + ${position} = ${n + position}. The ${ordinal(position)} MULTIPLE means ${n} × ${position} = ${answer}.`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 4th multiple of 6</p><p>6, 12, 18, <strong>24</strong></p><p>Or simply: 6 × 4 = <strong>24</strong></p></div>`;
+                        // Switch examples when the answer would be the example's 24 (e.g. the 6th multiple of 4)
+                        result.workedExample = answer === 24
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 4th multiple of 7</p><p>7, 14, 21, <strong>28</strong></p><p>Or simply: 7 × 4 = <strong>28</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 4th multiple of 6</p><p>6, 12, 18, <strong>24</strong></p><p>Or simply: 6 × 4 = <strong>24</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -190,7 +206,7 @@ const FactorsMultiples4 = {
                         answer,
                         options: [{label: 'Yes — divides evenly!', value: 'Yes'}, {label: 'No — has a remainder!', value: 'No'}],
                         hint1: `Divide ${testNum} by ${base}. Is there a remainder?`,
-                        hint2: `${testNum} ÷ ${base} = ${(testNum / base).toFixed(2)}`,
+                        hint2: `${testNum} ÷ ${base} = ${Math.floor(testNum / base)} R ${testNum % base}`,
                         hint3: `${testNum} ÷ ${base} = ${testNum % base === 0 ? testNum / base : Math.floor(testNum / base) + ' R ' + (testNum % base)}, so ${answer}!`,
                         diagnose(userAnswer) {
                             if (answer === 'No' && userAnswer === 'Yes') return 'ignored-remainder';
@@ -204,7 +220,9 @@ const FactorsMultiples4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Is 21 a multiple of 7?</p><p>21 ÷ 7 = 3 (no remainder)</p><p>Yes! 21 = 7 × 3, so 21 IS a multiple of 7.</p><p><strong>Non-example:</strong> Is 22 a multiple of 7? 22 ÷ 7 = 3 R 1. No!</p></div>`;
+                        result.workedExample = (base === 7 && (testNum === 21 || testNum === 22))
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Is 24 a multiple of 6?</p><p>24 ÷ 6 = 4 (no remainder)</p><p>Yes! 24 = 6 × 4, so 24 IS a multiple of 6.</p><p><strong>Non-example:</strong> Is 25 a multiple of 6? 25 ÷ 6 = 4 R 1. No!</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Is 21 a multiple of 7?</p><p>21 ÷ 7 = 3 (no remainder)</p><p>Yes! 21 = 7 × 3, so 21 IS a multiple of 7.</p><p><strong>Non-example:</strong> Is 22 a multiple of 7? 22 ÷ 7 = 3 R 1. No!</p></div>`;
                     } else if (modality === 'visual') {
                         const steps = Math.min(Math.ceil(testNum / base), 12);
                         result.visual = `<div style="text-align:center;">
@@ -233,6 +251,11 @@ const FactorsMultiples4 = {
                     const n = isPrime ? pick(diff >= 2 ? primes : primes.slice(0, 6)) : pick(diff >= 2 ? composites : composites.slice(0, 8));
                     const answer = isPrime ? 'Prime' : 'Composite';
                     const nFactors = getFactors(n);
+                    // Only suggest trial divisors smaller than n (2 ÷ 2 DOES work, so don't list it for n = 2)
+                    const tryDivs = [2, 3, 5, 7].filter(p => p < n);
+                    const tryText = tryDivs.length
+                        ? `Try dividing ${n} by ${tryDivs.join(', ')} — ${tryDivs.length === 1 ? 'it leaves a remainder' : 'each one leaves a remainder'}!`
+                        : `No whole number between 1 and ${n} divides it evenly!`;
 
                     const result = {
                         type: 'multiple-choice',
@@ -247,7 +270,7 @@ const FactorsMultiples4 = {
                             {label: `Composite (more than 2 factors)`, value: 'Composite'}
                         ],
                         hint1: `Can any number besides 1 and ${n} divide into ${n} evenly?`,
-                        hint2: isPrime ? `Try dividing by 2, 3, 5... none work!` : `${n} ÷ ${nFactors[1]} = ${n / nFactors[1]} — it has more than 2 factors!`,
+                        hint2: isPrime ? tryText : `${n} ÷ ${nFactors[1]} = ${n / nFactors[1]} — it has more than 2 factors!`,
                         hint3: `${n} is ${answer} (factors: ${nFactors.join(', ')})`,
                         diagnose(userAnswer) {
                             if (n === 2 && userAnswer === 'Composite') return 'two-is-prime';
@@ -257,13 +280,16 @@ const FactorsMultiples4 = {
                         },
                         misconceptionHints: {
                             'two-is-prime': `2 is the ONLY even prime number! It has exactly 2 factors: 1 and 2. All other even numbers are composite because 2 is also a factor.`,
-                            'missed-prime': `${n} is prime — it can ONLY be divided evenly by 1 and ${n} itself. Try dividing by 2, 3, 5, 7... none go in evenly!`,
+                            'missed-prime': `${n} is prime — it can ONLY be divided evenly by 1 and ${n} itself. ${tryText}`,
                             'missed-composite': `${n} is composite because it has MORE than 2 factors: ${nFactors.join(', ')}. The extra factor ${nFactors[1]} divides evenly into ${n}!`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Prime:</strong> 7 → factors are just 1, 7 ✓</p><p><strong>Composite:</strong> 12 → factors: 1, 2, 3, 4, 6, 12 ✗</p><p>Note: 1 is NEITHER prime nor composite!</p></div>`;
+                        // Example numbers must differ from the one being asked
+                        const exPrime = n === 7 ? 11 : 7;
+                        const exComposite = n === 12 ? 10 : 12;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Prime:</strong> ${exPrime} → factors are just ${getFactors(exPrime).join(', ')} ✓</p><p><strong>Composite:</strong> ${exComposite} → factors: ${getFactors(exComposite).join(', ')} ✗</p><p>Note: 1 is NEITHER prime nor composite!</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">💃 Factor Dance Test 💃</div>
@@ -326,7 +352,10 @@ const FactorsMultiples4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> GCF of 12 and 18</p><p>Factors of 12: 1, 2, 3, 4, 6, 12</p><p>Factors of 18: 1, 2, 3, 6, 9, 18</p><p>Common: 1, 2, 3, 6 → GCF = <strong>6</strong></p></div>`;
+                        // Switch examples when the GCF would be the example's 6 (e.g. 12 and 18)
+                        result.workedExample = gcf === 6
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> GCF of 8 and 12</p><p>Factors of 8: 1, 2, 4, 8</p><p>Factors of 12: 1, 2, 3, 4, 6, 12</p><p>Common: 1, 2, 4 → GCF = <strong>4</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> GCF of 12 and 18</p><p>Factors of 12: 1, 2, 3, 4, 6, 12</p><p>Factors of 18: 1, 2, 3, 6, 9, 18</p><p>Common: 1, 2, 3, 6 → GCF = <strong>6</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -384,7 +413,10 @@ const FactorsMultiples4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Strategy:</strong> Check pairs from 1 up to √${n} ≈ ${Math.sqrt(n).toFixed(1)}</p><p>Each pair gives TWO factors (unless it's a perfect square).</p><p>Factors of ${n}: ${factors.join(', ')} = <strong>${factors.length} factors</strong></p></div>`;
+                            // Solve a DIFFERENT number (with a different factor count) so the example doesn't give the answer away
+                            const exN = pick([12, 16, 18, 20, 24, 30, 36, 48].filter(x => getFactors(x).length !== factors.length));
+                            const exFactors = getFactors(exN);
+                            result.workedExample = `<div style="text-align:center"><p><strong>Strategy:</strong> Check pairs from 1 up to √${exN} ≈ ${Math.sqrt(exN).toFixed(1)}</p><p>Each pair gives TWO factors (unless it's a perfect square).</p><p>Example — factors of ${exN}: ${exFactors.join(', ')} = <strong>${exFactors.length} factors</strong></p></div>`;
                         } else if (modality === 'visual') {
                             result.visual = `<div style="text-align:center;">
                                 <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🎤 Factor Pair Dance 🎤</div>
@@ -427,7 +459,10 @@ const FactorsMultiples4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Rule:</strong> Exactly 2 factors → Prime. More than 2 → Composite.</p><p>Factors of ${n}: ${nFactors.join(', ')}</p><p>${n} is <strong>${answer}</strong>!</p><p style="font-size:0.85rem;color:var(--text-muted);">Remember: 1 is NEITHER prime nor composite.</p></div>`;
+                            // Solve a DIFFERENT number so the example doesn't give the answer away
+                            const exN = pick(pool.filter(x => x !== n));
+                            const exFactors = getFactors(exN);
+                            result.workedExample = `<div style="text-align:center"><p><strong>Rule:</strong> Exactly 2 factors → Prime. More than 2 → Composite.</p><p>Example — factors of ${exN}: ${exFactors.join(', ')}</p><p>${exN} is <strong>${exFactors.length === 2 ? 'Prime' : 'Composite'}</strong>!</p><p style="font-size:0.85rem;color:var(--text-muted);">Remember: 1 is NEITHER prime nor composite.</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual = `<div style="text-align:center;">
                                 <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">✨ Prime or Composite Spotlight ✨</div>
@@ -467,7 +502,14 @@ const FactorsMultiples4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Shortcut:</strong> The Nth multiple of a number = number × N</p><p>The ${pos}th multiple of ${base} = ${base} × ${pos} = <strong>${answer}</strong></p><p>Skip-count check: ${Array.from({length: Math.min(pos, 5)}, (_, i) => base * (i + 1)).join(', ')}${pos > 5 ? `, ... ${answer}` : ''}</p></div>`;
+                            // Solve a DIFFERENT problem (different base, different result) so the example doesn't give the answer away
+                            let exBase, exPos;
+                            do {
+                                exBase = R(3, 9);
+                                exPos = R(5, 9);
+                            } while (exBase === base || exBase * exPos === answer);
+                            const exAnswer = exBase * exPos;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Shortcut:</strong> The Nth multiple of a number = number × N</p><p>Example: the ${ordinal(exPos)} multiple of ${exBase} = ${exBase} × ${exPos} = <strong>${exAnswer}</strong></p><p>Skip-count check: ${Array.from({length: Math.min(exPos, 5)}, (_, i) => exBase * (i + 1)).join(', ')}${exPos > 5 ? `, ... ${exAnswer}` : ''}</p></div>`;
                         } else if (modality === 'visual') {
                             const displayCount = Math.min(pos, 8);
                             result.visual = `<div style="text-align:center;">

@@ -48,7 +48,10 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weW = R(2, 3), weN = 1, weD = pick([2, 3, 4]);
+                        const weN = 1;
+                        let weW, weD;
+                        // Never show this question's answer (or the question itself) as the solved example
+                        do { weW = R(2, 3); weD = pick([2, 3, 4]); } while (weW * weN === answerNumer);
                         result.workedExample = `<div style="text-align:center">
                             <p><strong>Example:</strong> ${weW} × ${weN}/${weD} = ?</p>
                             <p>Multiply the whole number by the numerator: ${weW} × ${weN} = ${weW * weN}</p>
@@ -100,7 +103,9 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weW = R(2, 3), weD = pick([2, 3, 4]);
+                        let weW, weD;
+                        // Never show this question's answer as the solved example's numerator
+                        do { weW = R(2, 3); weD = pick([2, 3, 4]); } while (weW === whole);
                         result.workedExample = `<div style="text-align:center">
                             <p><strong>Example:</strong> ${weW} × 1/${weD} = ?</p>
                             <p>Multiply: ${weW} × 1 = ${weW}</p>
@@ -154,7 +159,8 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weD = 4, weN = 3, weG = 12;
+                        // Switch examples when the 3/4-of-12 example would show this answer (its result 9, or its step 12 ÷ 4)
+                        const [weN, weD, weG] = (answer === 9 || (groupSize === 12 && denom === 4)) ? [2, 5, 10] : [3, 4, 12];
                         result.workedExample = `<div style="text-align:center">
                             <p><strong>Example:</strong> ${weN}/${weD} of ${weG} monsters = ?</p>
                             <p>Step 1: Divide ${weG} by ${weD}: ${weG} ÷ ${weD} = ${weG / weD}</p>
@@ -215,7 +221,8 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weD = 3, weW = 2, weN = 2;
+                        // Switch examples when the example's result (4) is this question's answer
+                        const [weW, weN, weD] = answer === 4 ? [3, 1, 2] : [2, 2, 3];
                         result.workedExample = `<div style="text-align:center">
                             <p><strong>Example:</strong> ${weW} × ${weN}/${weD} on a grid</p>
                             <p>${weW} rows × ${weD} columns = ${weW * weD} total cells</p>
@@ -227,7 +234,7 @@ const MultiplyFractions4 = {
                     if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(147,51,234,0.1);border:1px solid var(--monster-purple);border-radius:10px;">
                             <p style="font-weight:700;color:var(--monster-purple);">💎 Grid Strategy:</p>
-                            <p>1. Count shaded cells per row: <strong>${numer}</strong></p>
+                            <p>1. Cells to shade in each row: <strong>${numer}</strong> of ${denom}</p>
                             <p>2. Count number of rows: <strong>${whole}</strong></p>
                             <p>3. Multiply: ${whole} × ${numer} = <strong>${shadedParts}</strong></p>
                         </div>`;
@@ -270,12 +277,13 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weW = 3, weN = 1, weD = 4;
+                        // Switch examples when the example's result (3) is this question's answer
+                        const [weW, weN, weD] = answer === 3 ? [2, 1, 3] : [3, 1, 4];
                         result.workedExample = `<div style="text-align:center">
-                            <p><strong>Example:</strong> 1/${weD} + 1/${weD} + 1/${weD} = ?/${weD}</p>
-                            <p>Add numerators: 1 + 1 + 1 = 3</p>
+                            <p><strong>Example:</strong> ${Array(weW).fill(`${weN}/${weD}`).join(' + ')} = ?/${weD}</p>
+                            <p>Add numerators: ${Array(weW).fill(weN).join(' + ')} = ${weW * weN}</p>
                             <p>Denominator stays ${weD}</p>
-                            <p>Answer: <strong>3/${weD}</strong> — numerator is <strong>3</strong></p>
+                            <p>Answer: <strong>${weW * weN}/${weD}</strong> — numerator is <strong>${weW * weN}</strong></p>
                         </div>`;
                     }
 
@@ -296,9 +304,14 @@ const MultiplyFractions4 = {
             {
                 skillId: '4mf-mixed-result',
                 generate(diff, modality) {
-                    const denom = pick(diff >= 2 ? [2, 3, 4, 5, 6] : [2, 3, 4]);
-                    const numer = R(1, denom - 1);
-                    const whole = R(3, diff >= 2 ? 7 : 5);
+                    // Regenerate until the product is truly improper AND not a whole number
+                    // (rejects e.g. 3 × 1/4 = 3/4 and 4 × 2/4 = 8/4 = 2), so it has a real mixed-number form
+                    let denom, numer, whole;
+                    do {
+                        denom = pick(diff >= 2 ? [2, 3, 4, 5, 6] : [2, 3, 4]);
+                        numer = R(1, denom - 1);
+                        whole = R(3, diff >= 2 ? 7 : 5);
+                    } while (whole * numer < denom || (whole * numer) % denom === 0);
                     const answerNumer = whole * numer;
                     const answer = answerNumer;
                     const wholeResult = Math.floor(answerNumer / denom);
@@ -332,7 +345,8 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weW = 4, weN = 2, weD = 3;
+                        // Switch examples when the example's result (8) is this question's answer
+                        const [weW, weN, weD] = answer === 8 ? [3, 3, 4] : [4, 2, 3];
                         const weAns = weW * weN;
                         const weWhole = Math.floor(weAns / weD);
                         const weRem = weAns % weD;
@@ -447,7 +461,8 @@ const MultiplyFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weW = 3, weN = 2, weD = 4;
+                        // Switch examples when the example's result (6) is this question's answer
+                        const [weW, weN, weD] = answer === 6 ? [2, 2, 5] : [3, 2, 4];
                         result.workedExample = `<div style="text-align:center">
                             <p><strong>Example:</strong> ${weW} × ${weN}/${weD} = ?</p>
                             <p>Multiply the numerator: ${weW} × ${weN} = ${weW * weN}</p>

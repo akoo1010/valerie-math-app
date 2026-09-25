@@ -57,7 +57,10 @@ const EquivFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 1/3 = ?/9</p><p>3 × 3 = 9 (denominator × 3)</p><p>1 × 3 = 3 (numerator × 3)</p><p>1/3 = <strong>3/9</strong></p></div>`;
+                        // Switch examples when the example's result (3) is this question's answer
+                        result.workedExample = answer === 3
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 2/5 = ?/10</p><p>5 × 2 = 10 (denominator × 2)</p><p>2 × 2 = 4 (numerator × 2)</p><p>2/5 = <strong>4/10</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 1/3 = ?/9</p><p>3 × 3 = 9 (denominator × 3)</p><p>1 × 3 = 3 (numerator × 3)</p><p>1/3 = <strong>3/9</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -117,7 +120,10 @@ const EquivFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/8</p><p>GCD of 6 and 8 is 2</p><p>6 ÷ 2 = 3, 8 ÷ 2 = 4</p><p>6/8 = <strong>3/4</strong></p></div>`;
+                        // Switch examples when the example's result numerator (3) is this question's answer
+                        result.workedExample = answer === 3
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/9</p><p>GCD of 6 and 9 is 3</p><p>6 ÷ 3 = 2, 9 ÷ 3 = 3</p><p>6/9 = <strong>2/3</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/8</p><p>GCD of 6 and 8 is 2</p><p>6 ÷ 2 = 3, 8 ÷ 2 = 4</p><p>6/8 = <strong>3/4</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -187,7 +193,9 @@ const EquivFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Are 2/3 and 6/9 equivalent?</p><p>Cross multiply: 2 × 9 = 18, 6 × 3 = 18</p><p>18 = 18, so <strong>Yes</strong>!</p></div>`;
+                        result.workedExample = (numer1 === 2 && denom1 === 3 && numer2 === 6 && denom2 === 9)
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Are 1/2 and 3/6 equivalent?</p><p>Cross multiply: 1 × 6 = 6, 3 × 2 = 6</p><p>6 = 6, so <strong>Yes</strong>!</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Are 2/3 and 6/9 equivalent?</p><p>Cross multiply: 2 × 9 = 18, 6 × 3 = 18</p><p>18 = 18, so <strong>Yes</strong>!</p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -261,7 +269,11 @@ const EquivFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Compare 2/3 and 3/4</p><p>Cross multiply: 2 × 4 = 8, 3 × 3 = 9</p><p>8 < 9, so 2/3 < 3/4</p></div>`;
+                        // Use a different example if the question is the same pair (in either order)
+                        const pairKey = [`${n1}/${d1}`, `${n2}/${d2}`].sort().join(',');
+                        result.workedExample = pairKey === '2/3,3/4'
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/2 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 2 = 4</p><p>5 > 4, so 1/2 > 2/5</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Compare 2/3 and 3/4</p><p>Cross multiply: 2 × 4 = 8, 3 × 3 = 9</p><p>8 < 9, so 2/3 < 3/4</p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -288,24 +300,24 @@ const EquivFractions4 = {
                 skillId: '4ef-common-denom',
                 generate(diff, modality) {
                     const d1 = pick([2, 3, 4, 5, 6]);
-                    const d2 = pick([2, 3, 4, 5, 6].filter(d => d !== d1));
+                    // Skip d2 values that divide d1 (e.g. 6 and 3) — the LCD would be d1 itself and the answer just n1 × 1
+                    const d2 = pick([2, 3, 4, 5, 6].filter(d => d !== d1 && d1 % d !== 0));
                     const n1 = R(1, d1 - 1);
                     const n2 = R(1, d2 - 1);
 
                     // Find LCD
                     const lcm = (d1 * d2) / gcd(d1, d2);
                     const mult1 = lcm / d1;
-                    const mult2 = lcm / d2;
                     const newN1 = n1 * mult1;
                     const answer = newN1;
 
                     const result = {
                         type: 'input',
-                        questionText: `🐾 Rewrite with a common denominator of ${lcm}:<br>${n1}/${d1} = ?/${lcm}`,
+                        questionText: `🐾 ${n1}/${d1} and ${n2}/${d2} need a common denominator — use ${lcm}.<br>Rewrite ${n1}/${d1} = ?/${lcm}`,
                         subText: `What's the new numerator?`,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:1.6rem;font-weight:700;color:var(--monster-blue);">${n1}/${d1} = ?/${lcm}</div>
-                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">Common denominator: ${lcm}</div>
+                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">Common denominator of ${n1}/${d1} and ${n2}/${d2}: ${lcm}</div>
                         </div>`,
                         answer,
                         hint1: `${d1} × ${mult1} = ${lcm}, so multiply the numerator by ${mult1} too`,
@@ -323,7 +335,10 @@ const EquivFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Rewrite 2/3 with denominator 12</p><p>3 × 4 = 12, so multiply numerator by 4 too</p><p>2 × 4 = 8</p><p>2/3 = <strong>8/12</strong></p></div>`;
+                        // Switch examples when the example's result (8) is this question's answer
+                        result.workedExample = answer === 8
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Rewrite 3/4 with denominator 12</p><p>4 × 3 = 12, so multiply numerator by 3 too</p><p>3 × 3 = 9</p><p>3/4 = <strong>9/12</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Rewrite 2/3 with denominator 12</p><p>3 × 4 = 12, so multiply numerator by 4 too</p><p>2 × 4 = 8</p><p>2/3 = <strong>8/12</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -384,7 +399,10 @@ const EquivFractions4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 1/2 = ?/6</p><p>The bar is split into 6 parts instead of 2</p><p>Each original piece becomes 3 smaller pieces</p><p>1 shaded piece becomes <strong>3</strong> shaded pieces</p></div>`;
+                        // Switch examples when the example's result (3) is this question's answer
+                        result.workedExample = answer === 3
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 1/3 = ?/6</p><p>The bar is split into 6 parts instead of 3</p><p>Each original piece becomes 2 smaller pieces</p><p>1 shaded piece becomes <strong>2</strong> shaded pieces</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 1/2 = ?/6</p><p>The bar is split into 6 parts instead of 2</p><p>Each original piece becomes 3 smaller pieces</p><p>1 shaded piece becomes <strong>3</strong> shaded pieces</p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -412,12 +430,14 @@ const EquivFractions4 = {
                 generate(diff, modality) {
                     const type = pick(['equiv', 'compare', 'simplify']);
                     let result;
+                    let sameAsExample = false; // the fixed worked example would show this question (or its answer) → show an alternate one
 
                     if (type === 'equiv') {
                         const d = pick([2, 3, 4, 5]);
                         const n = R(1, d - 1);
                         const m = R(2, 4);
                         const answer = n * m;
+                        sameAsExample = answer === 9; // 3/5 = 9/15 example
                         result = {
                             type: 'input',
                             questionText: `🔮 WIZARD BOSS! ${n}/${d} = ?/${d * m}`,
@@ -444,6 +464,7 @@ const EquivFractions4 = {
                         const answer = (n1 / d1) > (n2 / d2) ? '>' : (n1 / d1) < (n2 / d2) ? '<' : '=';
                         const cross1 = n1 * d2;
                         const cross2 = n2 * d1;
+                        sameAsExample = [`${n1}/${d1}`, `${n2}/${d2}`].sort().join(',') === '1/3,2/5';
                         result = {
                             type: 'multiple-choice',
                             questionText: `🔮 WIZARD BOSS! Compare: ${n1}/${d1} ☐ ${n2}/${d2}`,
@@ -471,6 +492,7 @@ const EquivFractions4 = {
                         while (gcd(sn, sd) !== 1) sn = R(1, sd - 1);
                         const m = R(2, 4);
                         const answer = sn;
+                        sameAsExample = answer === 2; // 8/12 = 2/3 example
                         result = {
                             type: 'input',
                             questionText: `🔮 WIZARD BOSS! Simplify ${sn * m}/${sd * m}. What's the numerator?`,
@@ -493,11 +515,17 @@ const EquivFractions4 = {
 
                     if (modality === 'worked-example') {
                         if (type === 'equiv') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 3/5 = ?/15</p><p>5 × 3 = 15, so numerator × 3</p><p>3 × 3 = <strong>9</strong></p></div>`;
+                            result.workedExample = sameAsExample
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> 2/3 = ?/12</p><p>3 × 4 = 12, so numerator × 4</p><p>2 × 4 = <strong>8</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> 3/5 = ?/15</p><p>5 × 3 = 15, so numerator × 3</p><p>3 × 3 = <strong>9</strong></p></div>`;
                         } else if (type === 'compare') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/3 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 3 = 6</p><p>5 < 6, so 1/3 <strong><</strong> 2/5</p></div>`;
+                            result.workedExample = sameAsExample
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/4 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 4 = 8</p><p>5 < 8, so 1/4 <strong><</strong> 2/5</p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/3 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 3 = 6</p><p>5 < 6, so 1/3 <strong><</strong> 2/5</p></div>`;
                         } else {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Simplify 8/12</p><p>GCD is 4: 8 ÷ 4 = 2, 12 ÷ 4 = 3</p><p>8/12 = <strong>2/3</strong></p></div>`;
+                            result.workedExample = sameAsExample
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/8</p><p>GCD is 2: 6 ÷ 2 = 3, 8 ÷ 2 = 4</p><p>6/8 = <strong>3/4</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> Simplify 8/12</p><p>GCD is 4: 8 ÷ 4 = 2, 12 ÷ 4 = 3</p><p>8/12 = <strong>2/3</strong></p></div>`;
                         }
                     }
 
