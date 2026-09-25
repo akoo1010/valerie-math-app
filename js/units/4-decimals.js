@@ -22,7 +22,8 @@ const Decimals4 = {
                     const denom = useTenths ? 10 : 100;
                     const numer = useTenths ? R(1, 9) : R(1, 99);
                     const answer = numer / denom;
-                    const answerStr = answer.toString();
+                    // toFixed keeps the trailing zero (30/100 → "0.30") so hints about "two decimal places" stay true
+                    const answerStr = answer.toFixed(denom === 10 ? 1 : 2);
 
                     const result = {
                         type: 'input',
@@ -54,9 +55,10 @@ const Decimals4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weN = useTenths ? R(1, 9) : R(1, 99);
+                        let weN = useTenths ? R(1, 9) : R(1, 99);
+                        while (weN === numer) weN = useTenths ? R(1, 9) : R(1, 99);
                         const weD = useTenths ? 10 : 100;
-                        const weA = weN / weD;
+                        const weA = (weN / weD).toFixed(useTenths ? 1 : 2);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Write ${weN}/${weD} as a decimal.</p><p>${weN} ÷ ${weD} = <strong>${weA}</strong></p><p>So ${weN}/${weD} = <strong>${weA}</strong> ✨</p></div>`;
                     } else if (modality === 'visual') {
                         const gridSize = denom === 10 ? 10 : 100;
@@ -82,42 +84,46 @@ const Decimals4 = {
                     const denom = useTenths ? 10 : 100;
                     const numer = useTenths ? R(1, 9) : R(1, 99);
                     const decimal = numer / denom;
+                    // Show hundredths with both places (0.50, not 0.5) so "two places means hundredths" is true
+                    const decStr = decimal.toFixed(useTenths ? 1 : 2);
                     const answer = numer;
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 The dance move is ${decimal}!<br>Write it as a fraction: ?/${denom}`,
+                        questionText: `🕺 The dance move is ${decStr}!<br>Write it as a fraction: ?/${denom}`,
                         subText: `What is the numerator?`,
                         visual: `<div style="text-align:center;">
-                            <div style="font-size:2.8rem;font-weight:800;color:var(--dance-gold);">${decimal}</div>
+                            <div style="font-size:2.8rem;font-weight:800;color:var(--dance-gold);">${decStr}</div>
                             <div style="font-size:1.5rem;margin-top:8px;">= <span style="color:var(--dance-cyan);font-weight:800;">?</span> / ${denom} 🎶</div>
                         </div>`,
                         answer,
                         hint1: `Count the decimal places — ${useTenths ? 'one place means tenths' : 'two places means hundredths'}!`,
-                        hint2: `${decimal} means ${numer} ${useTenths ? 'tenths' : 'hundredths'}`,
-                        hint3: `${decimal} = ${numer}/${denom}`,
+                        hint2: `${decStr} means ${numer} ${useTenths ? 'tenths' : 'hundredths'}`,
+                        hint3: `${decStr} = ${numer}/${denom}`,
                         diagnose(userAnswer) {
                             if (userAnswer === decimal) return 'wrote-decimal-not-numerator';
-                            if (!useTenths && userAnswer === numer * 10) return 'confused-tenths-hundredths';
+                            // e.g. 0.50 → typed 5 (counted tenths) instead of 50 hundredths
+                            if (!useTenths && numer % 10 === 0 && userAnswer === numer / 10) return 'confused-tenths-hundredths';
                             return null;
                         },
                         misconceptionHints: {
-                            'wrote-decimal-not-numerator': `That's the decimal itself! We need just the numerator — how many ${useTenths ? 'tenths' : 'hundredths'} is ${decimal}?`,
-                            'confused-tenths-hundredths': `Careful with place value! ${decimal} has two decimal places, so the denominator is 100, not 10.`
+                            'wrote-decimal-not-numerator': `That's the decimal itself! We need just the numerator — how many ${useTenths ? 'tenths' : 'hundredths'} is ${decStr}?`,
+                            'confused-tenths-hundredths': `Careful with place value! You counted tenths, but the denominator is 100. ${decStr} has two decimal places — how many hundredths is that?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        const weN = useTenths ? R(1, 9) : R(1, 99);
+                        let weN = useTenths ? R(1, 9) : R(1, 99);
+                        while (weN === numer) weN = useTenths ? R(1, 9) : R(1, 99);
                         const weD = useTenths ? 10 : 100;
-                        const weDec = weN / weD;
+                        const weDec = (weN / weD).toFixed(useTenths ? 1 : 2);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Write ${weDec} as a fraction.</p><p>${weDec} has ${weD === 10 ? 'one' : 'two'} decimal place${weD === 100 ? 's' : ''}, so the denominator is ${weD}.</p><p>${weDec} = <strong>${weN}/${weD}</strong> 🌟</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <p>💃 Think of place value:</p>
                             <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
                                 <div style="padding:8px 14px;background:rgba(255,105,180,0.15);border:2px solid var(--dance-pink);border-radius:8px;">
-                                    <div style="font-size:1.5rem;font-weight:800;color:var(--dance-pink);">${decimal}</div>
+                                    <div style="font-size:1.5rem;font-weight:800;color:var(--dance-pink);">${decStr}</div>
                                     <div style="font-size:0.7rem;color:var(--dance-pink);">decimal</div>
                                 </div>
                                 <div style="font-size:1.5rem;color:var(--dance-gold);">→</div>
@@ -191,7 +197,8 @@ const Decimals4 = {
                     if (modality === 'worked-example') {
                         const weA = R(1, 9) / 10;
                         let weB = R(1, 9) / 10;
-                        while (weB === weA) weB = R(1, 9) / 10;
+                        // Don't let the example be this exact pair
+                        while (weB === weA || ([a, b].includes(weA) && [a, b].includes(weB))) weB = R(1, 9) / 10;
                         const weAns = weA > weB ? '>' : '<';
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Compare ${weA} and ${weB}.</p><p>Both are tenths. ${Math.round(weA * 10)} tenths vs ${Math.round(weB * 10)} tenths.</p><p>${Math.round(weA * 10)} ${weA > weB ? '>' : '<'} ${Math.round(weB * 10)}, so ${weA} <strong>${weAns}</strong> ${weB} ✨</p></div>`;
                     } else if (modality === 'visual') {
@@ -301,6 +308,7 @@ const Decimals4 = {
                 generate(diff, modality) {
                     const tenths = R(1, 9);
                     const answer = tenths / 10;
+                    const tickOrd = tenths === 1 ? '1st' : tenths === 2 ? '2nd' : tenths === 3 ? '3rd' : `${tenths}th`;
                     const low = 0;
                     const high = 1;
 
@@ -332,7 +340,7 @@ const Decimals4 = {
                             return Engine.Utils.shuffle(unique).map(v => ({label: `${v}`, value: v}));
                         })(),
                         hint1: `Count the tick marks from 0. Each space is one tenth!`,
-                        hint2: `The arrow is at the ${tenths}th tick mark out of 10`,
+                        hint2: `The arrow is at the ${tickOrd} tick mark out of 10`,
                         hint3: `The arrow points to ${answer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === tenths) return 'wrote-tick-not-decimal';
@@ -343,13 +351,14 @@ const Decimals4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'wrote-tick-not-decimal': `You wrote the tick number, not the decimal! The ${tenths}th tick represents 0.${tenths}, not just ${tenths}. Each space is 1/10 = 0.1 💃`,
+                            'wrote-tick-not-decimal': `You wrote the tick number, not the decimal! The ${tickOrd} tick represents 0.${tenths}, not just ${tenths}. Each space is 1/10 = 0.1 💃`,
                             'off-by-one-tenth': `So close! You're off by 0.1. Count again carefully from 0 — each tick mark is one tenth (0.1). The arrow is at tick #${tenths}. 🎵`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        const weT = R(1, 9);
+                        let weT = R(1, 9);
+                        while (weT === tenths) weT = R(1, 9);
                         const weA = weT / 10;
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> An arrow points to tick #${weT} on a 0–1 number line with 10 spaces.</p><p>Each space = 0.1, so tick #${weT} = ${weT} × 0.1</p><p>= <strong>${weA}</strong> ✨</p></div>`;
                     } else if (modality === 'visual') {
@@ -410,7 +419,8 @@ const Decimals4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weA = R(1, 4) / 10, weB = R(1, 4) / 10;
+                        let weA = R(1, 4) / 10, weB = R(1, 4) / 10;
+                        while (Math.round(weA * 10) + Math.round(weB * 10) === Math.round(answer * 10)) { weA = R(1, 4) / 10; weB = R(1, 4) / 10; }
                         const weAns = Math.round((weA + weB) * 10) / 10;
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} + ${weB} = ?</p><p>${Math.round(weA * 10)} tenths + ${Math.round(weB * 10)} tenths = ${Math.round(weA * 10) + Math.round(weB * 10)} tenths</p><p>= <strong>${weAns}</strong> 🪩</p></div>`;
                     } else if (modality === 'visual') {
@@ -419,7 +429,7 @@ const Decimals4 = {
                         const totalCells = Math.max(10, aCells + bCells);
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <p>🎵 Each block = 0.1. Count the shaded blocks:</p>
-                            <div style="display:flex;gap:2px;justify-content:center;margin:8px 0;">
+                            <div style="display:flex;flex-wrap:wrap;gap:2px;justify-content:center;margin:8px 0;">
                                 ${Array.from({length: totalCells}, (_, i) => {
                                     let bg = 'rgba(255,255,255,0.1)';
                                     if (i < aCells) bg = 'var(--dance-pink)';
@@ -475,8 +485,9 @@ const Decimals4 = {
 
                         if (modality === 'worked-example') {
                             const weD = pick([10, 100]);
-                            const weN = weD === 10 ? R(1, 9) : R(1, 99);
-                            const weA = weN / weD;
+                            let weN = weD === 10 ? R(1, 9) : R(1, 99);
+                            while (weN / weD === answer) weN = weD === 10 ? R(1, 9) : R(1, 99);
+                            const weA = (weN / weD).toFixed(weD === 10 ? 1 : 2);
                             result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Write ${weN}/${weD} as a decimal.</p><p>${weN} ÷ ${weD} = <strong>${weA}</strong></p><p>Denominator ${weD} → ${weD === 10 ? 'one' : 'two'} decimal place${weD === 100 ? 's' : ''} ✨</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
@@ -524,7 +535,7 @@ const Decimals4 = {
                         if (modality === 'worked-example') {
                             const weA = R(1, 9) / 10;
                             let weB = R(1, 9) / 10;
-                            while (weB === weA) weB = R(1, 9) / 10;
+                            while (weB === weA || ([a, b].includes(weA) && [a, b].includes(weB))) weB = R(1, 9) / 10;
                             const weAns = weA > weB ? '>' : '<';
                             result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Compare ${weA} and ${weB}.</p><p>Tenths: ${Math.round(weA * 10)} vs ${Math.round(weB * 10)}</p><p>${Math.round(weA * 10)} ${weA > weB ? '>' : '<'} ${Math.round(weB * 10)}, so ${weA} <strong>${weAns}</strong> ${weB} 🕺</p></div>`;
                         } else if (modality === 'visual') {
@@ -570,8 +581,9 @@ const Decimals4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            const weA = R(1, 5) / 10;
-                            const weB = R(1, 4) / 10;
+                            let weA = R(1, 5) / 10;
+                            let weB = R(1, 4) / 10;
+                            while (Math.round(weA * 10) + Math.round(weB * 10) === Math.round(answer * 10)) { weA = R(1, 5) / 10; weB = R(1, 4) / 10; }
                             const weAns = Math.round((weA + weB) * 10) / 10;
                             result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} + ${weB} = ?</p><p>Line up decimals: ${Math.round(weA * 10)} tenths + ${Math.round(weB * 10)} tenths = ${Math.round(weA * 10) + Math.round(weB * 10)} tenths</p><p>= <strong>${weAns}</strong> 🪩</p></div>`;
                         } else if (modality === 'visual') {

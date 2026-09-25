@@ -25,17 +25,18 @@ const Measurement4 = {
                     const conv = pick(conversions);
                     const amount = R(1, diff >= 2 ? 10 : 5);
                     const answer = amount * conv.factor;
+                    const fromUnit = amount === 1 ? conv.singular : conv.from;
 
                     const result = {
                         type: 'input',
-                        questionText: `${conv.emoji} A monster is ${amount} ${conv.from} tall!<br>How many ${conv.to} is that?`,
+                        questionText: `${conv.emoji} A monster is ${amount} ${fromUnit} tall!<br>How many ${conv.to} is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-red);">
-                            🐲 ${amount} ${conv.from} = ? ${conv.to}
+                            🐲 ${amount} ${fromUnit} = ? ${conv.to}
                         </div>`,
                         answer,
                         hint1: `1 ${conv.singular} = ${conv.factor} ${conv.to}`,
                         hint2: `${amount} × ${conv.factor} = ?`,
-                        hint3: `${amount} ${conv.from} = ${Engine.Utils.fmt(answer)} ${conv.to}`,
+                        hint3: `${amount} ${fromUnit} = ${Engine.Utils.fmt(answer)} ${conv.to}`,
                         diagnose(userAnswer) {
                             if (conv.factor !== 1 && userAnswer === amount / conv.factor) return 'divided-instead';
                             return null;
@@ -46,16 +47,17 @@ const Measurement4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 3 feet = ? inches</p><p>1 foot = 12 inches</p><p>3 × 12 = <strong>36 inches</strong></p></div>`;
+                        const weFeet = (conv.from === 'feet' && amount === 3) ? 4 : 3;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weFeet} feet = ? inches</p><p>1 foot = 12 inches</p><p>${weFeet} × 12 = <strong>${weFeet * 12} inches</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
                         result.visual = `<div style="text-align:center">
                             <div style="font-size:2rem;margin-bottom:0.5rem;">📏🐲📏</div>
                             <div style="display:flex;justify-content:center;align-items:center;gap:0.5rem;flex-wrap:wrap;margin:0.5rem 0;">
-                                ${Array.from({length: Math.min(amount, 6)}, (_, i) => `<div style="background:var(--monster-red);color:#fff;border-radius:12px;padding:0.3rem 0.7rem;font-size:0.9rem;font-weight:700;">${conv.singular} ${i + 1}</div>`).join('<span style="font-size:1rem;">+</span>')}
+                                ${Array.from({length: amount}, (_, i) => `<div style="background:var(--monster-red);color:#fff;border-radius:12px;padding:0.3rem 0.7rem;font-size:0.9rem;font-weight:700;">${conv.singular} ${i + 1}</div>`).join('<span style="font-size:1rem;">+</span>')}
                             </div>
-                            <p style="margin-top:0.5rem;font-weight:700;color:var(--monster-red);">${amount} ${conv.from} × ${conv.factor} = ? ${conv.to}</p>
+                            <p style="margin-top:0.5rem;font-weight:700;color:var(--monster-red);">${amount} ${fromUnit} × ${conv.factor} = ? ${conv.to}</p>
                             <p style="font-size:0.85rem;color:#666;">⚡ Each ${conv.singular} = ${conv.factor} ${conv.to}</p>
                         </div>`;
                     }
@@ -72,7 +74,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `⚖️ A monster egg weighs ${pounds} pounds.<br>How many ounces is that?`,
+                        questionText: `⚖️ A monster egg weighs ${pounds} ${pounds === 1 ? 'pound' : 'pounds'}.<br>How many ounces is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-blue);">
                             🥚 ${pounds} lb = ? oz
                         </div>`,
@@ -90,14 +92,15 @@ const Measurement4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 3 pounds = ? ounces</p><p>1 pound = 16 ounces</p><p>3 × 16 = <strong>48 ounces</strong></p></div>`;
+                        const weLb = pounds === 3 ? 4 : 3;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weLb} pounds = ? ounces</p><p>1 pound = 16 ounces</p><p>${weLb} × 16 = <strong>${weLb * 16} ounces</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
                         result.visual = `<div style="text-align:center">
                             <div style="font-size:2rem;margin-bottom:0.5rem;">🥚⚖️🐲</div>
                             <div style="display:flex;justify-content:center;gap:0.5rem;flex-wrap:wrap;">
-                                ${Array.from({length: Math.min(pounds, 8)}, () => '<div style="background:var(--monster-blue);color:#fff;border-radius:12px;padding:0.3rem 0.6rem;font-size:0.9rem;">1 lb = 16 oz</div>').join('')}
+                                ${Array.from({length: pounds}, () => '<div style="background:var(--monster-blue);color:#fff;border-radius:12px;padding:0.3rem 0.6rem;font-size:0.9rem;">1 lb = 16 oz</div>').join('')}
                             </div>
                             <p style="margin-top:0.5rem;font-weight:700;color:var(--monster-blue);">${pounds} lb × 16 = ? oz</p>
                         </div>`;
@@ -119,17 +122,18 @@ const Measurement4 = {
                     const conv = pick(conversions);
                     const amount = R(1, diff >= 2 ? 8 : 5);
                     const answer = amount * conv.factor;
+                    const fromUnit = amount === 1 ? conv.from.slice(0, -1) : conv.from;
 
                     const result = {
                         type: 'input',
-                        questionText: `🧪 A potion cauldron holds ${amount} ${conv.from}.<br>How many ${conv.to} is that?`,
+                        questionText: `🧪 A potion cauldron holds ${amount} ${fromUnit}.<br>How many ${conv.to} is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-purple);">
-                            🧪 ${amount} ${conv.from} = ? ${conv.to}
+                            🧪 ${amount} ${fromUnit} = ? ${conv.to}
                         </div>`,
                         answer,
                         hint1: `1 ${conv.from.slice(0, -1)} = ${conv.factor} ${conv.to}`,
                         hint2: `${amount} × ${conv.factor} = ?`,
-                        hint3: `${amount} ${conv.from} = ${answer} ${conv.to}`,
+                        hint3: `${amount} ${fromUnit} = ${answer} ${conv.to}`,
                         diagnose(userAnswer) {
                             if (conv.factor !== 1 && userAnswer === amount / conv.factor) return 'divided-instead';
                             return null;
@@ -140,16 +144,17 @@ const Measurement4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 3 gallons = ? quarts</p><p>1 gallon = 4 quarts</p><p>3 × 4 = <strong>12 quarts</strong></p></div>`;
+                        const weGal = answer === 12 ? 2 : 3;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weGal} gallons = ? quarts</p><p>1 gallon = 4 quarts</p><p>${weGal} × 4 = <strong>${weGal * 4} quarts</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
                         result.visual = `<div style="text-align:center">
                             <div style="font-size:2rem;margin-bottom:0.5rem;">🧪🐲🧪</div>
                             <div style="display:flex;justify-content:center;gap:0.5rem;flex-wrap:wrap;">
-                                ${Array.from({length: Math.min(amount, 6)}, () => `<div style="background:var(--monster-purple);color:#fff;border-radius:12px;padding:0.3rem 0.6rem;font-size:0.9rem;">1 ${conv.from.slice(0, -1)} = ${conv.factor} ${conv.to}</div>`).join('')}
+                                ${Array.from({length: amount}, () => `<div style="background:var(--monster-purple);color:#fff;border-radius:12px;padding:0.3rem 0.6rem;font-size:0.9rem;">1 ${conv.from.slice(0, -1)} = ${conv.factor} ${conv.to}</div>`).join('')}
                             </div>
-                            <p style="margin-top:0.5rem;font-weight:700;color:var(--monster-purple);">${amount} ${conv.from} × ${conv.factor} = ? ${conv.to}</p>
+                            <p style="margin-top:0.5rem;font-weight:700;color:var(--monster-purple);">${amount} ${fromUnit} × ${conv.factor} = ? ${conv.to}</p>
                         </div>`;
                     }
 
@@ -168,17 +173,18 @@ const Measurement4 = {
                     const conv = pick(diff >= 2 ? conversions : conversions.slice(0, 2));
                     const amount = R(1, diff >= 2 ? 10 : 5);
                     const answer = amount * conv.factor;
+                    const fromUnit = amount === 1 ? conv.from.slice(0, -1) : conv.from;
 
                     const result = {
                         type: 'input',
-                        questionText: `🐾 A monster ran ${amount} ${conv.from}.<br>How many ${conv.to} is that?`,
+                        questionText: `🐾 A monster ran ${amount} ${fromUnit}.<br>How many ${conv.to} is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-green);">
-                            🐾 ${amount} ${conv.from} = ? ${conv.to}
+                            🐾 ${amount} ${fromUnit} = ? ${conv.to}
                         </div>`,
                         answer,
                         hint1: `1 ${conv.from.slice(0, -1)} = ${Engine.Utils.fmt(conv.factor)} ${conv.to}`,
                         hint2: `${amount} × ${Engine.Utils.fmt(conv.factor)} = ?`,
-                        hint3: `${amount} ${conv.from} = ${Engine.Utils.fmt(answer)} ${conv.to}`,
+                        hint3: `${amount} ${fromUnit} = ${Engine.Utils.fmt(answer)} ${conv.to}`,
                         diagnose(userAnswer) {
                             if (conv.factor !== 1 && userAnswer === amount / conv.factor) return 'divided-instead';
                             return null;
@@ -189,14 +195,15 @@ const Measurement4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 5 meters = ? centimeters</p><p>1 meter = 100 centimeters</p><p>5 × 100 = <strong>500 centimeters</strong></p></div>`;
+                        const weM = answer === 500 ? 4 : 5;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weM} meters = ? centimeters</p><p>1 meter = 100 centimeters</p><p>${weM} × 100 = <strong>${weM * 100} centimeters</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
                         result.visual = `<div style="text-align:center">
                             <div style="font-size:2rem;margin-bottom:0.5rem;">🐾🐲🐾</div>
                             <div style="display:flex;justify-content:center;align-items:center;gap:0.3rem;margin:0.5rem 0;">
-                                <div style="background:var(--monster-green);color:#fff;border-radius:8px;padding:0.4rem 0.8rem;font-weight:700;">${amount} ${conv.from}</div>
+                                <div style="background:var(--monster-green);color:#fff;border-radius:8px;padding:0.4rem 0.8rem;font-weight:700;">${amount} ${fromUnit}</div>
                                 <span style="font-size:1.3rem;">→</span>
                                 <div style="background:var(--monster-green);color:#fff;border-radius:8px;padding:0.4rem 0.8rem;font-weight:700;">× ${Engine.Utils.fmt(conv.factor)}</div>
                                 <span style="font-size:1.3rem;">→</span>
@@ -217,7 +224,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🦖 A dinosaur-monster weighs ${kg} kilograms.<br>How many grams is that?`,
+                        questionText: `🦖 A dinosaur-monster weighs ${kg} ${kg === 1 ? 'kilogram' : 'kilograms'}.<br>How many grams is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-yellow);">
                             🦖 ${kg} kg = ? g
                         </div>`,
@@ -235,7 +242,8 @@ const Measurement4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 4 kilograms = ? grams</p><p>1 kilogram = 1,000 grams</p><p>4 × 1,000 = <strong>4,000 grams</strong></p></div>`;
+                        const weKg = kg === 4 ? 3 : 4;
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weKg} kilograms = ? grams</p><p>1 kilogram = 1,000 grams</p><p>${weKg} × 1,000 = <strong>${Engine.Utils.fmt(weKg * 1000)} grams</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -279,11 +287,17 @@ const Measurement4 = {
                     };
                     addLabel(`${endHour}:${String((endMin + 15) % 60).padStart(2, '0')}`, 'wrong1');
                     addLabel(`${(endHour % 12) + 1}:${String(endMin).padStart(2, '0')}`, 'wrong2');
-                    // Build a third distractor by tweaking minutes by 30, 10, -10, etc. until distinct
+                    // Third distractor: the real "subtracted the minutes" mistake (start + hours − minutes),
+                    // so the 'subtracted-minutes' hint matches what was picked
+                    const subMins = startHour * 60 + startMin + elapsedHours * 60 - elapsedMins;
+                    const subLabel = `${Math.floor(subMins / 60) % 12 || 12}:${String(subMins % 60).padStart(2, '0')}`;
+                    if (!labelSet.has(subLabel)) addLabel(subLabel, 'wrong3');
+                    // Fallback (untagged, so no targeted hint) if that time was somehow already taken
                     for (const off of [30, -30, 10, -10, 5, -5, 20, -20]) {
+                        if (labelSet.size >= 4) break;
                         const m = ((endMin + off) % 60 + 60) % 60;
                         const cand = `${endHour}:${String(m).padStart(2, '0')}`;
-                        if (!labelSet.has(cand)) { addLabel(cand, 'wrong3'); break; }
+                        if (!labelSet.has(cand)) addLabel(cand, 'wrong4');
                     }
                     const options = Engine.Utils.shuffle([...labelSet]).map(l => ({label: l, value: valueMap[l]}));
 
@@ -310,7 +324,9 @@ const Measurement4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Start 2:30 PM, lasts 1 hour and 45 minutes</p><p>2:30 + 1 hour = 3:30</p><p>3:30 + 45 min = <strong>4:15 PM</strong></p></div>`;
+                        result.workedExample = answer === '4:15'
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Start 3:15 PM, lasts 2 hours and 30 minutes</p><p>3:15 + 2 hours = 5:15</p><p>5:15 + 30 min = <strong>5:45 PM</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Start 2:30 PM, lasts 1 hour and 45 minutes</p><p>2:30 + 1 hour = 3:30</p><p>3:30 + 45 min = <strong>4:15 PM</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -354,7 +370,8 @@ const Measurement4 = {
                             }
                         };
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🐲 Boss Example:</strong> 2 feet = ? inches</p><p>1 foot = 12 inches</p><p>2 × 12 = <strong>24 inches</strong></p><p>⚡ Bigger unit → smaller unit = MULTIPLY!</p></div>`;
+                            const weFt = feet === 2 ? 3 : 2;
+                            result.workedExample = `<div style="text-align:center"><p><strong>🐲 Boss Example:</strong> ${weFt} feet = ? inches</p><p>1 foot = 12 inches</p><p>${weFt} × 12 = <strong>${weFt * 12} inches</strong></p><p>⚡ Bigger unit → smaller unit = MULTIPLY!</p></div>`;
                         }
                         if (modality === 'visual') {
                             result.visual = `<div style="text-align:center">
@@ -387,7 +404,8 @@ const Measurement4 = {
                             }
                         };
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🦖 Boss Example:</strong> 3 pounds = ? ounces</p><p>1 pound = 16 ounces</p><p>3 × 16 = <strong>48 ounces</strong></p><p>🔥 Bigger unit → smaller unit = MULTIPLY!</p></div>`;
+                            const weLb = lb === 3 ? 4 : 3;
+                            result.workedExample = `<div style="text-align:center"><p><strong>🦖 Boss Example:</strong> ${weLb} pounds = ? ounces</p><p>1 pound = 16 ounces</p><p>${weLb} × 16 = <strong>${weLb * 16} ounces</strong></p><p>🔥 Bigger unit → smaller unit = MULTIPLY!</p></div>`;
                         }
                         if (modality === 'visual') {
                             result.visual = `<div style="text-align:center">
@@ -420,7 +438,8 @@ const Measurement4 = {
                             }
                         };
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>👾 Boss Example:</strong> 3 meters = ? centimeters</p><p>1 meter = 100 centimeters</p><p>3 × 100 = <strong>300 centimeters</strong></p><p>🐲 Bigger unit → smaller unit = MULTIPLY!</p></div>`;
+                            const weM = m === 3 ? 4 : 3;
+                            result.workedExample = `<div style="text-align:center"><p><strong>👾 Boss Example:</strong> ${weM} meters = ? centimeters</p><p>1 meter = 100 centimeters</p><p>${weM} × 100 = <strong>${weM * 100} centimeters</strong></p><p>🐲 Bigger unit → smaller unit = MULTIPLY!</p></div>`;
                         }
                         if (modality === 'visual') {
                             result.visual = `<div style="text-align:center">

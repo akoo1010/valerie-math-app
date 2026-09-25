@@ -87,9 +87,10 @@ const Angles4 = {
                         answer,
                         options: (() => {
                             const set = new Set([angle]);
-                            const candidates = [angle + 20, angle - 20, angle + 10, angle - 10, 180 - angle, angle + 30, angle - 30];
+                            // Keep every distractor at least 20° from the answer — this is estimation by eye
+                            const candidates = [angle + 20, angle - 20, 180 - angle, angle + 40, angle - 40, angle + 60, angle - 60];
                             for (const c of candidates) {
-                                if (c > 0 && c < 180 && c !== angle && !set.has(c)) set.add(c);
+                                if (c > 0 && c < 180 && Math.abs(c - angle) >= 20 && !set.has(c)) set.add(c);
                                 if (set.size === 4) break;
                             }
                             return Engine.Utils.shuffle([...set]).map(v => ({label: `${v}°`, value: v}));
@@ -156,7 +157,8 @@ const Angles4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 35° + 55° = ?</p><p>35 + 55 = <strong>90°</strong></p><p>That makes a right angle!</p></div>`;
+                        const [weA, weB] = answer === 90 ? [40, 60] : [35, 55];
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA}° + ${weB}° = ?</p><p>${weA} + ${weB} = <strong>${weA + weB}°</strong></p><p>${weA + weB === 90 ? 'That makes a right angle!' : 'Just add the two angles!'}</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1rem;font-weight:700;color:var(--monster-green);margin-bottom:6px;">🐲 Monster Beam Combiner 🐲</div>
@@ -204,9 +206,10 @@ const Angles4 = {
                     };
 
                     if (modality === 'worked-example') {
+                        const weK = isComplementary ? (known === 30 ? 40 : 30) : (known === 110 ? 120 : 110);
                         result.workedExample = isComplementary
-                            ? `<div style="text-align:center"><p><strong>Complementary Angles:</strong></p><p>Two angles that add to 90°</p><p>Example: 30° + ? = 90°</p><p>90° - 30° = <strong>60°</strong></p></div>`
-                            : `<div style="text-align:center"><p><strong>Supplementary Angles:</strong></p><p>Two angles that add to 180°</p><p>Example: 110° + ? = 180°</p><p>180° - 110° = <strong>70°</strong></p></div>`;
+                            ? `<div style="text-align:center"><p><strong>Complementary Angles:</strong></p><p>Two angles that add to 90°</p><p>Example: ${weK}° + ? = 90°</p><p>90° - ${weK}° = <strong>${90 - weK}°</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Supplementary Angles:</strong></p><p>Two angles that add to 180°</p><p>Example: ${weK}° + ? = 180°</p><p>180° - ${weK}° = <strong>${180 - weK}°</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1rem;font-weight:700;color:var(--monster-purple);margin-bottom:6px;">${isComplementary ? '🔥 Complementary Corner' : '👾 Supplementary Straight Line'}</div>
@@ -259,7 +262,8 @@ const Angles4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Triangle Angle Rule:</strong></p><p>All 3 angles in a triangle add to 180°</p><p>Example: angles 60° and 70°</p><p>60 + 70 = 130°</p><p>180° - 130° = <strong>50°</strong></p></div>`;
+                        const [weA1, weA2] = answer === 50 ? [50, 70] : [60, 70];
+                        result.workedExample = `<div style="text-align:center"><p><strong>Triangle Angle Rule:</strong></p><p>All 3 angles in a triangle add to 180°</p><p>Example: angles ${weA1}° and ${weA2}°</p><p>${weA1} + ${weA2} = ${weA1 + weA2}°</p><p>180° - ${weA1 + weA2}° = <strong>${180 - weA1 - weA2}°</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.6rem;font-weight:700;color:var(--monster-green);margin-bottom:8px;">🦖 Monster Triangle Challenge 🦖</div>
@@ -325,14 +329,21 @@ const Angles4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Turns and Degrees:</strong></p><p>Quarter turn = 360° ÷ 4 = 90°</p><p>Half turn = 360° ÷ 2 = 180°</p><p>Three-quarter turn = 3 × 90° = 270°</p><p>Full turn = 360°</p></div>`;
+                        // Leave out the turn being asked about so the card doesn't hand over the answer
+                        const facts = [
+                            {deg: 90, text: 'Quarter turn = 360° ÷ 4 = 90°'},
+                            {deg: 180, text: 'Half turn = 360° ÷ 2 = 180°'},
+                            {deg: 270, text: 'Three-quarter turn = 3 × 90° = 270°'},
+                            {deg: 360, text: 'Full turn = 360°'}
+                        ].filter(f => f.deg !== selected.degrees);
+                        result.workedExample = `<div style="text-align:center"><p><strong>Turns and Degrees:</strong></p>${facts.map(f => `<p>${f.text}</p>`).join('')}</div>`;
                     } else if (modality === 'visual') {
                         const rotation = selected.degrees;
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.4rem;font-weight:700;color:var(--monster-purple);margin-bottom:8px;">🐲 Monster Spin Tracker 🐲</div>
-                            <div style="width:140px;height:140px;margin:0 auto;position:relative;border:3px solid var(--monster-purple);border-radius:50%;background:rgba(139,92,246,0.08);">
-                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-green);transform-origin:left;transform:rotate(${rotation}deg);"></div>
-                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-red);"></div>
+                            <div style="width:140px;height:140px;margin:0 auto;position:relative;border:3px solid var(--monster-purple);border-radius:50%;background:conic-gradient(rgba(74,222,128,0.3) 0deg ${rotation}deg, rgba(139,92,246,0.08) ${rotation}deg);">
+                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-green);transform-origin:left;transform:rotate(${rotation - 90}deg);"></div>
+                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-red);transform-origin:left;transform:rotate(-90deg);"></div>
                                 <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:0.7rem;font-weight:700;color:var(--monster-purple);">Start</div>
                             </div>
                             <div style="font-size:0.9rem;color:var(--text-muted);margin-top:6px;">The monster spun a ${selected.name}!</div>
@@ -380,7 +391,10 @@ const Angles4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Compare to 90° (the right angle):</p><p>Less than 90° → Acute (sharp like a fang)</p><p>Exactly 90° → Right (perfect corner)</p><p>More than 90° → Obtuse (wide jaw)</p><p>${deg}° is ${answer}!</p></div>`;
+                            // Example angle from a different category, so it doesn't answer this question
+                            const weDeg = answer === 'acute' ? R(91, 179) : answer === 'obtuse' ? R(10, 89) : pick([R(10, 89), R(91, 179)]);
+                            const weType = weDeg < 90 ? 'acute' : 'obtuse';
+                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Compare to 90° (the right angle):</p><p>Less than 90° → Acute (sharp like a fang)</p><p>Exactly 90° → Right (perfect corner)</p><p>More than 90° → Obtuse (wide jaw)</p><p>Example: ${weDeg}° is ${weType}!</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;font-size:0.9rem;text-align:center;">
                                 <div style="font-weight:700;color:var(--monster-red);margin-bottom:6px;">🐲 Boss Hint:</div>
@@ -418,7 +432,9 @@ const Angles4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Missing angle = Total - Known angle</p><p>${total}° - ${known}° = <strong>${answer}°</strong></p><p>${total === 90 ? 'Complementary (adds to 90°)' : 'Supplementary (adds to 180°)'}</p></div>`;
+                            let weKnown = R(10, total - 10);
+                            while (weKnown === known) weKnown = R(10, total - 10);
+                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Missing angle = Total - Known angle</p><p>Example: ${weKnown}° + ? = ${total}°</p><p>${total}° - ${weKnown}° = <strong>${total - weKnown}°</strong></p><p>${total === 90 ? 'Complementary (adds to 90°)' : 'Supplementary (adds to 180°)'}</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;">
                                 <div style="font-weight:700;color:var(--monster-red);margin-bottom:6px;">🐉 Boss Equation:</div>
@@ -460,7 +476,9 @@ const Angles4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>⚡ Boss Strategy:</strong></p><p>Add both angles together:</p><p>${a}° + ${b}° = <strong>${answer}°</strong></p><p>The monster's combined beam power!</p></div>`;
+                            let weA = R(20, 80), weB = R(20, 80);
+                            while (weA + weB === answer) { weA = R(20, 80); weB = R(20, 80); }
+                            result.workedExample = `<div style="text-align:center"><p><strong>⚡ Boss Strategy:</strong></p><p>Add both angles together:</p><p>Example: ${weA}° + ${weB}° = <strong>${weA + weB}°</strong></p><p>The monster's combined beam power!</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;padding:10px;background:rgba(250,204,21,0.1);border-radius:8px;">
                                 <div style="font-weight:700;color:var(--monster-yellow);margin-bottom:6px;">⚡ Boss Beam Combiner:</div>
