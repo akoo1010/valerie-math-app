@@ -12,13 +12,24 @@ const Geometry = {
         const R = Engine.Utils.rand;
         const pick = Engine.Utils.pick;
 
+        // props describe only this shape's plain example (the svg), e.g. a square has no "long and short" sides.
+        // alsoIs = other names that are also true of it (a square IS a rectangle) — never offered as distractors.
         const shapes = [
-            { name: 'Square', props: '4 equal sides, 4 right angles', svg: '<rect x="10" y="10" width="60" height="60" fill="none" stroke="var(--craft-pink)" stroke-width="3" rx="2"/>' },
-            { name: 'Rectangle', props: '2 pairs of equal sides, 4 right angles', svg: '<rect x="5" y="15" width="70" height="50" fill="none" stroke="var(--craft-lavender)" stroke-width="3" rx="2"/>' },
-            { name: 'Rhombus', props: '4 equal sides, opposite angles equal', svg: '<polygon points="40,5 75,40 40,75 5,40" fill="none" stroke="var(--craft-mint)" stroke-width="3"/>' },
-            { name: 'Trapezoid', props: 'Exactly 1 pair of parallel sides', svg: '<polygon points="20,60 60,60 70,20 10,20" fill="none" stroke="var(--craft-yellow)" stroke-width="3"/>' },
-            { name: 'Parallelogram', props: '2 pairs of parallel sides, opposite sides equal', svg: '<polygon points="15,60 55,60 65,20 25,20" fill="none" stroke="var(--craft-coral)" stroke-width="3"/>' },
+            { name: 'Square', props: '4 equal sides, 4 right angles', alsoIs: ['Rectangle', 'Rhombus', 'Parallelogram'], svg: '<rect x="10" y="10" width="60" height="60" fill="none" stroke="var(--craft-pink)" stroke-width="3" rx="2"/>' },
+            { name: 'Rectangle', props: '4 right angles, 2 long sides and 2 short sides', alsoIs: ['Parallelogram'], svg: '<rect x="5" y="15" width="70" height="50" fill="none" stroke="var(--craft-lavender)" stroke-width="3" rx="2"/>' },
+            { name: 'Rhombus', props: '4 equal sides, no right angles', alsoIs: ['Parallelogram'], svg: '<polygon points="40,4 64,40 40,76 16,40" fill="none" stroke="var(--craft-mint)" stroke-width="3"/>' },
+            { name: 'Trapezoid', props: 'Exactly 1 pair of parallel sides', alsoIs: [], svg: '<polygon points="20,60 60,60 70,20 10,20" fill="none" stroke="var(--craft-yellow)" stroke-width="3"/>' },
+            { name: 'Parallelogram', props: '2 pairs of parallel sides, no right angles, 2 long and 2 short sides', alsoIs: [], svg: '<polygon points="5,55 55,55 72,25 22,25" fill="none" stroke="var(--craft-coral)" stroke-width="3"/>' },
         ];
+        // Fill-ins when too few quadrilateral names are safe distractors (a square is also 3 of the others)
+        const nonQuadNames = ['Triangle', 'Pentagon', 'Hexagon'];
+        function safeDistractors(shape) {
+            const quads = Engine.Utils.shuffle(shapes.filter(s => s.name !== shape.name && !shape.alsoIs.includes(s.name)).map(s => s.name));
+            return [...quads, ...Engine.Utils.shuffle(nonQuadNames)].slice(0, 3);
+        }
+        // Inline SVGs: there is no trapezoid emoji, and 🟦 is a square
+        const trapezoidIcon = '<svg width="1.2em" height="1.2em" viewBox="0 0 22 22" style="vertical-align:middle"><polygon points="1,19 21,19 15,4 7,4" fill="var(--craft-yellow)"/></svg>';
+        const rectangleIcon = '<svg width="1.2em" height="1.2em" viewBox="0 0 22 22" style="vertical-align:middle"><rect x="1" y="5" width="20" height="12" rx="1" fill="var(--craft-lavender)"/></svg>';
 
         return [
             // 1. Shape Sorter — identify the shape
@@ -26,9 +37,8 @@ const Geometry = {
                 skillId: 'geo-identify',
                 generate(diff) {
                     const shape = pick(shapes);
-                    // Always include the correct shape + 3 random distractors
-                    const distractors = Engine.Utils.shuffle(shapes.filter(s => s.name !== shape.name).map(s => s.name)).slice(0, 3);
-                    const options = [shape.name, ...distractors];
+                    // Always include the correct shape + 3 distractors that are NOT also true of it
+                    const options = [shape.name, ...safeDistractors(shape)];
                     return {
                         type: 'multiple-choice',
                         questionText: `What type of quadrilateral is this?`,
@@ -46,8 +56,8 @@ const Geometry = {
                 skillId: 'geo-properties',
                 generate(diff) {
                     const shape = pick(shapes);
-                    // Always include the correct shape + 3 random distractors
-                    const distractors = Engine.Utils.shuffle(shapes.filter(s => s.name !== shape.name).map(s => s.name)).slice(0, 3);
+                    // Always include the correct shape + 3 distractors that don't also fit the clue
+                    const distractors = safeDistractors(shape);
                     return {
                         type: 'multiple-choice',
                         questionText: `Which shape has these properties?<br>"${shape.props}"`,
@@ -73,7 +83,7 @@ const Geometry = {
                     const sides = { Triangle: 3, Pentagon: 5, Hexagon: 6, Circle: 0, Octagon: 8,
                                     Square: 4, Rectangle: 4, Rhombus: 4, Trapezoid: 4, Parallelogram: 4 };
                     const shapeEmoji = {
-                        Square: '🟥', Rectangle: '▭', Rhombus: '🔷', Trapezoid: '🔶', Parallelogram: '▰',
+                        Square: '🟥', Rectangle: '▭', Rhombus: '🔷', Trapezoid: trapezoidIcon, Parallelogram: '▰',
                         Triangle: '🔺', Pentagon: '⬠', Hexagon: '⬡', Circle: '🔴', Octagon: '🛑'
                     };
                     return {
@@ -154,7 +164,7 @@ const Geometry = {
                 skillId: 'geo-mosaic',
                 generate(diff) {
                     const hidden = pick(['squares', 'rectangles', 'rhombuses', 'trapezoids']);
-                    const shapeEmojis = { squares: '🟥', rectangles: '🟦', rhombuses: '🔷', trapezoids: '🔶' };
+                    const shapeEmojis = { squares: '🟥', rectangles: rectangleIcon, rhombuses: '🔷', trapezoids: trapezoidIcon };
                     // Decoys must not be quadrilaterals, or counting "squares"/"rectangles" gets ambiguous
                     const decoys = ['🟡','🟣','🟠','⚪','🟤'];
                     const totalCells = 25;

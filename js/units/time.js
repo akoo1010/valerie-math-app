@@ -80,7 +80,10 @@ const Time = {
                         answer,
                         options: Engine.Utils.shuffle(options).map(o => ({label: o, value: o})),
                         hint1: `The short hand (blue) shows the hour, the long hand (pink) shows the minutes`,
-                        hint2: `Hour hand points near ${h}. Minute hand: each number = 5 minutes`,
+                        // The hour hand creeps toward the next number as minutes pass — don't say it's "near" h at :55
+                        hint2: m === 0
+                            ? `The hour hand points right at ${h}. Minute hand: each number = 5 minutes`
+                            : `The hour hand is between ${h} and ${h % 12 + 1}, so the hour is still ${h}. Minute hand: each number = 5 minutes`,
                         hint3: `The time is ${answer}`
                     };
                 }
@@ -166,7 +169,7 @@ const Time = {
                         hint1: `Start at ${formatTime(startH, startM)} and add ${duration} minutes`,
                         hint2: (startM + duration < 60)
                             ? `${startM} + ${duration} = ${startM + duration} minutes past ${startH > 12 ? startH - 12 : startH}`
-                            : `${startM} + ${duration} = ${startM + duration} minutes — that's more than 60, so it crosses into the next hour`,
+                            : `${startM} + ${duration} = ${startM + duration} minutes — that's 60 or more, so it crosses into the next hour`,
                         hint3: `${event} ends at ${formatTime(endH, endM)}`
                     };
                 }

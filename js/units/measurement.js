@@ -21,10 +21,11 @@ const Measurement = {
                         type: 'input',
                         questionText: `How long is this ribbon?`,
                         inputSuffix: 'cm',
+                        // Ticks are placed at i/length of the ribbon's width, so the last tick sits exactly at its end
                         visual: `<div style="text-align:center;">
                             <div style="background:linear-gradient(90deg,var(--craft-pink),var(--craft-lavender));height:20px;width:${length*20}px;border-radius:4px;max-width:100%;"></div>
-                            <div style="display:flex;width:${length*20}px;max-width:100%;margin-top:2px;">
-                                ${Array.from({length:length+1},(_,i)=>`<div style="flex:${i===length?'0':'1'};text-align:left;font-size:0.65rem;font-weight:700;color:var(--text-muted);border-left:2px solid rgba(255,255,255,0.3);padding-left:2px;">${i}</div>`).join('')}
+                            <div style="position:relative;width:${length*20}px;max-width:100%;height:16px;margin-top:2px;">
+                                ${Array.from({length:length+1},(_,i)=>`<div style="position:absolute;top:0;left:${(i/length)*100}%;white-space:nowrap;font-size:0.65rem;font-weight:700;color:var(--text-muted);border-left:2px solid rgba(255,255,255,0.3);padding-left:2px;">${i}</div>`).join('')}
                             </div>
                         </div>`,
                         answer: length,
