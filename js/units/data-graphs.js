@@ -14,18 +14,20 @@ const DataGraphs = {
         const colors = ['var(--ocean-glow)','var(--gd-pink)','var(--gd-green)','var(--gd-yellow)','var(--craft-lavender)'];
 
         function barGraphHTML(data, maxVal, showValues = true) {
-            // Build a y-axis tick list so kids can read bar heights even without printed values
-            const ticks = Array.from({length: maxVal + 1}, (_, i) => maxVal - i);
+            // Build a y-axis tick list so kids can read bar heights even without printed values.
+            // Each label is centred exactly at its height: the bars' baseline sits 32px above the
+            // bottom (2px border + 10px padding + 16px bar label + 4px gap), so label t is at 32 + t*tickHeight.
+            const ticks = Array.from({length: maxVal + 1}, (_, i) => i);
             const tickHeight = 120 / Math.max(maxVal, 1);
             return `<div style="display:flex;gap:8px;justify-content:center;">
-                <div style="display:flex;flex-direction:column;justify-content:flex-end;height:160px;padding-bottom:30px;font-size:0.65rem;color:var(--text-secondary);font-weight:700;">
-                    ${ticks.map(t => `<div style="height:${tickHeight}px;line-height:${tickHeight}px;">${t}</div>`).join('')}
+                <div style="position:relative;width:1.6em;height:160px;font-size:0.65rem;color:var(--text-secondary);font-weight:700;">
+                    ${ticks.map(t => `<div style="position:absolute;right:0;bottom:${32 + t * tickHeight}px;transform:translateY(50%);line-height:1;">${t}</div>`).join('')}
                 </div>
                 <div style="display:flex;align-items:flex-end;gap:12px;height:160px;padding:10px;border-left:2px solid rgba(255,255,255,0.3);border-bottom:2px solid rgba(255,255,255,0.3);">
                     ${data.map((d,i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;flex:1;">
                         ${showValues ? `<span style="font-size:0.7rem;font-weight:800">${d.value}</span>` : ''}
                         <div style="width:36px;height:${(d.value/maxVal)*120}px;background:${colors[i%colors.length]};border-radius:4px 4px 0 0;min-height:4px;"></div>
-                        <span style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-align:center;max-width:60px;">${d.label}</span>
+                        <span style="font-size:0.65rem;font-weight:700;color:var(--text-secondary);text-align:center;max-width:60px;height:16px;line-height:16px;">${d.label}</span>
                     </div>`).join('')}
                 </div>
             </div>`;
@@ -47,7 +49,7 @@ const DataGraphs = {
                         visual: barGraphHTML(data, maxVal, false),
                         answer: askAbout.value,
                         hint1: `Find the ${askAbout.label} bar and read its height against the y-axis`,
-                        hint2: `Count the gridlines the bar reaches`,
+                        hint2: `Slide your finger straight across from the top of the bar to the numbers on the side`,
                         hint3: `${askAbout.label} has ${askAbout.value} swimmers`
                     };
                 }
@@ -94,7 +96,7 @@ const DataGraphs = {
                         answer: askAbout.value,
                         hint1: `Find ${askAbout.label}'s row and count the ${icon}`,
                         hint2: `Count carefully...`,
-                        hint3: `${askAbout.label} won ${askAbout.value} medals`
+                        hint3: `${askAbout.label} won ${askAbout.value} medal${askAbout.value === 1 ? '' : 's'}`
                     };
                 }
             },
@@ -153,7 +155,7 @@ const DataGraphs = {
                     const pool = Engine.Utils.shuffle([3,4,5,6,7,8,9,10,11,12]).slice(0, events.length);
                     const data = events.map((e, i) => ({label:e, value:pool[i]}));
                     const maxVal = Math.max(...data.map(d=>d.value));
-                    const a = data[0], b = data[1];
+                    const [a, b] = Engine.Utils.shuffle(data).slice(0, 2);
                     const answer = Math.abs(a.value - b.value);
                     return {
                         type: 'input',

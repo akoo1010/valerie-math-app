@@ -21,15 +21,17 @@ const Measurement = {
                         type: 'input',
                         questionText: `How long is this ribbon?`,
                         inputSuffix: 'cm',
+                        // Ticks are placed at i/length of the ribbon's width, so the last tick sits exactly at its end
                         visual: `<div style="text-align:center;">
                             <div style="background:linear-gradient(90deg,var(--craft-pink),var(--craft-lavender));height:20px;width:${length*20}px;border-radius:4px;max-width:100%;"></div>
-                            <div style="display:flex;width:${length*20}px;max-width:100%;margin-top:2px;">
-                                ${Array.from({length:length+1},(_,i)=>`<div style="flex:${i===length?'0':'1'};text-align:left;font-size:0.65rem;font-weight:700;color:var(--text-muted);border-left:2px solid rgba(255,255,255,0.3);padding-left:2px;">${i}</div>`).join('')}
+                            <div style="position:relative;width:${length*20}px;max-width:100%;height:16px;margin-top:2px;">
+                                ${Array.from({length:length+1},(_,i)=>`<div style="position:absolute;top:0;left:${(i/length)*100}%;white-space:nowrap;font-size:0.65rem;font-weight:700;color:var(--text-muted);border-left:2px solid rgba(255,255,255,0.3);padding-left:2px;">${i}</div>`).join('')}
                             </div>
                         </div>`,
                         answer: length,
                         hint1: `Read the number at the end of the ribbon`,
-                        hint2: `Count the markings on the ruler`,
+                        // Count jumps, not tick marks: the ruler has one more tick than cm (0 is a tick too)
+                        hint2: `Start at 0 and count each 1 cm jump until you reach the end of the ribbon`,
                         hint3: `The ribbon is ${length} cm long`
                     };
                 }
@@ -48,7 +50,7 @@ const Measurement = {
                         </div>`,
                         answer: amount,
                         hint1: `Read the level against the markings`,
-                        hint2: `The paint fills up to the ${amount} mark`,
+                        hint2: `Put your finger on the top of the paint and slide it across to the numbers — which line does it reach?`,
                         hint3: `There are ${amount} liters`
                     };
                 }
@@ -63,11 +65,12 @@ const Measurement = {
                     return {
                         type: 'multiple-choice',
                         questionText: `${a.emoji} weighs ${a.w} kg, ${b.emoji} weighs ${b.w} kg. Which is heavier?`,
-                        visual: `<div class="balance-scale"><div class="scale-pan ${a.w>b.w?'heavier':'lighter'}">${a.emoji}<br>${a.w}kg</div><div class="scale-beam"></div><div class="scale-pan ${b.w>a.w?'heavier':'lighter'}">${b.emoji}<br>${b.w}kg</div></div>`,
+                        // Pans stay level with a ❓: a tipped scale would show which one is heavier before she compares
+                        visual: `<div class="balance-scale"><div class="scale-pan">${a.emoji}<br>${a.w}kg</div><div style="display:flex;flex-direction:column;align-items:center;gap:4px;"><span style="font-size:1.5rem">❓</span><div class="scale-beam"></div></div><div class="scale-pan">${b.emoji}<br>${b.w}kg</div></div>`,
                         answer: heavier,
                         options: [{label:`${a.emoji} ${a.name}`,value:a.name},{label:`${b.emoji} ${b.name}`,value:b.name}],
                         hint1: `Compare: ${a.w} vs ${b.w}`,
-                        hint2: `${Math.max(a.w,b.w)} > ${Math.min(a.w,b.w)}`,
+                        hint2: `More kg means heavier. Count up from 1 — which do you reach last, ${a.w} or ${b.w}?`,
                         hint3: `The ${heavier} is heavier!`
                     };
                 }
@@ -82,8 +85,9 @@ const Measurement = {
                         questionText: `Convert: ${v} ${c.f} = ? ${c.t}`,
                         inputSuffix: c.t,
                         answer: v * c.x,
-                        hint1: `1 ${c.f.slice(0,-1)} = ${c.x} ${c.t}`,
-                        hint2: `${v} × ${c.x} = ?`,
+                        // When v is 1 the unit fact IS the answer, so halve the 2-unit fact instead
+                        hint1: v === 1 ? `2 ${c.f} = ${2 * c.x} ${c.t}, and 1 ${c.f.slice(0,-1)} is half of that` : `1 ${c.f.slice(0,-1)} = ${c.x} ${c.t}`,
+                        hint2: v === 1 ? `${2 * c.x} ÷ 2 = ?` : `${v} × ${c.x} = ?`,
                         hint3: `${v} ${c.f} = ${v*c.x} ${c.t}`
                     };
                 }
@@ -91,7 +95,12 @@ const Measurement = {
             {
                 skillId: 'meas-estimate',
                 generate(diff) {
-                    const item = pick([{n:'pencil',r:18,u:'cm',e:'✏️'},{n:'book',r:25,u:'cm',e:'📚'},{n:'apple',r:200,u:'g',e:'🍎'}]);
+                    // tip = a benchmark to estimate from, not the answer itself
+                    const item = pick([
+                        {n:'pencil',r:18,u:'cm',e:'✏️',tip:'Your hand is about 15 cm long. About how many hands long is a pencil?'},
+                        {n:'book',r:25,u:'cm',e:'📚',tip:'A school ruler is 30 cm long. Is a book longer or shorter than a ruler — and by how much?'},
+                        {n:'apple',r:200,u:'g',e:'🍎',tip:'About 5 apples weigh 1 kilogram, which is 1000 g. So 1 apple is about 1000 ÷ 5 = ?'}
+                    ]);
                     const opts = Engine.Utils.shuffle([item.r, item.r*10, Math.round(item.r/5), item.r*3]);
                     return {
                         type: 'multiple-choice',
@@ -100,7 +109,7 @@ const Measurement = {
                         answer: item.r,
                         options: opts.map(o=>({label:`${o} ${item.u}`,value:o})),
                         hint1: `Think about the real size of a ${item.n}`,
-                        hint2: `A ${item.n} is about ${item.r} ${item.u}`,
+                        hint2: item.tip,
                         hint3: `Approximately ${item.r} ${item.u}`
                     };
                 }
@@ -124,14 +133,18 @@ const Measurement = {
             {
                 skillId: 'meas-tool',
                 generate(diff) {
-                    const t = pick([{task:'Measure ribbon length',tool:'Ruler'},{task:'Weigh beads',tool:'Scale'},{task:'Measure paint volume',tool:'Measuring cup'}]);
+                    const t = pick([
+                        {task:'Measure ribbon length',tool:'Ruler',kind:'length',how:'lay flat along the ribbon'},
+                        {task:'Weigh beads',tool:'Scale',kind:'weight',how:'set the beads on'},
+                        {task:'Measure paint volume',tool:'Measuring cup',kind:'liquid',how:'pour the paint into'}
+                    ]);
                     return {
                         type: 'multiple-choice',
                         questionText: `Which tool? "${t.task}"`,
                         answer: t.tool,
                         options: Engine.Utils.shuffle(['Ruler','Scale','Measuring cup','Thermometer']).map(o=>({label:o,value:o})),
-                        hint1: `Length→ruler, Weight→scale, Liquid→measuring cup`,
-                        hint2: `This measures ${t.tool==='Ruler'?'length':t.tool==='Scale'?'weight':'liquid'}`,
+                        hint1: `First ask: are you measuring how long, how heavy, or how much liquid?`,
+                        hint2: `This measures ${t.kind}. Which tool would you ${t.how}?`,
                         hint3: `Use a ${t.tool}!`
                     };
                 }

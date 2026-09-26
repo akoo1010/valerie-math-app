@@ -35,7 +35,7 @@ const MultiplicationIntro = {
                         hint3: `${rows} × ${cols} = ${answer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === rows + cols) return 'added-instead-of-multiplied';
-                            if (userAnswer === rows || userAnswer === cols) return 'counted-one-group';
+                            if (userAnswer === cols) return 'counted-one-group'; // one lane's worth of swimmers
                             return null;
                         },
                         misconceptionHints: {
@@ -45,7 +45,9 @@ const MultiplicationIntro = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weR = R(2, 3), weC = R(2, 3);
+                        // Re-roll so the example's product is never this question's answer
+                        let weR, weC;
+                        do { weR = R(2, 3); weC = R(2, 3); } while (weR * weC === answer);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weR} lanes × ${weC} swimmers = ?</p><p>${Array(weR).fill(weC).join(' + ')} = ${weR * weC}</p><p>So ${weR} × ${weC} = <strong>${weR * weC}</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold"><p>Count row by row:</p>${Array.from({length: rows}, (_, i) => `<div>Lane ${i + 1}: ${cols} swimmers</div>`).join('')}<div><strong>Total: ${rows} × ${cols} = ?</strong></div></div>`;
@@ -68,7 +70,7 @@ const MultiplicationIntro = {
                         subText: `${addExpr} = ? × ${perGroup}`,
                         answer: groups,
                         hint1: `How many times is ${perGroup} being added?`,
-                        hint2: `Count the ${perGroup}s: there are ${groups} of them`,
+                        hint2: `Point to each ${perGroup} in ${addExpr} and count them. That count goes in the ? spot.`,
                         hint3: `${addExpr} = ${groups} × ${perGroup}`,
                         diagnose(userAnswer) {
                             if (userAnswer === groups * perGroup) return 'gave-product-not-factor';
@@ -80,7 +82,9 @@ const MultiplicationIntro = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weG = R(2, 3), weP = R(2, 4);
+                        // Re-roll so the example's bold count is never this question's answer
+                        let weG, weP;
+                        do { weG = R(2, 3); weP = R(2, 4); } while (weG === groups);
                         const weExpr = Array(weG).fill(weP).join(' + ');
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weExpr} = ? × ${weP}</p><p>Count the ${weP}s: there are <strong>${weG}</strong> of them.</p><p>So ${weExpr} = <strong>${weG}</strong> × ${weP}</p></div>`;
                     }
@@ -123,7 +127,7 @@ const MultiplicationIntro = {
                         visual,
                         answer,
                         options: Engine.Utils.multipleChoice(answer),
-                        hint1: useZero ? 'Any number times 0 is always 0!' : 'Any number times 1 stays the same!',
+                        hint1: useZero ? 'Times 0 means zero groups, or groups with nothing in them. How many is that in all?' : 'Any number times 1 stays the same!',
                         hint2: useZero ? `${n} × 0 = ?` : `1 × ${n} = ?`,
                         hint3: useZero ? `${n} × 0 = 0` : `1 × ${n} = ${n}`
                     };
@@ -168,8 +172,10 @@ const MultiplicationIntro = {
                         questionText: `Skip count by ${skipBy}s! Find the missing number:`,
                         visual: `<div style="font-size: 1.4rem; font-weight: 700; letter-spacing: 2px;">${display}</div>`,
                         answer,
-                        hint1: `We're counting by ${skipBy}s: ${skipBy}, ${skipBy * 2}, ${skipBy * 3}...`,
-                        hint2: `The number before is ${sequence[hideIndex - 1]} and after is ${sequence[hideIndex + 1] || '...'}.`,
+                        hint1: `We're counting by ${skipBy}s: each number is ${skipBy} more than the one before.`,
+                        hint2: hideIndex < steps - 1
+                            ? `The number before is ${sequence[hideIndex - 1]} and after is ${sequence[hideIndex + 1]}.`
+                            : `The number before is ${sequence[hideIndex - 1]}. Add ${skipBy} more!`,
                         hint3: `The missing number is ${answer}`
                     };
                 }
@@ -193,31 +199,33 @@ const MultiplicationIntro = {
                             rightB = a + delta <= 9 ? a + delta : a - delta;
                         }
                     }
-                    const swimmerRow = (n) => n <= 12
-                        ? Array.from({length: n}, () => '<span class="swimmer-item">🏊</span>').join('')
-                        : null;
-                    const leftProduct = a * b;
-                    const rightProduct = rightA * rightB;
-                    const leftVisual = swimmerRow(leftProduct);
-                    const rightVisual = swimmerRow(rightProduct);
+                    // Draw each side as an array (rows × columns) so a true swap looks like the
+                    // same array turned sideways. Draw both sides or neither, decided from a and b
+                    // only, so whether the picture appears never hints at True/False.
+                    const drawArrays = a <= 4 && b <= 4;
+                    const swimmerArray = (rows, cols) => drawArrays
+                        ? `<div style="display:flex; flex-direction:column; align-items:center; gap:4px">${Array.from({length: rows}, () =>
+                            `<div class="swimmer-group">${Array.from({length: cols}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>`
+                        ).join('')}</div>`
+                        : '';
+                    const leftVisual = swimmerArray(a, b);
+                    const rightVisual = swimmerArray(rightA, rightB);
                     return {
                         type: 'true-false',
                         questionText: `True or False?<br>${a} × ${b} = ${rightA} × ${rightB}`,
-                        visual: `<div style="display:flex; gap: 24px; align-items:center;">
+                        visual: `<div style="display:flex; flex-wrap:wrap; justify-content:center; gap: 24px; align-items:center;">
                             <div style="text-align:center">
                                 <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${a} × ${b}</div>
-                                ${leftVisual ? `<div class="swimmer-group">${leftVisual}</div>` : ''}
+                                ${leftVisual}
                             </div>
                             <div style="font-size:2rem">=?</div>
                             <div style="text-align:center">
                                 <div style="font-size:1.2rem; font-weight:700; margin-bottom:8px">${rightA} × ${rightB}</div>
-                                ${rightVisual ? `<div class="swimmer-group">${rightVisual}</div>` : ''}
+                                ${rightVisual}
                             </div>
                         </div>`,
                         answer: isTrue,
-                        hint1: isTrue
-                            ? `The order of multiplication doesn't change the answer!`
-                            : `Check the numbers carefully — are they really just swapped?`,
+                        hint1: `Swapping the order doesn't change the answer, but changing a number does. Are the numbers on each side the same, just swapped?`,
                         hint2: `${a} × ${b} = ${a * b}. What does ${rightA} × ${rightB} equal?`,
                         hint3: `${a} × ${b} = ${a * b} and ${rightA} × ${rightB} = ${rightA * rightB}. ${isTrue ? 'They match!' : "They don't match!"}`,
                         diagnose(userAnswer) {
@@ -225,8 +233,8 @@ const MultiplicationIntro = {
                             return null;
                         },
                         misconceptionHints: {
-                            'missed-commutative': `When the numbers are just swapped (like ${a}×${b} and ${b}×${a}), the answer is always the same!`,
-                            'assumed-commutative': `Check closely — these aren't just swapped. ${a}×${b}=${a*b} but ${rightA}×${rightB}=${rightA*rightB}.`
+                            'missed-commutative': `Swapping the order of the numbers never changes the answer! Check: does ${rightA} × ${rightB} use the same two numbers as ${a} × ${b}?`,
+                            'assumed-commutative': `Don't assume the numbers are just swapped — check each one: is ${rightA} × ${rightB} really ${b} × ${a}?`
                         }
                     };
                 }
@@ -263,7 +271,9 @@ const MultiplicationIntro = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weA = R(2, 4), weB = R(2, 4);
+                        // Re-roll so the example's product is never this question's answer
+                        let weA, weB;
+                        do { weA = R(2, 4); weB = R(2, 4); } while (weA * weB === answer);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 🏊 ${weA} teams with ${weB} swimmers each.</p><p>"Each" means multiply: ${weA} × ${weB} = <strong>${weA * weB}</strong></p></div>`;
                     }
 

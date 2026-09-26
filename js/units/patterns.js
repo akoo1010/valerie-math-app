@@ -72,9 +72,10 @@ const Patterns = {
                     const b = R(3, 10);
                     const c = R(2, 8);
                     const scenarios = [
-                        { text: `You collected ${a} coins in Level 1 and ${b} coins in Level 2. Then you spent ${c} coins on a power-up. How many coins do you have left?`, answer: a + b - c },
-                        { text: `You had ${a} gems. You found ${b} more, then your friend gave you ${c} more. How many gems total?`, answer: a + b + c },
-                        { text: `There were ${a + b} obstacles. You destroyed ${b} of them, then ${c} more appeared. How many are there now?`, answer: a + c },
+                        // steps set up the first operation and name the second, leaving both results to her
+                        { text: `You collected ${a} coins in Level 1 and ${b} coins in Level 2. Then you spent ${c} coins on a power-up. How many coins do you have left?`, answer: a + b - c, steps: `First: ${a} + ${b} = ?  Then take away ${c}.` },
+                        { text: `You had ${a} gems. You found ${b} more, then your friend gave you ${c} more. How many gems total?`, answer: a + b + c, steps: `First: ${a} + ${b} = ?  Then add ${c} more.` },
+                        { text: `There were ${a + b} obstacles. You destroyed ${b} of them, then ${c} more appeared. How many are there now?`, answer: a + c, steps: `First: ${a + b} − ${b} = ?  Then add ${c}.` },
                     ];
                     const s = pick(scenarios);
                     return {
@@ -83,7 +84,7 @@ const Patterns = {
                         visual: `<div style="font-size:2rem">🎮💎</div>`,
                         answer: s.answer,
                         hint1: `This has two steps! Do the first operation, then the second.`,
-                        hint2: `Work through it step by step...`,
+                        hint2: `Step by step: ${s.steps}`,
                         hint3: `The answer is ${s.answer}`
                     };
                 }
@@ -156,11 +157,13 @@ const Patterns = {
                     const applyRule = (n) => rule.op === '+' ? n + rule.val : rule.op === '*' ? n * rule.val : n - rule.val;
                     // For subtract, ensure all inputs and test stay >= rule.val so outputs are non-negative
                     const minIn = rule.op === '-' ? rule.val + 1 : 1;
-                    const inputs = [R(minIn, minIn + 4), R(minIn + 2, minIn + 7), R(minIn + 4, minIn + 9)];
-                    // Ensure testInput is not already shown in the I/O table (otherwise the answer is given away)
-                    let testInput;
-                    let tries = 0;
-                    do { testInput = R(minIn + 1, minIn + 11); tries++; } while (inputs.includes(testInput) && tries < 20);
+                    // Three DISTINCT inputs: with repeats the table can show a single
+                    // IN→OUT pair, which fits both an "adds" and a "multiplies" rule.
+                    const inputs = Engine.Utils.shuffle(Array.from({length: 10}, (_, i) => minIn + i))
+                        .slice(0, 3)
+                        .sort((x, y) => x - y);
+                    // testInput must not already be in the I/O table (otherwise the answer is given away)
+                    const testInput = pick(Array.from({length: 11}, (_, i) => minIn + 1 + i).filter(n => !inputs.includes(n)));
                     const answer = applyRule(testInput);
                     return {
                         type: 'input',
@@ -188,8 +191,9 @@ const Patterns = {
                     const b = R(2, 8);
                     const c = R(3, 10);
                     const probs = [
-                        { text: `Valerie beat ${a} levels on Monday. She beat ${b} times as many on Tuesday. How many total levels did she beat both days?`, answer: a + (a * b), steps: `${a} + (${a} × ${b}) = ${a} + ${a * b} = ${a + a * b}` },
-                        { text: `There are ${a} rows of jump pads with ${b} pads in each row. ${c} pads break. How many pads are left?`, answer: a * b - c, steps: `(${a} × ${b}) − ${c} = ${a * b} − ${c} = ${a * b - c}` },
+                        // steps stop before the last operation so the final combine is still hers
+                        { text: `Valerie beat ${a} levels on Monday. She beat ${b} times as many on Tuesday. How many total levels did she beat both days?`, answer: a + (a * b), steps: `${a} + (${a} × ${b}) = ${a} + ${a * b} = ?` },
+                        { text: `There are ${a} rows of jump pads with ${b} pads in each row. ${c} pads break. How many pads are left?`, answer: a * b - c, steps: `(${a} × ${b}) − ${c} = ${a * b} − ${c} = ?` },
                     ];
                     const p = pick(probs);
                     return {

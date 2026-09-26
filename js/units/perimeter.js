@@ -183,18 +183,19 @@ const Perimeter = {
                     const w = R(3, 10);
                     const perim = 2 * (l + w);
                     const scenarios = [
-                        `A GD level border is ${l} units long and ${w} units tall. How many units of fence are needed around it?`,
-                        `Valerie is building a frame around her pixel art. It's ${l} cm × ${w} cm. What length of trim does she need?`,
-                        `The GD practice zone is a rectangle: ${l} meters by ${w} meters. What's the perimeter?`,
+                        { text: `A GD level border is ${l} units long and ${w} units tall. How many units of fence are needed around it?`, unit: 'units' },
+                        { text: `Valerie is building a frame around her pixel art. It's ${l} cm × ${w} cm. What length of trim does she need?`, unit: 'cm' },
+                        { text: `The GD practice zone is a rectangle: ${l} meters by ${w} meters. What's the perimeter?`, unit: 'meters' },
                     ];
+                    const s = pick(scenarios);
                     return {
                         type: 'input',
-                        questionText: pick(scenarios),
-                        inputSuffix: 'units',
+                        questionText: s.text,
+                        inputSuffix: s.unit,
                         answer: perim,
                         hint1: `Perimeter = 2 × (length + width)`,
                         hint2: `2 × (${l} + ${w}) = 2 × ${l + w} = ?`,
-                        hint3: `Perimeter = ${perim} units`
+                        hint3: `Perimeter = ${perim} ${s.unit}`
                     };
                 }
             }

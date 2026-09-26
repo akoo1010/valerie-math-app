@@ -66,6 +66,13 @@ const App = (() => {
 
         // Update total stars display
         updateStars();
+
+        // If she tapped through to the map while progress was still loading, it
+        // was drawn from the empty placeholder state — redraw with the real data.
+        if (document.getElementById('screen-map')?.classList.contains('active')) {
+            renderMap();
+            updateDaily();
+        }
     }
 
     function updateStars() {
@@ -480,7 +487,9 @@ const App = (() => {
                             subText: `${a} × ${b} = ?`,
                             answer,
                             hint1: `Think of ${a} groups of ${b}.`,
-                            hint2: `Skip count by ${a}: ${Array.from({length: b}, (_, i) => a * (i + 1)).join(', ')}`,
+                            hint2: b > 1
+                                ? `Skip count by ${a}, ${b} times: ${Array.from({length: b - 1}, (_, i) => a * (i + 1)).join(', ')}, ?`
+                                : 'Any number times 1 stays the same!',
                             hint3: `${a} × ${b} = ${answer}`
                         };
                     }

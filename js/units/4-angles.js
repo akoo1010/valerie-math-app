@@ -42,7 +42,7 @@ const Angles4 = {
                             {label: 'Obtuse (> 90°)', value: 'obtuse'}
                         ],
                         hint1: `Is ${degrees}° less than, equal to, or greater than 90°?`,
-                        hint2: `${degrees}° is ${degrees < 90 ? 'less than' : degrees === 90 ? 'equal to' : 'greater than'} 90°`,
+                        hint2: `Use the signs in the choices: < 90° means smaller than 90, = 90° means exactly 90, > 90° means bigger. Which sign is true for ${degrees}°?`,
                         hint3: `${degrees}° is ${answer}`,
                         diagnose(userAnswer) {
                             if (type === 'acute' && userAnswer === 'obtuse') return 'confused-acute-obtuse';
@@ -87,22 +87,24 @@ const Angles4 = {
                         answer,
                         options: (() => {
                             const set = new Set([angle]);
-                            const candidates = [angle + 20, angle - 20, angle + 10, angle - 10, 180 - angle, angle + 30, angle - 30];
+                            // Keep every distractor at least 20° from the answer — this is estimation by eye
+                            const candidates = [angle + 20, angle - 20, 180 - angle, angle + 40, angle - 40, angle + 60, angle - 60];
                             for (const c of candidates) {
-                                if (c > 0 && c < 180 && c !== angle && !set.has(c)) set.add(c);
+                                if (c > 0 && c < 180 && Math.abs(c - angle) >= 20 && !set.has(c)) set.add(c);
                                 if (set.size === 4) break;
                             }
                             return Engine.Utils.shuffle([...set]).map(v => ({label: `${v}°`, value: v}));
                         })(),
-                        hint1: `A right angle is 90°. Is this bigger or smaller?`,
-                        hint2: `This angle looks ${angle < 90 ? 'smaller' : angle > 90 ? 'bigger' : 'equal to'} 90°`,
+                        hint1: `A right angle is 90° (a square corner). Is this angle smaller, bigger, or a perfect match?`,
+                        // Same wording for every angle — "smaller/bigger than 90°" told her the class (and the answer at 90°)
+                        hint2: `Use benchmarks: a square corner is 90°, half of one is 45°, and a straight line is 180°. Which benchmark is this angle closest to? Pick the choice nearest your estimate.`,
                         hint3: `The angle is ${angle}°`,
                         diagnose(userAnswer) {
                             if (userAnswer === 180 - angle) return 'picked-supplement';
                             return null;
                         },
                         misconceptionHints: {
-                            'picked-supplement': `You found the supplementary angle (180° - ${angle}° = ${180 - angle}°). Look at the angle itself, not what's left over on a straight line!`
+                            'picked-supplement': `You picked the supplementary angle — what's left over on a straight line (180°). Look at the opening between the two lines itself: is it smaller or bigger than 90°?`
                         }
                     };
 
@@ -151,12 +153,13 @@ const Angles4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'subtracted-instead': `You subtracted the angles instead of adding! When combining angles, add them: ${a}° + ${b}° = ${answer}°`
+                            'subtracted-instead': `You subtracted the angles instead of adding! When combining angles, add them: ${a}° + ${b}° = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 35° + 55° = ?</p><p>35 + 55 = <strong>90°</strong></p><p>That makes a right angle!</p></div>`;
+                        const [weA, weB] = answer === 90 ? [40, 60] : [35, 55];
+                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA}° + ${weB}° = ?</p><p>${weA} + ${weB} = <strong>${weA + weB}°</strong></p><p>${weA + weB === 90 ? 'That makes a right angle!' : 'Just add the two angles!'}</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1rem;font-weight:700;color:var(--monster-green);margin-bottom:6px;">🐲 Monster Beam Combiner 🐲</div>
@@ -204,9 +207,13 @@ const Angles4 = {
                     };
 
                     if (modality === 'worked-example') {
+                        // Example angle that is neither this question's known angle nor its answer (else it's the same pair)
+                        const weK = isComplementary
+                            ? ([known, answer].includes(30) ? 40 : 30)
+                            : ([known, answer].includes(110) ? 120 : 110);
                         result.workedExample = isComplementary
-                            ? `<div style="text-align:center"><p><strong>Complementary Angles:</strong></p><p>Two angles that add to 90°</p><p>Example: 30° + ? = 90°</p><p>90° - 30° = <strong>60°</strong></p></div>`
-                            : `<div style="text-align:center"><p><strong>Supplementary Angles:</strong></p><p>Two angles that add to 180°</p><p>Example: 110° + ? = 180°</p><p>180° - 110° = <strong>70°</strong></p></div>`;
+                            ? `<div style="text-align:center"><p><strong>Complementary Angles:</strong></p><p>Two angles that add to 90°</p><p>Example: ${weK}° + ? = 90°</p><p>90° - ${weK}° = <strong>${90 - weK}°</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Supplementary Angles:</strong></p><p>Two angles that add to 180°</p><p>Example: ${weK}° + ? = 180°</p><p>180° - ${weK}° = <strong>${180 - weK}°</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1rem;font-weight:700;color:var(--monster-purple);margin-bottom:6px;">${isComplementary ? '🔥 Complementary Corner' : '👾 Supplementary Straight Line'}</div>
@@ -253,13 +260,16 @@ const Angles4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'added-not-subtracted': `You added the two known angles (${a1}° + ${a2}° = ${a1 + a2}°), but forgot to subtract from 180°! Triangle angles always add to 180°, so the third angle is 180° - ${a1 + a2}° = ${answer}°`,
+                            'added-not-subtracted': `You added the two known angles (${a1}° + ${a2}° = ${a1 + a2}°), but forgot to subtract from 180°! Triangle angles always add to 180°, so the third angle is 180° - ${a1 + a2}° = ?`,
                             'used-360-not-180': `You used 360° instead of 180°. A full circle is 360°, but triangle angles add to 180°!`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Triangle Angle Rule:</strong></p><p>All 3 angles in a triangle add to 180°</p><p>Example: angles 60° and 70°</p><p>60 + 70 = 130°</p><p>180° - 130° = <strong>50°</strong></p></div>`;
+                        // Never the question's own triangle (50°, 60°, 70° in any order) or its answer
+                        const same = [a1, a2, answer].sort((x, y) => x - y).join() === '50,60,70';
+                        const [weA1, weA2] = same ? [40, 60] : answer === 50 ? [50, 70] : [60, 70];
+                        result.workedExample = `<div style="text-align:center"><p><strong>Triangle Angle Rule:</strong></p><p>All 3 angles in a triangle add to 180°</p><p>Example: angles ${weA1}° and ${weA2}°</p><p>${weA1} + ${weA2} = ${weA1 + weA2}°</p><p>180° - ${weA1 + weA2}° = <strong>${180 - weA1 - weA2}°</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.6rem;font-weight:700;color:var(--monster-green);margin-bottom:8px;">🦖 Monster Triangle Challenge 🦖</div>
@@ -307,8 +317,19 @@ const Angles4 = {
                             {label: '270°', value: 270},
                             {label: '360°', value: 360}
                         ]),
-                        hint1: `A full turn is 360°. A half turn is half of that.`,
-                        hint2: `A ${selected.name} = ?°`,
+                        // Set up the math for THIS turn, ending at "?"
+                        hint1: {
+                            90: `A quarter turn is ¼ of a full 360° turn: 360° ÷ 4 = ?`,
+                            180: `A full turn is 360°. A half turn is half of that.`,
+                            270: `A three-quarter turn is 3 quarter turns, and a quarter turn is 360° ÷ 4. So 3 × (360° ÷ 4) = ?`,
+                            360: `A full turn is 4 quarter turns, and a quarter turn is a square corner (90°). 4 × 90° = ?`
+                        }[selected.degrees],
+                        hint2: {
+                            90: `On a clock, a quarter turn moves the hand from 12 to 3 — one square corner. How many degrees is a square corner?`,
+                            180: `On a clock, a half turn moves the hand from 12 to 6 — 2 square corners. 2 × 90° = ?`,
+                            270: `On a clock, a three-quarter turn moves the hand from 12 to 9 — 3 square corners. 3 × 90° = ?`,
+                            360: `On a clock, a full turn takes the hand from 12 all the way back to 12 — 2 half turns. 180° + 180° = ?`
+                        }[selected.degrees],
                         hint3: `A ${selected.name} = ${answer}°`,
                         diagnose(userAnswer) {
                             if (selected.degrees === 90 && userAnswer === 180) return 'confused-quarter-half';
@@ -318,28 +339,39 @@ const Angles4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'confused-quarter-half': `Quarter and half turns are easy to mix up! A quarter turn is 90° (like a clock hand moving from 12 to 3). A half turn is 180° (from 12 to 6).`,
-                            'confused-quarter-threequarter': `A three-quarter turn is 3 times a quarter turn: 3 x 90° = 270°, not just 90°!`,
-                            'confused-full-half': `A full turn goes all the way around: 360°, not 180°. A half turn is 180°.`
+                            'confused-quarter-half': `Quarter and half turns are easy to mix up! A full turn is 360°. A quarter turn is ¼ of it (a clock hand moving from 12 to 3): 360° ÷ 4. A half turn is ½ of it (from 12 to 6): 360° ÷ 2. So a ${selected.name} = ?`,
+                            'confused-quarter-threequarter': `90° is just ONE quarter turn! A three-quarter turn is 3 quarter turns: 3 × 90° = ?`,
+                            'confused-full-half': `180° is only a half turn — halfway around! A full turn goes all the way back to the start, so it's 2 half turns: 2 × 180° = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Turns and Degrees:</strong></p><p>Quarter turn = 360° ÷ 4 = 90°</p><p>Half turn = 360° ÷ 2 = 180°</p><p>Three-quarter turn = 3 × 90° = 270°</p><p>Full turn = 360°</p></div>`;
+                        // Solve turns that are NOT among the options — listing the other three turns would leave only the answer.
+                        // For the full turn, don't state "full turn = 360°"; build from square corners instead.
+                        const facts = selected.degrees === 360
+                            ? ['A quarter turn is a square corner (90°).', 'Example: a half turn is 2 quarter turns: 2 × 90° = <strong>180°</strong>']
+                            : ['A full turn is 360°.', 'Example: a one-third turn is ⅓ of it: 360° ÷ 3 = <strong>120°</strong>', 'A two-thirds turn is 2 of those: 2 × 120° = <strong>240°</strong>'];
+                        result.workedExample = `<div style="text-align:center"><p><strong>Turns and Degrees:</strong></p>${facts.map(f => `<p>${f}</p>`).join('')}</div>`;
                     } else if (modality === 'visual') {
                         const rotation = selected.degrees;
+                        // Set up the spin math for THIS turn only — a full ¼/½/¾/full table would just be an answer key
+                        const spinMath = {
+                            90: '¼ of a full 360° turn: 360° ÷ 4 = ?°',
+                            180: '½ of a full 360° turn: 360° ÷ 2 = ?°',
+                            270: '¾ turn = 3 quarter turns, and a quarter turn is 360° ÷ 4. So 3 × (360° ÷ 4) = ?°',
+                            360: 'Full turn = 4 quarter turns, and a quarter turn is a square corner (90°). So 4 × 90° = ?°'
+                        }[rotation];
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.4rem;font-weight:700;color:var(--monster-purple);margin-bottom:8px;">🐲 Monster Spin Tracker 🐲</div>
-                            <div style="width:140px;height:140px;margin:0 auto;position:relative;border:3px solid var(--monster-purple);border-radius:50%;background:rgba(139,92,246,0.08);">
-                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-green);transform-origin:left;transform:rotate(${rotation}deg);"></div>
-                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-red);"></div>
+                            <div style="width:140px;height:140px;margin:0 auto;position:relative;border:3px solid var(--monster-purple);border-radius:50%;background:conic-gradient(rgba(74,222,128,0.3) 0deg ${rotation}deg, rgba(139,92,246,0.08) ${rotation}deg);">
+                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-green);transform-origin:left;transform:rotate(${rotation - 90}deg);"></div>
+                                <div style="position:absolute;top:50%;left:50%;width:60px;height:3px;background:var(--monster-red);transform-origin:left;transform:rotate(-90deg);"></div>
                                 <div style="position:absolute;top:4px;left:50%;transform:translateX(-50%);font-size:0.7rem;font-weight:700;color:var(--monster-purple);">Start</div>
                             </div>
                             <div style="font-size:0.9rem;color:var(--text-muted);margin-top:6px;">The monster spun a ${selected.name}!</div>
                             <div class="visual-scaffold" style="margin-top:8px;padding:8px;background:rgba(139,92,246,0.1);border-radius:8px;font-size:0.85rem;">
                                 <div style="font-weight:700;color:var(--monster-purple);">🐲 Spin Guide:</div>
-                                <div>¼ turn = 90° &nbsp; ½ turn = 180°</div>
-                                <div>¾ turn = 270° &nbsp; Full = 360°</div>
+                                <div>${spinMath}</div>
                             </div>
                         </div>`;
                     }
@@ -364,7 +396,7 @@ const Angles4 = {
                             answer,
                             options: [{label: 'Acute', value: 'acute'}, {label: 'Right', value: 'right'}, {label: 'Obtuse', value: 'obtuse'}],
                             hint1: `Is ${deg}° less than, equal to, or greater than 90°?`,
-                            hint2: `${deg}° is ${deg < 90 ? 'less than' : deg === 90 ? 'equal to' : 'greater than'} 90°`,
+                            hint2: `Acute is less than 90°, right is exactly 90°, obtuse is more than 90°. Which one fits ${deg}°?`,
                             hint3: `${deg}° is ${answer}`,
                             diagnose(userAnswer) {
                                 if (answer === 'acute' && userAnswer === 'obtuse') return 'confused-acute-obtuse';
@@ -374,13 +406,16 @@ const Angles4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'confused-acute-obtuse': `Remember: Acute is SMALL (< 90°), obtuse is BIG (> 90°). The boss monster knows ${deg}° is ${answer}! 🐲`,
-                                'confused-with-right': `A right angle is exactly 90°. ${deg}° is ${deg < 90 ? 'less' : 'more'} than 90°, so it is ${answer}! ⚡`
+                                'confused-acute-obtuse': `Remember: Acute is SMALL (< 90°), obtuse is BIG (> 90°). Is ${deg}° smaller or bigger than 90°? 🐲`,
+                                'confused-with-right': `A right angle is exactly 90° — no more, no less. Is ${deg}° exactly 90°, less than 90° (acute), or more than 90° (obtuse)? ⚡`
                             }
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Compare to 90° (the right angle):</p><p>Less than 90° → Acute (sharp like a fang)</p><p>Exactly 90° → Right (perfect corner)</p><p>More than 90° → Obtuse (wide jaw)</p><p>${deg}° is ${answer}!</p></div>`;
+                            // Example angle from a different category, so it doesn't answer this question
+                            const weDeg = answer === 'acute' ? R(91, 179) : answer === 'obtuse' ? R(10, 89) : pick([R(10, 89), R(91, 179)]);
+                            const weType = weDeg < 90 ? 'acute' : 'obtuse';
+                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Compare to 90° (the right angle):</p><p>Less than 90° → Acute (sharp like a fang)</p><p>Exactly 90° → Right (perfect corner)</p><p>More than 90° → Obtuse (wide jaw)</p><p>Example: ${weDeg}° is ${weType}!</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;font-size:0.9rem;text-align:center;">
                                 <div style="font-weight:700;color:var(--monster-red);margin-bottom:6px;">🐲 Boss Hint:</div>
@@ -411,14 +446,16 @@ const Angles4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'used-180-not-90': `These angles add to 90° (complementary), not 180°! The boss says: ${total}° - ${known}° = ${answer}° 🐉`,
-                                'used-90-not-180': `These angles add to 180° (supplementary), not 90°! The boss says: ${total}° - ${known}° = ${answer}° 🐉`,
-                                'repeated-known': `That is the angle you already know! Use subtraction to find the missing one: ${total}° - ${known}° = ${answer}° 🔥`
+                                'used-180-not-90': `These angles add to 90° (complementary), not 180°! The boss says: ${total}° - ${known}° = ? 🐉`,
+                                'used-90-not-180': `These angles add to 180° (supplementary), not 90°! The boss says: ${total}° - ${known}° = ? 🐉`,
+                                'repeated-known': `That is the angle you already know! Use subtraction to find the missing one: ${total}° - ${known}° = ? 🔥`
                             }
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Missing angle = Total - Known angle</p><p>${total}° - ${known}° = <strong>${answer}°</strong></p><p>${total === 90 ? 'Complementary (adds to 90°)' : 'Supplementary (adds to 180°)'}</p></div>`;
+                            let weKnown = R(10, total - 10);
+                            while (weKnown === known || weKnown === answer) weKnown = R(10, total - 10);
+                            result.workedExample = `<div style="text-align:center"><p><strong>🔥 Boss Strategy:</strong></p><p>Missing angle = Total - Known angle</p><p>Example: ${weKnown}° + ? = ${total}°</p><p>${total}° - ${weKnown}° = <strong>${total - weKnown}°</strong></p><p>${total === 90 ? 'Complementary (adds to 90°)' : 'Supplementary (adds to 180°)'}</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;padding:10px;background:rgba(239,68,68,0.1);border-radius:8px;">
                                 <div style="font-weight:700;color:var(--monster-red);margin-bottom:6px;">🐉 Boss Equation:</div>
@@ -454,13 +491,15 @@ const Angles4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'subtracted-instead': `You subtracted instead of adding! The boss demands: ${a}° + ${b}° = ${answer}°. Add the angles! ⚡`,
-                                'only-one-angle': `You only used one angle. Combine both beams: ${a}° + ${b}° = ${answer}° 👾`
+                                'subtracted-instead': `You subtracted instead of adding! The boss demands: ${a}° + ${b}° = ? Add the angles! ⚡`,
+                                'only-one-angle': `You only used one angle. Combine both beams: ${a}° + ${b}° = ? 👾`
                             }
                         };
 
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>⚡ Boss Strategy:</strong></p><p>Add both angles together:</p><p>${a}° + ${b}° = <strong>${answer}°</strong></p><p>The monster's combined beam power!</p></div>`;
+                            let weA = R(20, 80), weB = R(20, 80);
+                            while (weA + weB === answer) { weA = R(20, 80); weB = R(20, 80); }
+                            result.workedExample = `<div style="text-align:center"><p><strong>⚡ Boss Strategy:</strong></p><p>Add both angles together:</p><p>Example: ${weA}° + ${weB}° = <strong>${weA + weB}°</strong></p><p>The monster's combined beam power!</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;padding:10px;background:rgba(250,204,21,0.1);border-radius:8px;">
                                 <div style="font-weight:700;color:var(--monster-yellow);margin-bottom:6px;">⚡ Boss Beam Combiner:</div>

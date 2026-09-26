@@ -52,15 +52,16 @@ const PlaceValue4 = {
                     if (modality === 'worked-example') {
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 2,000 + 300 + 40 + 5 = ?</p><p>2 thousands + 3 hundreds + 4 tens + 5 ones</p><p>= <strong>2,345</strong></p></div>`;
                     } else if (modality === 'visual') {
+                        // Only the thousands digit is modeled — reading the other digits off the parts (and the 0 for a missing place) stays hers
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
-                            <p>🐲 Think of each monster carrying its place value:</p>
+                            <p>🐲 Each part fills one place. The first one is done for you:</p>
                             <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
-                                <div>🐲 Thousands: ${thousands}</div>
-                                <div>🦖 Hundreds: ${hundreds}</div>
-                                <div>⚡ Tens: ${tens}</div>
-                                <div>🔥 Ones: ${ones}</div>
+                                <div>🐲 ${thousands},000 → Thousands: ${thousands}</div>
+                                <div>🦖 Hundreds: ?</div>
+                                <div>⚡ Tens: ?</div>
+                                <div>🔥 Ones: ?</div>
                             </div>
-                            <p>Stack them: <strong>${num.toLocaleString()}</strong></p>
+                            <p>How many hundreds, tens, and ones do the other parts have? A place with no part gets a 0. Stack them — thousands, hundreds, tens, ones: <strong>?</strong></p>
                         </div>`;
                     }
 
@@ -88,7 +89,7 @@ const PlaceValue4 = {
                         type: 'multiple-choice',
                         questionText: `In the number <strong>${num.toLocaleString()}</strong>, what digit is in the <strong>${place}</strong> place?`,
                         visual: `<div style="display:flex;gap:4px;justify-content:center;">
-                            ${numStr.split('').map((d, i) => `<div style="width:44px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${i === placeIndex[place] ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};border-radius:8px;font-weight:700;font-size:1.4rem;color:#fff;">${monsterEmojis[i % monsterEmojis.length]}<span>${d}</span></div>`).join('')}
+                            ${numStr.split('').map((d, i) => `<div style="width:44px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);border-radius:8px;font-weight:700;font-size:1.4rem;color:#fff;">${monsterEmojis[i % monsterEmojis.length]}<span>${d}</span></div>`).join('')}
                         </div>`,
                         answer,
                         options: Engine.Utils.shuffle([answer, ...Engine.Utils.shuffle([0,1,2,3,4,5,6,7,8,9].filter(d => d !== answer && Math.abs(d - answer) <= 4)).slice(0, 3)]),
@@ -108,19 +109,17 @@ const PlaceValue4 = {
                     if (modality === 'worked-example') {
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> In 5,372 what is in the hundreds place?</p><p>5 , 3 , 7 , 2</p><p>Th H T O</p><p>The hundreds digit is <strong>3</strong></p></div>`;
                     } else if (modality === 'visual') {
+                        // Only the starting box is marked — naming every place would leave her just matching a label
+                        const placeOrder = ['ones','tens','hundreds','thousands','ten-thousands'].slice(0, numStr.length).join(', ');
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
-                            <p>🐲 Count from the RIGHT to find each place:</p>
+                            <p>🐲 Start at the RIGHT and count places as you move left:</p>
                             <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                                ${['ones','tens','hundreds','thousands','ten-thousands'].slice(0, numStr.length).reverse().map((pl, i) => {
-                                    const digit = numStr[i];
-                                    const highlighted = pl === place;
-                                    return `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-                                        <div style="background:${highlighted ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};color:#fff;padding:6px 12px;border-radius:8px;font-weight:700;font-size:1.3rem;">${digit}</div>
-                                        <div style="font-size:0.7rem;color:${highlighted ? 'var(--monster-yellow)' : 'var(--text-muted)'};">${highlighted ? '⚡' : ''} ${pl}</div>
-                                    </div>`;
-                                }).join('')}
+                                ${numStr.split('').map((digit, i) => `<div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
+                                        <div style="background:rgba(255,255,255,0.1);color:#fff;padding:6px 12px;border-radius:8px;font-weight:700;font-size:1.3rem;">${digit}</div>
+                                        <div style="font-size:0.7rem;color:var(--text-muted);">${i === numStr.length - 1 ? '↑ start' : '?'}</div>
+                                    </div>`).join('')}
                             </div>
-                            <p style="margin-top:8px;">The <strong>${place}</strong> digit is <span style="color:var(--monster-yellow);font-weight:700;">${answer}</span> 🔥</p>
+                            <p style="margin-top:8px;">Say them in order: ${placeOrder}. Which digit is in the <strong>${place}</strong> place? <span style="color:var(--monster-yellow);font-weight:700;">?</span> 🔥</p>
                         </div>`;
                     }
 
@@ -138,6 +137,11 @@ const PlaceValue4 = {
                     if (Math.random() < 0.15) b = a;
                     const correct = a > b ? '>' : a < b ? '<' : '=';
                     const reversed = a > b ? '<' : a < b ? '>' : '=';
+                    // Biggest place either number reaches — where the left-to-right comparison starts
+                    const len = Math.max(String(a).length, String(b).length);
+                    const topPlace = ['ones', 'tens', 'hundreds', 'thousands', 'ten-thousands', 'hundred-thousands'][len - 1];
+                    const topDigit = n => Math.floor(n / Math.pow(10, len - 1)) % 10;
+                    const lineUp = n => String(n).padStart(len, ' ').split('').map(d => `<span style="display:inline-block;width:1.1em;">${d.trim()}</span>`).join('');
 
                     const result = {
                         type: 'multiple-choice',
@@ -150,14 +154,14 @@ const PlaceValue4 = {
                         answer: correct,
                         options: [{label: '<', value: '<'}, {label: '>', value: '>'}, {label: '=', value: '='}],
                         hint1: `Compare starting from the largest place value`,
-                        hint2: `${a.toLocaleString()} is ${a > b ? 'greater than' : a < b ? 'less than' : 'equal to'} ${b.toLocaleString()}`,
+                        hint2: `Compare the ${topPlace} digits first: ${topDigit(a)} vs ${topDigit(b)}. If they match, move one place to the right and compare again. If every place matches, the numbers are equal.`,
                         hint3: `${a.toLocaleString()} ${correct} ${b.toLocaleString()}`,
                         diagnose(userAnswer) {
                             if (userAnswer === reversed && correct !== '=') return 'reversed-comparison';
                             return null;
                         },
                         misconceptionHints: {
-                            'reversed-comparison': `You picked the opposite direction! Remember: the open end of < or > always faces the BIGGER number. Think of it as a hungry monster mouth — it eats the larger number! 🐲`
+                            'reversed-comparison': `Check which way your symbol points! Remember: the open end of < or > always faces the BIGGER number. Think of it as a hungry monster mouth — it eats the larger number! 🐲`
                         }
                     };
 
@@ -168,7 +172,11 @@ const PlaceValue4 = {
                             <p>🐲 Step 1: Line up the digits by place value</p>
                             <p>🦖 Step 2: Compare from the LEFT (biggest place first)</p>
                             <p>⚡ Step 3: The first digit that's different tells you the answer!</p>
-                            <p style="font-size:1.3rem;margin-top:8px;">🐲 ${a.toLocaleString()} ${correct === '>' ? '🔥 WINS!' : correct === '<' ? '💤 loses...' : '🤝 TIE!'}</p>
+                            <div style="display:inline-block;text-align:left;font-size:1.3rem;font-weight:700;margin-top:8px;">
+                                <div style="color:var(--monster-red);">🐲 ${lineUp(a)}</div>
+                                <div style="color:var(--monster-blue);">🦖 ${lineUp(b)}</div>
+                            </div>
+                            <p>Which is the first place where the digits are different? (If every place matches, the numbers are equal.) 🔥</p>
                         </div>`;
                     }
 
@@ -214,7 +222,8 @@ const PlaceValue4 = {
                         const lower = Math.floor(num / roundTo) * roundTo;
                         const upper = lower + roundTo;
                         const midpoint = lower + roundTo / 2;
-                        const goesUp = num >= midpoint;
+                        // Same number line for every number (even one already on a multiple), and the
+                        // up/down call is left to her — naming the direction would name the answer
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <p>🐾 Is <strong>${num.toLocaleString()}</strong> closer to ${lower.toLocaleString()} or ${upper.toLocaleString()}?</p>
                             <div style="display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap;">
@@ -222,7 +231,7 @@ const PlaceValue4 = {
                                 <span style="color:var(--text-muted);">── midpoint: ${midpoint.toLocaleString()} ──</span>
                                 <span style="font-weight:700;color:var(--monster-red);">🔥 ${upper.toLocaleString()}</span>
                             </div>
-                            <p style="margin-top:6px;">${num.toLocaleString()} is ${goesUp ? 'at or past' : 'before'} the midpoint → round <strong>${goesUp ? 'UP' : 'DOWN'}</strong> to <span style="color:var(--monster-yellow);font-weight:700;">${answer.toLocaleString()}</span> ⚡</p>
+                            <p style="margin-top:6px;">At or past the midpoint → round <strong>UP</strong>. Before it → round <strong>DOWN</strong>. ${num.toLocaleString()} rounds to <span style="color:var(--monster-yellow);font-weight:700;">?</span> ⚡</p>
                         </div>`;
                     }
 
@@ -261,16 +270,20 @@ const PlaceValue4 = {
                         { label: endSwapStr, value: endSwapStr }
                     ]);
 
+                    // Re-shuffle if the display lands in sorted order — it would show the answer word for word
+                    let shown;
+                    do { shown = Engine.Utils.shuffle(nums); } while (shown.every((n, i) => n === sorted[i]));
+
                     const result = {
                         type: 'multiple-choice',
                         questionText: `Order these numbers from <strong>least to greatest</strong>:`,
                         visual: `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
-                            ${Engine.Utils.shuffle(nums).map(n => `<div style="background:var(--monster-blue);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;font-size:1.1rem;">🗡️ ${n.toLocaleString()}</div>`).join('')}
+                            ${shown.map(n => `<div style="background:var(--monster-blue);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;font-size:1.1rem;">🗡️ ${n.toLocaleString()}</div>`).join('')}
                         </div>`,
                         answer: correct,
                         options,
                         hint1: `Find the smallest number first, then the next smallest...`,
-                        hint2: `Compare the thousands digits first, then hundreds, then tens...`,
+                        hint2: `A number with more digits is bigger. If they have the same number of digits, compare the leftmost digits first, then move right...`,
                         hint3: `The correct order is: ${correct}`,
                         diagnose(userAnswer) {
                             if (userAnswer === descending) return 'ordered-greatest-to-least';
@@ -287,11 +300,15 @@ const PlaceValue4 = {
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Order: 482, 219, 905, 347</p><p>Step 1: Find the smallest → 219</p><p>Step 2: Next smallest → 347</p><p>Step 3: Next → 482</p><p>Step 4: Largest → 905</p><p>Answer: <strong>219, 347, 482, 905</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
-                            <p>🗡️ Monster lineup — smallest to biggest!</p>
+                            <p>🗡️ Stack them by place value, then compare from the LEFT:</p>
+                            <div style="display:inline-block;text-align:right;font-family:monospace;font-size:1.2rem;font-weight:700;color:var(--monster-blue);">
+                                ${shown.map(n => `<div>${n.toLocaleString()}</div>`).join('')}
+                            </div>
+                            <p style="margin-top:6px;">Monster lineup — smallest to biggest!</p>
                             <div style="display:flex;gap:6px;justify-content:center;align-items:flex-end;flex-wrap:wrap;">
-                                ${sorted.map((n, i) => `<div style="display:flex;flex-direction:column;align-items:center;">
+                                ${sorted.map((_, i) => `<div style="display:flex;flex-direction:column;align-items:center;">
                                     <span style="font-size:${0.8 + i * 0.3}rem;">🐲</span>
-                                    <span style="font-weight:700;color:var(--monster-blue);">${n.toLocaleString()}</span>
+                                    <span style="font-weight:700;color:var(--monster-yellow);">?</span>
                                 </div>`).join('→ ')}
                             </div>
                         </div>`;
@@ -328,6 +345,8 @@ const PlaceValue4 = {
                     }
 
                     const digitSum = thousands + hundreds + tens + ones;
+                    // A bare "N thousand" has no other parts, so its thousands value IS the answer — show only the setup then
+                    const thousandsVal = hundreds + tens + ones === 0 ? `${thousands} × 1,000` : (thousands * 1000).toLocaleString();
 
                     const result = {
                         type: 'input',
@@ -335,7 +354,7 @@ const PlaceValue4 = {
                         visual: `<div style="font-size:1.5rem;text-align:center;color:var(--monster-yellow);font-weight:700;">🐲 "${wordForm.trim()}" 🐲</div>`,
                         answer: num,
                         hint1: `Break it into parts: thousands, hundreds, tens, ones`,
-                        hint2: `${thousands} thousand = ${thousands * 1000}${hundreds > 0 ? ', ' + hundreds + ' hundred = ' + hundreds * 100 : ''}`,
+                        hint2: `${thousands} thousand = ${thousandsVal}${hundreds > 0 ? ', ' + hundreds + ' hundred = ' + hundreds * 100 : ''}`,
                         hint3: `The number is ${num.toLocaleString()}`,
                         diagnose(userAnswer) {
                             if (userAnswer === digitSum) return 'added-digits-not-place-values';
@@ -344,7 +363,7 @@ const PlaceValue4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'added-digits-not-place-values': `It looks like you added the individual digits together instead of using their place values! "${onesWords[thousands]} thousand" means ${thousands},000, not just ${thousands}. 🐲`,
+                            'added-digits-not-place-values': `It looks like you added the individual digits together instead of using their place values! "${onesWords[thousands]} thousand" means ${thousandsVal}, not just ${thousands}. 🐲`,
                             'forgot-tens-and-ones': `You got the thousands and hundreds right, but forgot the tens and ones! Make sure to include every part of the word form.`,
                             'off-by-place': `You're off by a factor of 10 — double-check how many digits your number should have!`
                         }
@@ -356,13 +375,13 @@ const PlaceValue4 = {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <p>🐲 Break the words into monster place-value cards:</p>
                             <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
-                                <div style="background:var(--monster-red);color:#fff;padding:8px 12px;border-radius:10px;">🐲 ${onesWords[thousands]} thousand = ${(thousands * 1000).toLocaleString()}</div>
+                                <div style="background:var(--monster-red);color:#fff;padding:8px 12px;border-radius:10px;">🐲 ${onesWords[thousands]} thousand = ${thousandsVal}</div>
                                 ${hundreds > 0 ? `<div style="background:var(--monster-purple);color:#fff;padding:8px 12px;border-radius:10px;">🦖 ${onesWords[hundreds]} hundred = ${hundreds * 100}</div>` : ''}
                                 ${tens === 1 ? `<div style="background:var(--monster-blue);color:#fff;padding:8px 12px;border-radius:10px;">⚡ ${teensWords[ones]} = ${10 + ones}</div>` : ''}
                                 ${tens > 1 ? `<div style="background:var(--monster-blue);color:#fff;padding:8px 12px;border-radius:10px;">⚡ ${tensWords[tens]} = ${tens * 10}</div>` : ''}
                                 ${tens !== 1 && ones > 0 ? `<div style="background:var(--monster-yellow);color:#000;padding:8px 12px;border-radius:10px;">🔥 ${onesWords[ones]} = ${ones}</div>` : ''}
                             </div>
-                            <p style="margin-top:8px;">Add them all: <strong>${num.toLocaleString()}</strong></p>
+                            <p style="margin-top:8px;">Add them all: <strong>?</strong></p>
                         </div>`;
                     }
 
@@ -404,13 +423,11 @@ const PlaceValue4 = {
                             if (modality === 'worked-example') {
                                 result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 7 x 100 = ?</p><p>Multiplying by 100 means adding 2 zeros</p><p>7 → 7<strong>00</strong></p><p>Answer: <strong>700</strong></p></div>`;
                             } else if (modality === 'visual') {
+                                // Power-ups are counted apart from the base — sticking the 0s onto it is her step
                                 result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                                     <p>🐲 Each zero in ${multiplier.toLocaleString()} is a monster power-up!</p>
-                                    <div style="display:flex;gap:8px;justify-content:center;align-items:center;">
-                                        <span style="font-size:1.4rem;font-weight:700;">${base}</span>
-                                        ${Array.from({length: zeroCount}, (_, i) => `<span style="font-size:1.4rem;">→ <span style="color:var(--monster-red);font-weight:700;">0</span> ⚡</span>`).join('')}
-                                    </div>
-                                    <p style="margin-top:4px;">= <strong>${answer.toLocaleString()}</strong></p>
+                                    <div style="font-size:1.4rem;">${multiplier.toLocaleString()} has ${zeroCount} zero${zeroCount > 1 ? 's' : ''} → ${Array.from({length: zeroCount}, () => '⚡').join(' ')}</div>
+                                    <p style="margin-top:4px;">Stick one 0 on the end of ${base} for each ⚡: ${base} x ${multiplier.toLocaleString()} = <strong>?</strong></p>
                                 </div>`;
                             }
 

@@ -18,6 +18,11 @@ const Time = {
             return `${displayH}:${m.toString().padStart(2, '0')} ${period}`;
         }
 
+        // An analog clock can't show AM or PM, so clock-reading answers leave it off
+        function clockTime(h, m) {
+            return `${h}:${m.toString().padStart(2, '0')}`;
+        }
+
         function clockSVG(h, m, size = 200) {
             const cx = size / 2, cy = size / 2, r = size / 2 - 10;
             // Hour hand angle
@@ -64,12 +69,12 @@ const Time = {
                 generate(diff) {
                     const h = R(1, 12);
                     const m = diff >= 2 ? R(0, 11) * 5 : pick([0, 15, 30, 45]);
-                    const answer = formatTime(h, m);
+                    const answer = clockTime(h, m);
                     const options = [answer];
                     while (options.length < 4) {
                         const fakeH = R(1, 12);
                         const fakeM = R(0, 11) * 5;
-                        const fake = formatTime(fakeH, fakeM);
+                        const fake = clockTime(fakeH, fakeM);
                         if (!options.includes(fake)) options.push(fake);
                     }
                     return {
@@ -80,7 +85,9 @@ const Time = {
                         answer,
                         options: Engine.Utils.shuffle(options).map(o => ({label: o, value: o})),
                         hint1: `The short hand (blue) shows the hour, the long hand (pink) shows the minutes`,
-                        hint2: `Hour hand points near ${h}. Minute hand: each number = 5 minutes`,
+                        // The hour hand creeps toward the next number as minutes pass — give the rule, don't name
+                        // the hour or the minutes (the fake options differ there, so naming either singles out the answer)
+                        hint2: `If the short hand is between two numbers, the hour is the one it has already passed, not the one it's heading to. Minute hand: each number = 5 minutes, so count by 5s from 12`,
                         hint3: `The time is ${answer}`
                     };
                 }
@@ -94,7 +101,8 @@ const Time = {
                     const m = diff >= 2 ? R(1, 11) * 5 : pick([15, 30, 45]);
                     return {
                         type: 'input',
-                        questionText: `The swim race starts at ${formatTime(h, m)}.<br>How many minutes past ${h > 12 ? h - 12 : h} o'clock is that?`,
+                        // Don't print the time too — "3:15" would hand over the 15 she's meant to read off the clock
+                        questionText: `The swim race starts at the time on this clock.<br>How many minutes past ${h > 12 ? h - 12 : h} o'clock is that?`,
                         answer: m,
                         visual: `<div class="clock-container" style="width:180px;height:180px">${clockSVG(h, m, 180)}</div>`,
                         hint1: `Look at where the minute hand is pointing`,
@@ -107,7 +115,8 @@ const Time = {
             {
                 skillId: 'time-elapsed',
                 generate(diff) {
-                    const startH = R(1, 10);
+                    // 24-hour start, 8 AM–5:50 PM: races happen in the daytime (ends by 7:20 PM at most)
+                    const startH = R(8, 17);
                     const startM = R(0, 5) * 10;
                     const duration = diff >= 2 ? R(15, 90) : R(10, 45);
                     const endTotalM = startH * 60 + startM + duration;
@@ -164,9 +173,10 @@ const Time = {
                             return Engine.Utils.shuffle(opts).map(o => ({label: o, value: o}));
                         })(),
                         hint1: `Start at ${formatTime(startH, startM)} and add ${duration} minutes`,
+                        // Don't name the hour: when the fakes all land in the next hour, "past 8" singles out the answer
                         hint2: (startM + duration < 60)
-                            ? `${startM} + ${duration} = ${startM + duration} minutes past ${startH > 12 ? startH - 12 : startH}`
-                            : `${startM} + ${duration} = ${startM + duration} minutes — that's more than 60, so it crosses into the next hour`,
+                            ? `${startM} + ${duration} = ? minutes`
+                            : `${startM} + ${duration} = ${startM + duration} minutes — that's 60 or more, so it crosses into the next hour`,
                         hint3: `${event} ends at ${formatTime(endH, endM)}`
                     };
                 }
@@ -175,11 +185,13 @@ const Time = {
             {
                 skillId: 'time-ampm',
                 generate(diff) {
+                    // Clues come from the activity, not the words "morning"/"evening" (those match the
+                    // option labels word-for-word); each hour fits only one of AM/PM for that activity
                     const events = [
-                        { name: 'Morning swim practice', h: R(6, 11), ampm: 'AM' },
-                        { name: 'Afternoon swim meet', h: R(1, 5), ampm: 'PM' },
-                        { name: 'Evening pool party', h: R(5, 8), ampm: 'PM' },
-                        { name: 'Early morning warm-up', h: R(5, 8), ampm: 'AM' },
+                        { name: 'Swim practice before school', h: R(6, 7), ampm: 'AM' },
+                        { name: 'Swim lesson after breakfast', h: R(8, 10), ampm: 'AM' },
+                        { name: 'Swim meet after lunch', h: R(1, 4), ampm: 'PM' },
+                        { name: 'Pool party after dinner', h: R(6, 8), ampm: 'PM' },
                     ];
                     const e = pick(events);
                     return {
@@ -218,8 +230,10 @@ const Time = {
             {
                 skillId: 'time-countdown',
                 generate(diff) {
-                    const now = R(1, 10);
-                    const nowM = pick([0, 15, 30, 45]);
+                    // 24-hour "now", 8 AM–5:45 PM, so the race is always in the daytime
+                    const now = R(8, 17);
+                    // Never on the hour: from 10:00 the answer is just the race's minutes (10:28 → 28)
+                    const nowM = diff <= 1 ? pick([15, 30, 45]) : pick([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
                     const delta = R(10, 40);
                     const totalEventM = now * 60 + nowM + delta;
                     const eventH = Math.floor(totalEventM / 60);

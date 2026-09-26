@@ -72,7 +72,8 @@ const Fractions = {
                         answer,
                         options,
                         hint1: `Count the colored parts (numerator) and total parts (denominator)`,
-                        hint2: `${numer} parts colored out of ${denom} total`,
+                        // Give the total (bottom number) but leave counting the colored parts to her
+                        hint2: `There are ${denom} parts in all — that's the bottom number. How many parts are colored? That's the top number.`,
                         hint3: `The fraction is ${numer}/${denom}`
                     };
                 }
@@ -89,6 +90,8 @@ const Fractions = {
                         [1,2,1,3], [1,3,2,5], [2,3,1,2], [1,4,1,3], [2,5,1,2], [3,4,2,3]
                     ];
                     const [n1,d1,n2,d2] = pick(pairs);
+                    // Start from the smaller denominator so the multiply test works for every equivalent pair
+                    const [sN, sD, bN, bD] = d1 < d2 ? [n1, d1, n2, d2] : [n2, d2, n1, d1];
                     return {
                         type: 'true-false',
                         questionText: `Are these fractions equivalent?<br>${n1}/${d1} = ${n2}/${d2}?`,
@@ -109,7 +112,7 @@ const Fractions = {
                         </div>`,
                         answer: (n1 / d1) === (n2 / d2),
                         hint1: `Compare the colored amounts — do they cover the same amount?`,
-                        hint2: `${n1}/${d1} = ${(n1/d1).toFixed(2)} and ${n2}/${d2} = ${(n2/d2).toFixed(2)}`,
+                        hint2: `Try multiplying the top AND bottom of ${sN}/${sD} by the same number. Can you make ${bN}/${bD}?`,
                         hint3: `${n1}/${d1} ${(n1/d1) === (n2/d2) ? '=' : '≠'} ${n2}/${d2}`
                     };
                 }
@@ -167,7 +170,10 @@ const Fractions = {
                         </div>`,
                         answer,
                         hint1: `First divide ${total} into ${denom} equal groups`,
-                        hint2: `Each group has ${total / denom}. Take ${numer} of those groups.`,
+                        // For 1/d the group size IS the answer, so leave that division to her
+                        hint2: numer === 1
+                            ? `${total} ÷ ${denom} = ? That's how many are in 1 group.`
+                            : `Each group has ${total / denom}. Take ${numer} of those groups.`,
                         hint3: `${numer}/${denom} of ${total} = ${answer}`
                     };
                 }
@@ -201,7 +207,7 @@ const Fractions = {
                         answer: bigger,
                         options: [{label: `1/${d1}`, value: `1/${d1}`}, {label: `1/${d2}`, value: `1/${d2}`}],
                         hint1: `With unit fractions: the smaller the denominator, the BIGGER the piece!`,
-                        hint2: `1/${Math.min(d1,d2)} is a bigger piece than 1/${Math.max(d1,d2)}`,
+                        hint2: `1/${d1} cuts the whole into ${d1} pieces. 1/${d2} cuts it into ${d2} pieces. Which one has fewer pieces?`,
                         hint3: `${bigger} is bigger because fewer pieces means each piece is larger!`
                     };
                 }
@@ -219,7 +225,7 @@ const Fractions = {
                         subText: `${whole} = ?/${denom}`,
                         visual: `<div style="font-size:2rem;font-weight:700;color:var(--craft-pink);">${whole} = <span style="color:var(--craft-yellow)">?</span>/${denom}</div>`,
                         answer: numer,
-                        hint1: `How many ${denom}ths make ${whole} whole?`,
+                        hint1: `How many ${{1: 'wholes', 2: 'halves', 3: 'thirds', 4: 'fourths'}[denom]} make ${whole} whole${whole === 1 ? '' : 's'}?`,
                         hint2: `${whole} × ${denom} = ?`,
                         hint3: `${whole} = ${numer}/${denom}`
                     };
@@ -244,7 +250,10 @@ const Fractions = {
                         visual: `<div style="font-size:2.5rem">✂️🎨</div>`,
                         answer,
                         hint1: `Find ${numer}/${denom} of ${total}: divide by ${denom}, then multiply by ${numer}`,
-                        hint2: `${total} ÷ ${denom} = ${total / denom}. Then × ${numer} = ?`,
+                        // For 1/d the division result IS the answer, so leave that step to her
+                        hint2: numer === 1
+                            ? `${total} ÷ ${denom} = ?`
+                            : `${total} ÷ ${denom} = ${total / denom}. Then × ${numer} = ?`,
                         hint3: `${numer}/${denom} of ${total} = ${answer}`
                     };
                 }

@@ -20,12 +20,14 @@ const AreaPerimeter4 = {
                     const w = R(2, diff >= 2 ? 15 : 8);
                     const h = R(2, diff >= 2 ? 15 : 8);
                     const answer = w * h;
+                    // One scale for both sides so the drawing keeps the real shape (a 15 × 15 floor stays square)
+                    const scale = Math.min(20, 200 / w, 160 / h);
 
                     const result = {
                         type: 'input',
                         questionText: `🪩 The dance floor is ${w} meters wide and ${h} meters long.<br>What is the area?`,
                         visual: `<div style="text-align:center;">
-                            <div style="display:inline-flex;width:${Math.min(w * 20, 200)}px;height:${Math.min(h * 20, 160)}px;background:rgba(236,72,153,0.15);border:3px solid var(--dance-pink);border-radius:8px;align-items:center;justify-content:center;position:relative;">
+                            <div style="display:inline-flex;width:${Math.round(w * scale)}px;height:${Math.round(h * scale)}px;background:rgba(236,72,153,0.15);border:3px solid var(--dance-pink);border-radius:8px;align-items:center;justify-content:center;position:relative;">
                                 <span style="font-weight:700;color:var(--dance-pink);">🪩</span>
                                 <span style="position:absolute;bottom:-24px;font-size:0.9rem;font-weight:700;color:var(--dance-gold);">${w} m</span>
                                 <span style="position:absolute;right:-40px;top:50%;transform:translateY(-50%);font-size:0.9rem;font-weight:700;color:var(--dance-cyan);">${h} m</span>
@@ -41,17 +43,24 @@ const AreaPerimeter4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'calculated-perimeter': `✨ That's the perimeter! Area fills the whole floor — use multiplication: ${w} × ${h} = ${answer} sq m. Perimeter goes around the edge! 💃`,
+                            'calculated-perimeter': `✨ That's the perimeter! Area fills the whole floor — use multiplication: ${w} × ${h} = ? sq m. Perimeter goes around the edge! 💃`,
                             'added-sides': `🎵 You added the sides, but area needs multiplication! Try ${w} × ${h} to cover the whole dance floor. 🕺`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>💃 Example:</strong> A 5m × 3m floor</p><p>Area = 5 × 3 = <strong>15 sq m</strong> 🪩</p><p>Think: tiles covering every inch of the dance floor!</p></div>`;
+                        const [weW, weH] = answer === 15 ? [6, 4] : [5, 3];
+                        result.workedExample = `<div style="text-align:center"><p><strong>💃 Example:</strong> A ${weW}m × ${weH}m floor</p><p>Area = ${weW} × ${weH} = <strong>${weW * weH} sq m</strong> 🪩</p><p>Think: tiles covering every inch of the dance floor!</p></div>`;
                     } else if (modality === 'visual') {
+                        // A side over 10 gets split into 10 + ones; the last add is hers
+                        const big = Math.max(w, h), small = Math.min(w, h);
+                        const steps = big > 10
+                            ? ` = (10 × ${small}) + (${big - 10} × ${small}) = ${10 * small} + ${(big - 10) * small}`
+                            : '';
                         result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(236,72,153,0.08);border-radius:8px;">
                             <p style="font-weight:700;color:var(--dance-pink);">✨ Area fills the whole space!</p>
-                            <p style="color:var(--dance-gold);">Area = ${w} × ${h} = ${answer} sq m 🪩</p>
+                            <p style="color:var(--dance-cyan);">Think: ${h} rows of ${w} tiles each</p>
+                            <p style="color:var(--dance-gold);">Area = ${w} × ${h}${steps} = ? sq m 🪩</p>
                         </div>`;
                     }
 
@@ -88,17 +97,18 @@ const AreaPerimeter4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'calculated-area': `🪩 That's the area! Perimeter is the distance AROUND the stage — like a dancer tracing the edge: 2 × (${w} + ${h}) = ${answer} ft. 💃`,
-                            'forgot-to-double': `🎵 Almost there! You added width + height but a rectangle has TWO of each side. Multiply by 2: 2 × (${w} + ${h}) = ${answer} ft. 🕺`
+                            'calculated-area': `🪩 That's the area! Perimeter is the distance AROUND the stage — like a dancer tracing the edge: 2 × (${w} + ${h}) = ? ft. 💃`,
+                            'forgot-to-double': `🎵 Almost there! You added width + height but a rectangle has TWO of each side. Multiply by 2: 2 × ${w + h} = ? ft. 🕺`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>🕺 Example:</strong> 6ft × 4ft rectangle</p><p>Perimeter = 2 × (6 + 4) = 2 × 10 = <strong>20 ft</strong> ✨</p><p>Think: a dancer walking all the way around the stage!</p></div>`;
+                        const [weW, weH] = answer === 20 ? [5, 3] : [6, 4];
+                        result.workedExample = `<div style="text-align:center"><p><strong>🕺 Example:</strong> ${weW}ft × ${weH}ft rectangle</p><p>Perimeter = 2 × (${weW} + ${weH}) = 2 × ${weW + weH} = <strong>${2 * (weW + weH)} ft</strong> ✨</p><p>Think: a dancer walking all the way around the stage!</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(34,211,238,0.08);border-radius:8px;">
                             <p style="font-weight:700;color:var(--dance-cyan);">💃 Perimeter = walking around the edge!</p>
-                            <p style="color:var(--dance-gold);">Top + Bottom + Left + Right = ${w} + ${w} + ${h} + ${h} = ${answer} ft ✨</p>
+                            <p style="color:var(--dance-gold);">Top + Bottom + Left + Right = ${w} + ${w} + ${h} + ${h} = ? ft ✨</p>
                         </div>`;
                     }
 
@@ -136,19 +146,21 @@ const AreaPerimeter4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'subtracted-instead-of-divided': `🎵 Close, but area uses multiplication! To undo multiplication you divide: ${area} ÷ ${known} = ${answer} ft. 💃`,
-                            'added-instead-of-divided': `✨ Remember: Area = side × side. To find the missing side, divide: ${area} ÷ ${known} = ${answer} ft. 🕺`,
-                            'multiplied-instead-of-divided': `🪩 You already know the area — no more multiplying needed! Divide to find the missing side: ${area} ÷ ${known} = ${answer} ft. 🎵`,
-                            'used-perimeter-formula': `💃 This problem is about area, not perimeter! Area = side × side, so missing side = ${area} ÷ ${known} = ${answer} ft. ✨`
+                            'subtracted-instead-of-divided': `🎵 Close, but area uses multiplication! To undo multiplication you divide: ${area} ÷ ${known} = ? ft. 💃`,
+                            'added-instead-of-divided': `✨ Remember: Area = side × side. To find the missing side, divide: ${area} ÷ ${known} = ? ft. 🕺`,
+                            'multiplied-instead-of-divided': `🪩 You already know the area — no more multiplying needed! Divide to find the missing side: ${area} ÷ ${known} = ? ft. 🎵`,
+                            'used-perimeter-formula': `💃 This problem is about area, not perimeter! Area = side × side, so missing side = ${area} ÷ ${known} = ? ft. ✨`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>🎵 Example:</strong> Area = 24 sq ft, one side = 6 ft</p><p>Missing side = 24 ÷ 6 = <strong>4 ft</strong> 🪩</p><p>Think: Area ÷ known side = missing side!</p></div>`;
+                        const [weArea, weSide] = answer === 4 ? [30, 5] : [24, 6];
+                        result.workedExample = `<div style="text-align:center"><p><strong>🎵 Example:</strong> Area = ${weArea} sq ft, one side = ${weSide} ft</p><p>Missing side = ${weArea} ÷ ${weSide} = <strong>${weArea / weSide} ft</strong> 🪩</p><p>Think: Area ÷ known side = missing side!</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(236,72,153,0.08);border-radius:8px;">
                             <p style="font-weight:700;color:var(--dance-pink);">🎵 Undo the multiplication with division!</p>
-                            <p style="color:var(--dance-gold);">${area} ÷ ${known} = <strong>${answer} ft</strong> ✨</p>
+                            <p style="color:var(--dance-gold);">${area} ÷ ${known} = ? ft ✨</p>
+                            <p style="color:var(--dance-cyan);">Think: ${known} × ? = ${area} — count by ${known}s up to ${area}!</p>
                         </div>`;
                     }
 
@@ -185,20 +197,21 @@ const AreaPerimeter4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'subtracted-from-full-perim': `🕺 Don't forget to halve the perimeter first! Step 1: ${perim} ÷ 2 = ${halfPerim}. Step 2: ${halfPerim} − ${known} = ${answer} ft. ✨`,
-                            'divided-by-known': `🎵 Perimeter uses addition inside, not multiplication! Step 1: ${perim} ÷ 2 = ${halfPerim}. Step 2: ${halfPerim} − ${known} = ${answer} ft. 💃`,
-                            'multiplied-known-perim': `🪩 Too many steps mixed up! Start here: ${perim} ÷ 2 = ${halfPerim}, then ${halfPerim} − ${known} = ${answer} ft. 🕺`,
-                            'forgot-to-subtract-known': `✨ Great first step dividing by 2! Now subtract the known side: ${halfPerim} − ${known} = ${answer} ft. You're almost there! 🎵`
+                            'subtracted-from-full-perim': `🕺 Don't forget to halve the perimeter first! Step 1: ${perim} ÷ 2 = ${halfPerim}. Step 2: ${halfPerim} − ${known} = ? ft. ✨`,
+                            'divided-by-known': `🎵 Perimeter uses addition inside, not multiplication! Step 1: ${perim} ÷ 2 = ${halfPerim}. Step 2: ${halfPerim} − ${known} = ? ft. 💃`,
+                            'multiplied-known-perim': `🪩 Too many steps mixed up! Start here: ${perim} ÷ 2 = ${halfPerim}, then ${halfPerim} − ${known} = ? ft. 🕺`,
+                            'forgot-to-subtract-known': `✨ Great first step dividing by 2! Now subtract the known side: ${halfPerim} − ${known} = ? ft. You're almost there! 🎵`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>🕺 Example:</strong> Perimeter = 20 ft, one side = 6 ft</p><p>Step 1: 20 ÷ 2 = 10 (half perimeter)</p><p>Step 2: 10 − 6 = <strong>4 ft</strong> ✨</p></div>`;
+                        const [weP, weSide] = answer === 4 ? [18, 4] : [20, 6];
+                        result.workedExample = `<div style="text-align:center"><p><strong>🕺 Example:</strong> Perimeter = ${weP} ft, one side = ${weSide} ft</p><p>Step 1: ${weP} ÷ 2 = ${weP / 2} (half perimeter)</p><p>Step 2: ${weP / 2} − ${weSide} = <strong>${weP / 2 - weSide} ft</strong> ✨</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(34,211,238,0.08);border-radius:8px;">
                             <p style="font-weight:700;color:var(--dance-cyan);">🕺 Two steps to find the missing side!</p>
                             <p style="color:var(--dance-gold);">Step 1: ${perim} ÷ 2 = ${halfPerim}</p>
-                            <p style="color:var(--dance-pink);">Step 2: ${halfPerim} − ${known} = <strong>${answer} ft</strong> ✨</p>
+                            <p style="color:var(--dance-pink);">Step 2: ${halfPerim} − ${known} = ? ft ✨</p>
                         </div>`;
                     }
 
@@ -239,20 +252,21 @@ const AreaPerimeter4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'subtracted-areas': `🎵 L-shapes combine both parts — add the areas, don't subtract! ${area1} + ${area2} = ${answer} sq units. 🪩`,
-                            'only-one-rectangle': `💃 Don't forget the other part of the L! Add both rectangles: ${area1} + ${area2} = ${answer} sq units. 🕺`,
-                            'multiplied-all-sides': `✨ The L-shape isn't one big rectangle! Split it: top (${w1}×${h1}=${area1}) + bottom (${w2}×${h2}=${area2}) = ${answer} sq units. 🎵`
+                            'subtracted-areas': `🎵 L-shapes combine both parts — add the areas, don't subtract! ${area1} + ${area2} = ? sq units. 🪩`,
+                            'only-one-rectangle': `💃 Don't forget the other part of the L! Add both rectangles: ${area1} + ${area2} = ? sq units. 🕺`,
+                            'multiplied-all-sides': `✨ The L-shape isn't one big rectangle! Split it: top (${w1}×${h1}=${area1}) + bottom (${w2}×${h2}=${area2}) = ? sq units. 🎵`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>💃 Strategy:</strong> Split into rectangles!</p><p>Rectangle A: 6×4 = 24</p><p>Rectangle B: 3×2 = 6</p><p>Total: 24 + 6 = <strong>30 sq units</strong> 🪩</p></div>`;
+                        const [weA, weB] = answer === 30 ? [[5, 4], [3, 2]] : [[6, 4], [3, 2]];
+                        result.workedExample = `<div style="text-align:center"><p><strong>💃 Strategy:</strong> Split into rectangles!</p><p>Rectangle A: ${weA[0]}×${weA[1]} = ${weA[0] * weA[1]}</p><p>Rectangle B: ${weB[0]}×${weB[1]} = ${weB[0] * weB[1]}</p><p>Total: ${weA[0] * weA[1]} + ${weB[0] * weB[1]} = <strong>${weA[0] * weA[1] + weB[0] * weB[1]} sq units</strong> 🪩</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(236,72,153,0.08);border-radius:8px;">
                             <p style="font-weight:700;color:var(--dance-pink);">✨ Decompose the L into two rectangles!</p>
                             <p style="color:var(--dance-gold);">🟥 Part 1: ${w1} × ${h1} = ${area1}</p>
                             <p style="color:var(--dance-cyan);">🟦 Part 2: ${w2} × ${h2} = ${area2}</p>
-                            <p style="color:var(--dance-pink);font-weight:700;">Total = ${area1} + ${area2} = ${answer} sq units 🪩</p>
+                            <p style="color:var(--dance-pink);font-weight:700;">Total = ${area1} + ${area2} = ? sq units 🪩</p>
                         </div>`;
                     }
 
@@ -287,18 +301,22 @@ const AreaPerimeter4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'multiplied-two-sides': `🎤 Perimeter means ADD all the sides — not multiply! Try: ${sides.join(' + ')} = ${answer}. 💃`,
-                            'used-wrong-formula': `✨ This shape isn't a regular rectangle — add each side individually: ${sides.join(' + ')} = ${answer}. 🕺`,
-                            'missed-last-side': `🎵 So close! You forgot the last side (${sides[sides.length - 1]}). Add it: ${partialSum} + ${sides[sides.length - 1]} = ${answer}. 🪩`
+                            'multiplied-two-sides': `🎤 Perimeter means ADD all the sides — not multiply! Try: ${sides.join(' + ')} = ? 💃`,
+                            'used-wrong-formula': `✨ This shape isn't a regular rectangle — add each side individually: ${sides.join(' + ')} = ? 🕺`,
+                            'missed-last-side': `🎵 So close! You forgot the last side (${sides[sides.length - 1]}). Add it: ${partialSum} + ${sides[sides.length - 1]} = ? 🪩`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>🎤 Example:</strong> Sides: 5, 4, 3, 6</p><p>Perimeter = 5 + 4 + 3 + 6 = <strong>18</strong> ✨</p><p>Think: a dancer tracing every edge of the stage! 💃</p></div>`;
+                        const weSides = answer === 18 ? [5, 4, 3, 7] : [5, 4, 3, 6];
+                        result.workedExample = `<div style="text-align:center"><p><strong>🎤 Example:</strong> Sides: ${weSides.join(', ')}</p><p>Perimeter = ${weSides.join(' + ')} = <strong>${weSides.reduce((x, y) => x + y, 0)}</strong> ✨</p><p>Think: a dancer tracing every edge of the stage! 💃</p></div>`;
                     } else if (modality === 'visual') {
+                        // Add in pairs (4 or 6 sides); the pair sums are shown, the last add is hers
+                        const pairs = [];
+                        for (let i = 0; i < sides.length; i += 2) pairs.push([sides[i], sides[i + 1]]);
                         result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(34,211,238,0.08);border-radius:8px;">
-                            <p style="font-weight:700;color:var(--dance-cyan);">🎤 Add EVERY side — don't skip any! ✨</p>
-                            <p style="color:var(--dance-gold);">${sides.join(' + ')} = <strong>${answer}</strong> 🕺</p>
+                            <p style="font-weight:700;color:var(--dance-cyan);">🎤 Add EVERY side — pair them up so you don't skip any! ✨</p>
+                            <p style="color:var(--dance-gold);">${pairs.map(p => `(${p[0]} + ${p[1]})`).join(' + ')} = ${pairs.map(p => p[0] + p[1]).join(' + ')} = ? 🕺</p>
                         </div>`;
                     }
 
@@ -312,6 +330,12 @@ const AreaPerimeter4 = {
                     const type = pick(['area', 'perimeter', 'both']);
                     const w = R(3, 12);
                     const h = R(3, 12);
+                    // Worked-example dimensions whose result isn't this question's answer
+                    const otherDims = (result, answer) => {
+                        let weW, weH;
+                        do { weW = R(3, 12); weH = R(3, 12); } while (result(weW, weH) === answer);
+                        return [weW, weH];
+                    };
 
                     if (type === 'area') {
                         const answer = w * h;
@@ -329,16 +353,17 @@ const AreaPerimeter4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'calculated-perimeter': `🪩 BOSS TIP: That's the perimeter! For area, multiply: ${w} × ${h} = ${answer} sq units. 💃`,
-                                'added-sides': `✨ BOSS TIP: Area uses multiplication to fill the whole floor! ${w} × ${h} = ${answer} sq units. 🕺`
+                                'calculated-perimeter': `🪩 BOSS TIP: That's the perimeter! For area, multiply: ${w} × ${h} = ? sq units. 💃`,
+                                'added-sides': `✨ BOSS TIP: Area uses multiplication to fill the whole floor! ${w} × ${h} = ? sq units. 🕺`
                             }
                         };
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🪩 BOSS MOVE:</strong> Area = length × width</p><p>${w} × ${h} = <strong>${answer} sq units</strong> 💃✨</p></div>`;
+                            const [weW, weH] = otherDims((x, y) => x * y, answer);
+                            result.workedExample = `<div style="text-align:center"><p><strong>🪩 BOSS MOVE:</strong> Area = length × width</p><p>Example: ${weW} × ${weH} = <strong>${weW * weH} sq units</strong> 💃✨</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(236,72,153,0.1);border-radius:8px;">
                                 <p style="font-weight:700;color:var(--dance-pink);">🪩 Boss Formula: Area = length × width</p>
-                                <p style="color:var(--dance-gold);">${w} × ${h} = <strong>${answer} sq units</strong> 💃</p>
+                                <p style="color:var(--dance-gold);">${h} rows of ${w}: ${w} × ${h} = ? sq units 💃</p>
                             </div>`;
                         }
                         return result;
@@ -359,16 +384,17 @@ const AreaPerimeter4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'calculated-area': `🕺 BOSS TIP: That's the area! Perimeter goes around the edge: 2 × (${w} + ${h}) = ${answer}. ✨`,
-                                'forgot-to-double': `🎵 BOSS TIP: A rectangle has TWO of each side! Multiply by 2: 2 × (${w} + ${h}) = ${answer}. 🪩`
+                                'calculated-area': `🕺 BOSS TIP: That's the area! Perimeter goes around the edge: 2 × (${w} + ${h}) = ? ✨`,
+                                'forgot-to-double': `🎵 BOSS TIP: A rectangle has TWO of each side! Multiply by 2: 2 × ${w + h} = ? 🪩`
                             }
                         };
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>✨ BOSS MOVE:</strong> Perimeter = 2 × (l + w)</p><p>2 × (${w} + ${h}) = 2 × ${w + h} = <strong>${answer}</strong> 🕺🪩</p></div>`;
+                            const [weW, weH] = otherDims((x, y) => 2 * (x + y), answer);
+                            result.workedExample = `<div style="text-align:center"><p><strong>✨ BOSS MOVE:</strong> Perimeter = 2 × (l + w)</p><p>Example: 2 × (${weW} + ${weH}) = 2 × ${weW + weH} = <strong>${2 * (weW + weH)}</strong> 🕺🪩</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(34,211,238,0.1);border-radius:8px;">
                                 <p style="font-weight:700;color:var(--dance-cyan);">✨ Boss Formula: Perimeter = 2 × (l + w)</p>
-                                <p style="color:var(--dance-gold);">2 × (${w} + ${h}) = <strong>${answer}</strong> 🕺</p>
+                                <p style="color:var(--dance-gold);">2 × (${w} + ${h}) = 2 × ${w + h} = ? 🕺</p>
                             </div>`;
                         }
                         return result;
@@ -392,17 +418,19 @@ const AreaPerimeter4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'subtracted-instead-of-divided': `🎵 BOSS TIP: To undo multiplication, divide! ${area} ÷ ${w} = ${answer} ft. 🪩`,
-                                'used-perimeter-formula': `💃 BOSS TIP: This is an area problem, not perimeter! Missing side = ${area} ÷ ${w} = ${answer} ft. ✨`,
-                                'multiplied-again': `🕺 BOSS TIP: You already have the area — divide to find the missing side: ${area} ÷ ${w} = ${answer} ft. 🎵`
+                                'subtracted-instead-of-divided': `🎵 BOSS TIP: To undo multiplication, divide! ${area} ÷ ${w} = ? ft. 🪩`,
+                                'used-perimeter-formula': `💃 BOSS TIP: This is an area problem, not perimeter! Missing side = ${area} ÷ ${w} = ? ft. ✨`,
+                                'multiplied-again': `🕺 BOSS TIP: You already have the area — divide to find the missing side: ${area} ÷ ${w} = ? ft. 🎵`
                             }
                         };
                         if (modality === 'worked-example') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>🎵 BOSS MOVE:</strong> Missing side = Area ÷ known side</p><p>${area} ÷ ${w} = <strong>${answer} ft</strong> 🪩💃</p></div>`;
+                            const [weW, weH] = otherDims((x, y) => y, answer);
+                            result.workedExample = `<div style="text-align:center"><p><strong>🎵 BOSS MOVE:</strong> Missing side = Area ÷ known side</p><p>Example: ${weW * weH} ÷ ${weW} = <strong>${weH} ft</strong> 🪩💃</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:16px;text-align:center;padding:10px;background:rgba(236,72,153,0.1);border-radius:8px;">
                                 <p style="font-weight:700;color:var(--dance-pink);">🎵 Boss Move: Area ÷ known side = missing side</p>
-                                <p style="color:var(--dance-gold);">${area} ÷ ${w} = <strong>${answer} ft</strong> 🕺✨</p>
+                                <p style="color:var(--dance-gold);">${area} ÷ ${w} = ? ft 🕺✨</p>
+                                <p style="color:var(--dance-cyan);">Think: ${w} × ? = ${area}</p>
                             </div>`;
                         }
                         return result;

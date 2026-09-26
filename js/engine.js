@@ -406,7 +406,7 @@ const Engine = (() => {
         correctCount++;
         const skillId = question.skillId || `${currentUnit.id}_ex${currentExIndex}`;
         const unitId = currentExercises[currentExIndex]?._sourceUnitId || currentUnit.id;
-        Adaptive.recordCorrect(skillId, unitId);
+        Adaptive.recordCorrect(skillId, unitId, wrongAttempts === 0);
 
         AudioManager.correct();
 
@@ -453,11 +453,12 @@ const Engine = (() => {
 
         AudioManager.incorrect();
 
-        // Misconception-aware hint selection. Prefer the misconception diagnosed
-        // on THIS answer (so a brand-new error gets a hint about that error), then
-        // fall back to the skill's all-time most common one.
+        // Misconception-aware hint selection: only the misconception diagnosed on
+        // THIS answer. Targeted hints describe a specific error ("you added 6 + 4"),
+        // so falling back to the skill's historic favorite showed them for
+        // unrelated answers — even on a different scenario of the same skill.
         let hintText = '';
-        const targetMisconception = (result && result.lastMisconception) || Adaptive.getTopMisconception(skillId);
+        const targetMisconception = result && result.lastMisconception;
 
         if (wrongAttempts === 1 && question.hint1) {
             // Use targeted hint if available for this misconception

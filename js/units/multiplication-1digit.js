@@ -50,7 +50,9 @@ const Multiplication1Digit = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weG = R(2, 3), weP = R(2, 4);
+                        // Re-roll so the example's total is never this question's answer
+                        let weG, weP;
+                        do { weG = R(2, 3); weP = R(2, 4); } while (weG * weP === answer);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weG} groups of ${weP} obstacles</p><p>${weG} × ${weP} = <strong>${weG * weP}</strong> total</p></div>`;
                     }
 
@@ -84,7 +86,9 @@ const Multiplication1Digit = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weA = R(2, 5), weB = R(2, 5);
+                        // Re-roll so the example's product is never this question's answer
+                        let weA, weB;
+                        do { weA = R(2, 5); weB = R(2, 5); } while (weA * weB === answer);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} × ${weB} = ?</p><p>Add ${weA} a total of ${weB} times: ${Array(weB).fill(weA).join(' + ')} = <strong>${weA * weB}</strong></p></div>`;
                     }
 
@@ -155,7 +159,7 @@ const Multiplication1Digit = {
                         answer: wrong,
                         options,
                         hint1: 'A fact family uses the same three numbers in multiplication and division',
-                        hint2: `The family is: ${a}×${b}=${product}, ${b}×${a}=${product}, ${product}÷${a}=${b}, ${product}÷${b}=${a}`,
+                        hint2: `Every fact in this family uses only ${a}, ${b}, and ${product} — and is true. Check each choice for both!`,
                         hint3: `${wrong} is NOT in the fact family!`
                     };
                 }
@@ -207,7 +211,7 @@ const Multiplication1Digit = {
                         answer,
                         options: Engine.Utils.multipleChoice(answer),
                         hint1: `${a} times ${b}...`,
-                        hint2: `Try skip counting by ${a}: ${Array.from({length: Math.min(b, 5)}, (_, i) => a * (i + 1)).join(', ')}...`,
+                        hint2: `Try skip counting by ${a}, ${b} times: ${Array.from({length: Math.min(b - 1, 5)}, (_, i) => a * (i + 1)).join(', ')}...`,
                         hint3: `${a} × ${b} = ${answer}`
                     };
                 }
@@ -247,7 +251,7 @@ const Multiplication1Digit = {
                         </div>`,
                         answer,
                         hint1: `These numbers are multiples of something... look at the differences!`,
-                        hint2: `The pattern goes up by ${base} each time: ${base}, ${base * 2}, ${base * 3}...`,
+                        hint2: `The pattern goes up by ${base} each time: ${base}, ${base * 2}... Add ${base} to the number just before the ❓.`,
                         hint3: `The missing number is ${answer} (multiples of ${base})`
                     };
                 }

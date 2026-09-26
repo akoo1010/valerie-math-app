@@ -24,7 +24,7 @@ const Division = {
                         type: 'input',
                         questionText: `${total} swimmers need to split into ${teams} equal relay teams.<br>How many swimmers per team?`,
                         visual: `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
-                            ${Array.from({length: Math.min(total, 20)}, () => '<span style="font-size:1.3rem">🏊</span>').join('')}
+                            ${Array.from({length: total}, () => '<span style="font-size:1.3rem">🏊</span>').join('')}
                         </div>`,
                         answer: perTeam,
                         hint1: `Divide the total swimmers by the number of teams`,
@@ -42,10 +42,13 @@ const Division = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weT = R(2, 3), wePT = R(2, 3), weTotal = weT * wePT;
+                        // Re-roll so the example's per-team count is never this question's answer
+                        let weT, wePT;
+                        do { weT = R(2, 3); wePT = R(2, 3); } while (wePT === perTeam || (weT === perTeam && wePT === teams));
+                        const weTotal = weT * wePT;
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weTotal} swimmers ÷ ${weT} teams = ?</p><p>Split them evenly: ${Array(weT).fill(wePT).join(' + ')} = ${weTotal}</p><p>Each team gets <strong>${wePT}</strong> swimmers</p></div>`;
                     } else if (modality === 'visual') {
-                        result.visual += `<div class="visual-scaffold"><p>Deal swimmers to teams one by one:</p>${Array.from({length: teams}, (_, i) => `<div>Team ${i + 1}: ${Array(perTeam).fill('🏊').join('')}</div>`).join('')}<div><strong>${total} ÷ ${teams} = ?</strong></div></div>`;
+                        result.visual += `<div class="visual-scaffold"><p>Deal swimmers to teams one by one:</p>${Array.from({length: teams}, (_, i) => `<div>Team ${i + 1}: 🏊 …</div>`).join('')}<div>Round 1 used ${teams} swimmers: ${total} − ${teams} = ${total - teams} left. Keep dealing — how many rounds until none are left?</div><div><strong>${total} ÷ ${teams} = ?</strong></div></div>`;
                     }
 
                     return result;
@@ -62,12 +65,12 @@ const Division = {
                         type: 'input',
                         questionText: `Share ${total} pairs of goggles equally among ${friends} friends.<br>How many does each friend get?`,
                         visual: `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-                            ${Array.from({length: Math.min(total, 18)}, () => '<span style="font-size:1.2rem">🥽</span>').join('')}
+                            ${Array.from({length: total}, () => '<span style="font-size:1.2rem">🥽</span>').join('')}
                         </div>`,
                         answer: each,
                         hint1: `Division means sharing equally!`,
-                        hint2: `${total} goggles ÷ ${friends} friends = ?`,
-                        hint3: `Each friend gets ${each} goggles`
+                        hint2: `${total} pairs ÷ ${friends} friends = ?`,
+                        hint3: `Each friend gets ${each} pairs of goggles`
                     };
                 }
             },
@@ -144,7 +147,10 @@ const Division = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weA = R(2, 5), weB = R(2, 5), weP = weA * weB;
+                        // Re-roll so the example's quotient is never this question's answer
+                        let weA, weB;
+                        do { weA = R(2, 5); weB = R(2, 5); } while (weB === b || (weA === b && weB === a));
+                        const weP = weA * weB;
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weP} ÷ ${weA} = ?</p><p>Think: ? × ${weA} = ${weP}</p><p><strong>${weB}</strong> × ${weA} = ${weP} ✓</p></div>`;
                     }
 

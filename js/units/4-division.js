@@ -44,21 +44,31 @@ const Division4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 84 ÷ 4 = ?</p><p>4 goes into 8 → 2 times (8 ÷ 4 = 2)</p><p>4 goes into 4 → 1 time</p><p>Answer: <strong>21</strong></p></div>`;
+                        // Question shares the example's answer (e.g. it IS 84 ÷ 4): show a second example so it can't be copied
+                        result.workedExample = answer !== 21
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 84 ÷ 4 = ?</p><p>4 goes into 8 → 2 times (8 ÷ 4 = 2)</p><p>4 goes into 4 → 1 time</p><p>Answer: <strong>21</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 96 ÷ 3 = ?</p><p>3 goes into 9 → 3 times (9 ÷ 3 = 3)</p><p>3 goes into 6 → 2 times</p><p>Answer: <strong>32</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
+                        // Deal out the tens part of each share first (e.g. 20 each), so what's left is one times-table fact —
+                        // rows showing the full share would draw the answer. Small shares start with 5 or 2.
+                        // Skip sizes whose "used"/"left" counts happen to equal the answer (e.g. 6 warriors, 12 each).
+                        const chunk = (answer >= 10 ? [Math.floor(answer / 10) * 10, answer - 10, answer - 5, answer - 2] : [5, 2])
+                            .find(c => c > 0 && c < answer && b * c !== answer && b * (answer - c) !== answer);
+                        const left = a - b * chunk;
                         const gemRows = [];
                         for (let i = 0; i < b; i++) {
-                            gemRows.push(`<div style="margin:2px 0;"><span style="color:var(--monster-blue);font-size:1rem;">Warrior ${i + 1}:</span> ${'💎'.repeat(Math.min(answer, 12))}${answer > 12 ? ` ×${answer}` : ''}</div>`);
+                            gemRows.push(`<div style="margin:2px 0;"><span style="color:var(--monster-blue);font-size:1rem;">Warrior ${i + 1}:</span> ${chunk <= 10 ? '💎'.repeat(chunk) : `💎 ×${chunk}`} + ❓</div>`);
                         }
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.4rem;font-weight:700;color:var(--monster-blue);margin-bottom:8px;">🐲 ${a} ÷ ${b} = ?</div>
-                            <div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">Split ${a} gems equally among ${b} warriors:</div>
+                            <div style="font-size:0.9rem;color:var(--text-muted);margin-bottom:8px;">Give each of the ${b} warriors ${chunk} gems first:</div>
                             <div style="display:inline-block;text-align:left;background:rgba(0,150,255,0.08);padding:8px 14px;border-radius:8px;">
                                 ${gemRows.join('')}
                             </div>
-                            <div style="margin-top:8px;font-size:0.95rem;color:var(--monster-blue);">⚡ Each warrior gets <strong>${answer}</strong> gems!</div>
+                            <div style="margin-top:8px;font-size:0.95rem;color:var(--monster-blue);">⚡ ${b} × ${chunk} = ${b * chunk} gems used, ${left} left to share: ${b} × ? = ${left}</div>
+                            <div style="margin-top:4px;font-size:0.95rem;color:var(--monster-blue);">Each warrior gets ${chunk} + ? gems</div>
                         </div>`;
                     }
 
@@ -84,7 +94,7 @@ const Division4 = {
                         </div>`,
                         answer,
                         hint1: `What's the biggest multiple of ${b} that fits in ${a}?`,
-                        hint2: `${b} × ${quotient} = ${b * quotient}, with ${remainder} left over`,
+                        hint2: `${b} × ? = ${b * quotient}, with ${remainder} left over`,
                         hint3: `${a} ÷ ${b} = ${quotient} remainder ${remainder}`,
                         diagnose(userAnswer) {
                             if (userAnswer === remainder) return 'gave-remainder';
@@ -98,22 +108,33 @@ const Division4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 29 ÷ 4 = ?</p><p>4 × 7 = 28 ✓ (28 ≤ 29)</p><p>4 × 8 = 32 ✗ (too big!)</p><p>29 - 28 = 1 remainder</p><p>Answer: <strong>7</strong> R 1</p></div>`;
+                        // Question shares the example's answer (e.g. it IS 29 ÷ 4): show a second example so it can't be copied
+                        result.workedExample = answer !== 7
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 29 ÷ 4 = ?</p><p>4 × 7 = 28 ✓ (28 ≤ 29)</p><p>4 × 8 = 32 ✗ (too big!)</p><p>29 - 28 = 1 remainder</p><p>Answer: <strong>7</strong> R 1</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 43 ÷ 5 = ?</p><p>5 × 8 = 40 ✓ (40 ≤ 43)</p><p>5 × 9 = 45 ✗ (too big!)</p><p>43 - 40 = 3 remainder</p><p>Answer: <strong>8</strong> R 3</p></div>`;
                     }
 
                     if (modality === 'visual') {
+                        // Deal out the tens part of each share first (e.g. 30 each), so what's left is one times-table fact —
+                        // drawing each dragon's full share would show the answer. Small shares start with 5 or 2.
+                        // Skip sizes whose "used"/"left" counts happen to equal the answer.
+                        const chunk = (quotient >= 10 ? [Math.floor(quotient / 10) * 10, quotient - 10, quotient - 5, quotient - 2] : [5, 2])
+                            .find(c => c > 0 && c < quotient && b * c !== quotient && b * (quotient - c) !== quotient);
+                        const left = b * quotient - b * chunk;
                         const dragonGroups = [];
-                        for (let i = 0; i < Math.min(b, 8); i++) {
-                            dragonGroups.push(`<div style="display:inline-block;margin:3px;padding:4px 8px;background:rgba(220,50,50,0.1);border-radius:6px;font-size:0.95rem;">🐲 ${'🧪'.repeat(Math.min(quotient, 8))}${quotient > 8 ? ` ×${quotient}` : ''}</div>`);
+                        for (let i = 0; i < b; i++) {
+                            dragonGroups.push(`<div style="display:inline-block;margin:3px;padding:4px 8px;background:rgba(220,50,50,0.1);border-radius:6px;font-size:0.95rem;">🐲 ${chunk <= 8 ? '🧪'.repeat(chunk) : `🧪 ×${chunk}`} + ❓</div>`);
                         }
                         const remainderPotions = '🧪'.repeat(remainder);
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.3rem;font-weight:700;color:var(--monster-red);margin-bottom:6px;">🔥 ${a} ÷ ${b}</div>
-                            <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;">${b} dragon${b > 1 ? 's' : ''}, each gets ${quotient} potion${quotient !== 1 ? 's' : ''}:</div>
+                            <div style="font-size:0.85rem;color:var(--text-muted);margin-bottom:8px;">${b} dragon${b > 1 ? 's' : ''}, each gets ${chunk} potions first:</div>
                             <div>${dragonGroups.join('')}</div>
                             <div style="margin-top:8px;padding:4px 10px;background:rgba(255,200,0,0.15);border-radius:6px;display:inline-block;">
                                 <span style="font-size:0.9rem;color:var(--monster-yellow);">👾 Leftover: ${remainderPotions} (${remainder} remainder)</span>
                             </div>
+                            <div style="margin-top:8px;font-size:0.9rem;color:var(--monster-red);">${a} − ${b * chunk} used − ${remainder} leftover = ${left} to share: ${b} × ? = ${left}</div>
+                            <div style="margin-top:4px;font-size:0.9rem;color:var(--monster-red);">Each dragon gets ${chunk} + ? potions</div>
                         </div>`;
                     }
 
@@ -146,7 +167,8 @@ const Division4 = {
                         questionText,
                         visual: `<div style="font-size:2rem;text-align:center;">${needExtra ? '⛵🐲' : '🎒🐾'}</div>`,
                         answer,
-                        hint1: `${a} ÷ ${b} = ${quotient} remainder ${remainder}`,
+                        // Don't state the quotient: for the bags question it IS the answer
+                        hint1: `${a} ÷ ${b}: ${b} × ? = ${b * quotient}, with ${remainder} left over`,
                         hint2: needExtra ? `We need an extra boat for the ${remainder} leftover monster(s)!` : `Only count the FULL bags — the ${remainder} leftover treats don't make a full bag.`,
                         hint3: `The answer is ${answer}`,
                         diagnose(userAnswer) {
@@ -155,26 +177,37 @@ const Division4 = {
                             if (userAnswer === remainder) return 'gave-remainder';
                             return null;
                         },
-                        misconceptionHints: {
+                        // Only the current scenario's hints — a boats hint on a bags question (or vice versa) states the wrong answer
+                        misconceptionHints: needExtra ? {
                             'forgot-extra': `You found the quotient (${quotient}), but ${remainder} monster(s) would be left without a boat! You need one more boat.`,
-                            'rounded-up-wrong': `We only want FULL bags. The ${remainder} leftover treats don't fill a bag, so the answer is ${quotient}, not ${quotient + 1}.`,
+                            'gave-remainder': `${remainder} is the remainder, not the answer! Think about what the question is really asking.`
+                        } : {
+                            'rounded-up-wrong': `We only want FULL bags. The ${remainder} leftover treats don't fill a bag, so don't count a bag for them!`,
                             'gave-remainder': `${remainder} is the remainder, not the answer! Think about what the question is really asking.`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = needExtra
-                            ? `<div style="text-align:center"><p><strong>Example:</strong> 23 monsters, boats hold 5</p><p>23 ÷ 5 = 4 R 3</p><p>4 boats hold 20 monsters, but 3 are left!</p><p>We need 1 more boat → <strong>5 boats</strong></p></div>`
-                            : `<div style="text-align:center"><p><strong>Example:</strong> 23 treats, bags of 5</p><p>23 ÷ 5 = 4 R 3</p><p>4 full bags (the 3 leftover don't count)</p><p>Answer: <strong>4</strong></p></div>`;
+                        // Question shares the example's answer (e.g. it IS 23 ÷ 5): show a second example so it can't be copied
+                        if (answer !== (needExtra ? 5 : 4)) {
+                            result.workedExample = needExtra
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> 23 monsters, boats hold 5</p><p>23 ÷ 5 = 4 R 3</p><p>4 boats hold 20 monsters, but 3 are left!</p><p>We need 1 more boat → <strong>5 boats</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> 23 treats, bags of 5</p><p>23 ÷ 5 = 4 R 3</p><p>4 full bags (the 3 leftover don't count)</p><p>Answer: <strong>4</strong></p></div>`;
+                        } else {
+                            result.workedExample = needExtra
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> 26 monsters, boats hold 3</p><p>26 ÷ 3 = 8 R 2</p><p>8 boats hold 24 monsters, but 2 are left!</p><p>We need 1 more boat → <strong>9 boats</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> 26 treats, bags of 3</p><p>26 ÷ 3 = 8 R 2</p><p>8 full bags (the 2 leftover don't count)</p><p>Answer: <strong>8</strong></p></div>`;
+                        }
                     }
 
                     if (modality === 'visual') {
-                        const boatIcons = Array(quotient).fill(needExtra ? '⛵🐲🐲' : '🎒').join(' ');
-                        const extraIcon = needExtra ? ` ⛵${'🐲'.repeat(remainder)}` : ` + ${'🐾'.repeat(remainder)} leftover`;
+                        // One sample group + the leftovers: a full row of boats/bags (plus the extra boat) could just be counted
+                        const item = needExtra ? '🐲' : '🐾';
                         result.visual = `<div style="text-align:center;font-size:1.2rem;">
-                            <div style="margin-bottom:8px;font-weight:700;color:var(--monster-blue);">${a} ÷ ${b} = ${quotient} R ${remainder}</div>
-                            <div style="word-wrap:break-word;">${boatIcons}${extraIcon}</div>
-                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">${needExtra ? 'Do the leftovers need their own group?' : 'Only count the FULL groups!'}</div>
+                            <div style="margin-bottom:8px;font-weight:700;color:var(--monster-blue);">${a} ÷ ${b} = ? R ${remainder}</div>
+                            <div style="word-wrap:break-word;">${needExtra ? '⛵' : '🎒'} = ${item.repeat(b)} <span style="font-size:0.9rem;">(each ${needExtra ? 'boat' : 'bag'} holds ${b})</span></div>
+                            <div style="word-wrap:break-word;margin-top:6px;">${b} × ? = ${b * quotient}, leftover: ${item.repeat(remainder)}</div>
+                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">${needExtra ? 'Do the leftovers need their own boat?' : 'Can the leftovers fill a whole bag?'}</div>
                         </div>`;
                     }
 
@@ -210,18 +243,20 @@ const Division4 = {
                         },
                         misconceptionHints: {
                             'multiplied-instead': `We're dividing, not multiplying! ${Engine.Utils.fmt(a)} ÷ ${b} means splitting ${Engine.Utils.fmt(a)} into ${b} groups.`,
-                            'carry-error': `Almost! Double-check your long division steps — you may have a carry or subtraction error. Verify: ${b} × ${Engine.Utils.fmt(answer)} = ${Engine.Utils.fmt(a)}.`,
+                            'carry-error': `Almost! Double-check your long division steps — you may have a carry or subtraction error. Check it: ${b} × your answer should equal ${Engine.Utils.fmt(a)}.`,
                             'subtracted-instead': `That's ${Engine.Utils.fmt(a)} minus ${b}, not divided! Use long division: divide, multiply, subtract, bring down.`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 156 ÷ 3</p><p>3 into 1 → 0, bring down 5 → 3 into 15 → 5</p><p>3 into 6 → 2</p><p>Answer: <strong>52</strong></p></div>`;
+                        // Question shares the example's answer (e.g. it IS 156 ÷ 3): show a second example so it can't be copied
+                        result.workedExample = answer !== 52
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 156 ÷ 3</p><p>3 into 1 → 0, bring down 5 → 3 into 15 → 5</p><p>3 into 6 → 2</p><p>Answer: <strong>52</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 128 ÷ 4</p><p>4 into 1 → 0, bring down 2 → 4 into 12 → 3</p><p>4 into 8 → 2</p><p>Answer: <strong>32</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
                         const aStr = Engine.Utils.fmt(a);
-                        const ansStr = Engine.Utils.fmt(answer);
                         const steps = [];
                         const digits = String(a).split('');
                         let runningDividend = 0;
@@ -230,10 +265,12 @@ const Division4 = {
                             const q = Math.floor(runningDividend / b);
                             const prod = q * b;
                             const rem = runningDividend - prod;
+                            // Leave the last step for her — with every step solved, the digits just spell the answer
+                            const last = i === digits.length - 1;
                             steps.push(`<div style="font-size:0.85rem;color:var(--text-muted);margin:2px 0;">
                                 <span style="color:var(--monster-green);font-weight:600;">${b}</span> into <span style="color:var(--monster-blue);font-weight:600;">${runningDividend}</span>
-                                → <span style="color:var(--monster-yellow);font-weight:700;">${q}</span>
-                                &nbsp;(${b}×${q}=${prod}, remainder ${rem})
+                                → <span style="color:var(--monster-yellow);font-weight:700;">${last ? '?' : q}</span>
+                                ${last ? '' : `&nbsp;(${b}×${q}=${prod}, remainder ${rem})`}
                             </div>`);
                             runningDividend = rem;
                         }
@@ -242,7 +279,7 @@ const Division4 = {
                             <div style="display:inline-block;text-align:left;background:rgba(0,200,100,0.08);padding:8px 14px;border-radius:8px;margin-bottom:8px;">
                                 ${steps.join('')}
                             </div>
-                            <div style="font-size:1rem;color:var(--monster-green);">⚡ Answer: <strong>${ansStr}</strong></div>
+                            <div style="font-size:1rem;color:var(--monster-green);">⚡ Answer: <strong>?</strong></div>
                         </div>`;
                     }
 
@@ -276,30 +313,36 @@ const Division4 = {
                         },
                         misconceptionHints: {
                             'multiplied-instead': `You multiplied instead of dividing! Dividing by ${divisor} makes the number smaller, not bigger.`,
-                            'extra-zero-removed': `You removed two zeros, but dividing by 10 only removes one! ${Engine.Utils.fmt(a)} ÷ 10 = ${answer}.`,
-                            'one-zero-removed': `You only removed one zero, but dividing by 100 removes two! ${Engine.Utils.fmt(a)} ÷ 100 = ${answer}.`
+                            'extra-zero-removed': `You removed two zeros, but dividing by 10 only removes one! ${Engine.Utils.fmt(a)} ÷ 10 = ?`,
+                            'one-zero-removed': `You only removed one zero, but dividing by 100 removes two! ${Engine.Utils.fmt(a)} ÷ 100 = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = divisor === 10
-                            ? `<div style="text-align:center"><p><strong>Example:</strong> 340 ÷ 10 = ?</p><p>Dividing by 10 → remove one zero from the end</p><p>34<s>0</s> → <strong>34</strong></p></div>`
-                            : `<div style="text-align:center"><p><strong>Example:</strong> 5,600 ÷ 100 = ?</p><p>Dividing by 100 → remove two zeros from the end</p><p>56<s>00</s> → <strong>56</strong></p></div>`;
+                        // Question shares the example's answer (e.g. it IS 340 ÷ 10): show a second example so it can't be copied
+                        if (divisor === 10) {
+                            result.workedExample = answer !== 34
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> 340 ÷ 10 = ?</p><p>Dividing by 10 → remove one zero from the end</p><p>34<s>0</s> → <strong>34</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> 450 ÷ 10 = ?</p><p>Dividing by 10 → remove one zero from the end</p><p>45<s>0</s> → <strong>45</strong></p></div>`;
+                        } else {
+                            result.workedExample = answer !== 56
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> 5,600 ÷ 100 = ?</p><p>Dividing by 100 → remove two zeros from the end</p><p>56<s>00</s> → <strong>56</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> 7,200 ÷ 100 = ?</p><p>Dividing by 100 → remove two zeros from the end</p><p>72<s>00</s> → <strong>72</strong></p></div>`;
+                        }
                     }
 
                     if (modality === 'visual') {
                         const zerosToRemove = divisor === 10 ? 1 : 2;
                         const aStr = String(a);
-                        const kept = aStr.slice(0, aStr.length - zerosToRemove);
-                        const removed = aStr.slice(aStr.length - zerosToRemove);
+                        // Whole number, no strike-through: pre-chopping the zeros left exactly the answer's digits standing
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.4rem;font-weight:700;color:var(--monster-yellow);margin-bottom:8px;">÷ ${divisor} = chop ${zerosToRemove === 1 ? 'one zero' : 'two zeros'}!</div>
                             <div style="font-size:2rem;font-family:var(--font-display);">
-                                <span style="color:var(--monster-green);">${kept}</span><span style="text-decoration:line-through;color:var(--monster-red);opacity:0.5;">${removed}</span>
+                                <span style="color:var(--monster-green);">${aStr}</span>
                                 <span style="margin:0 8px;">→</span>
                                 <span style="color:var(--monster-green);font-weight:800;">?</span>
                             </div>
-                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">🗡️ Slash the zero${zerosToRemove > 1 ? 's' : ''} off!</div>
+                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">🗡️ Slash ${zerosToRemove === 1 ? 'one zero' : 'two zeros'} off the end!</div>
                         </div>`;
                     }
 
@@ -337,18 +380,22 @@ const Division4 = {
                         },
                         misconceptionHints: {
                             'gave-product': `${product} is the product (the result of multiplying). We need to divide it! ${product} ÷ ${divisor} = the other factor.`,
-                            'gave-divisor': `${divisor} is the divisor, not the answer! Look at the multiplication fact: ${a} × ${b} = ${product}. The OTHER number is the answer.`,
-                            'multiplied-instead': `You multiplied again! We need to go backwards: ${product} ÷ ${divisor} = ${answer}.`
+                            'gave-divisor': `${divisor} is the divisor, not the answer! Look at the multiplication fact: ${a} × ${b} = ${product}. Which number times ${divisor} makes ${product}?`,
+                            'multiplied-instead': `You multiplied again! We need to go backwards: ${product} ÷ ${divisor} = ? Think: ${divisor} × ? = ${product}.`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> If 6 × 8 = 48, what is 48 ÷ 6?</p><p>Multiplication and division are inverse operations!</p><p>6 × <strong>8</strong> = 48, so 48 ÷ 6 = <strong>8</strong></p><p>The answer is always the "other factor."</p></div>`;
+                        // Question is the example's fact family (48 = 6 × 8) or shares its answer: show a second example so it can't be copied
+                        result.workedExample = product !== 48 && answer !== 8
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> If 6 × 8 = 48, what is 48 ÷ 6?</p><p>Multiplication and division are inverse operations!</p><p>6 × <strong>8</strong> = 48, so 48 ÷ 6 = <strong>8</strong></p><p>The answer is always the "other factor."</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> If 7 × 9 = 63, what is 63 ÷ 7?</p><p>Multiplication and division are inverse operations!</p><p>7 × <strong>9</strong> = 63, so 63 ÷ 7 = <strong>9</strong></p><p>The answer is always the "other factor."</p></div>`;
                     }
 
                     if (modality === 'visual') {
                         const knownFactor = divisor;
-                        const unknownFactor = answer;
+                        // Both factors in one colour: a factor coloured like the green "?" pointed at it —
+                        // the answer, or else the divisor (the gave-divisor mistake)
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1rem;color:var(--text-muted);margin-bottom:6px;">🐲 Fact family triangle:</div>
                             <div style="display:inline-block;padding:10px 20px;background:rgba(150,50,200,0.08);border-radius:10px;border:2px solid rgba(150,50,200,0.2);">
@@ -357,7 +404,7 @@ const Division4 = {
                                 <div style="font-size:1.2rem;font-weight:700;">
                                     <span style="color:var(--monster-blue);">${a}</span>
                                     <span style="color:var(--text-muted);margin:0 8px;">×</span>
-                                    <span style="color:var(--monster-green);">${b}</span>
+                                    <span style="color:var(--monster-blue);">${b}</span>
                                 </div>
                             </div>
                             <div style="margin-top:10px;font-size:0.95rem;color:var(--text-muted);">
@@ -365,7 +412,7 @@ const Division4 = {
                                 = <span style="color:var(--monster-green);font-weight:700;">?</span>
                                 &nbsp;← the other factor!
                             </div>
-                            <div style="margin-top:4px;font-size:0.85rem;color:var(--text-muted);">👾 Cover <strong>${knownFactor}</strong> → the hidden number is your answer</div>
+                            <div style="margin-top:4px;font-size:0.85rem;color:var(--text-muted);">👾 Think: <strong>${knownFactor}</strong> × ? = ${product}</div>
                         </div>`;
                     }
 
@@ -417,18 +464,30 @@ const Division4 = {
                         misconceptionHints: {
                             'multiplied-instead': `You multiplied instead of dividing! ${a} ÷ ${b} means splitting ${a} into ${b} equal groups.`,
                             'subtracted-instead': `That's subtraction, not division! Think: how many groups of ${b} fit in ${a}?`,
-                            'close-error': `So close! Double-check your work. ${b} × ${answer} = ${b * answer}.`,
+                            'close-error': `So close! Double-check your work: ${b} × your answer should ${type === 'remainder' ? `be the biggest multiple of ${b} that fits in` : 'equal'} ${Engine.Utils.fmt(a)}.`,
                             'rounded-up': `Don't round up — just give the whole number quotient and ignore the remainder.`
                         }
                     };
 
                     if (modality === 'worked-example') {
+                        // Fresh numbers of the same type with a different answer, so the example doesn't solve
+                        // (or hand over the answer to) the actual question
+                        let exA, exB, exAns;
+                        do {
+                            if (type === 'basic') {
+                                exB = R(2, 9); exAns = R(10, 50); exA = exB * exAns;
+                            } else if (type === 'remainder') {
+                                exB = R(3, 8); exAns = R(5, 30); exA = exB * exAns + R(1, exB - 1);
+                            } else {
+                                exB = R(2, 6); exAns = R(50, 200); exA = exB * exAns;
+                            }
+                        } while (exAns === answer);
                         if (type === 'basic') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${a} ÷ ${b}</p><p>Think: ${b} × ? = ${a}</p><p>${b} × ${answer} = ${a} ✓</p><p>Answer: <strong>${answer}</strong></p></div>`;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${exA} ÷ ${exB}</p><p>Think: ${exB} × ? = ${exA}</p><p>${exB} × ${exAns} = ${exA} ✓</p><p>Answer: <strong>${exAns}</strong></p></div>`;
                         } else if (type === 'remainder') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${a} ÷ ${b}</p><p>Find the largest multiple of ${b} that fits in ${a}</p><p>${b} × ${answer} = ${b * answer} (remainder ${a - b * answer})</p><p>Quotient: <strong>${answer}</strong></p></div>`;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${exA} ÷ ${exB}</p><p>Find the largest multiple of ${exB} that fits in ${exA}</p><p>${exB} × ${exAns} = ${exB * exAns} (remainder ${exA - exB * exAns})</p><p>Quotient: <strong>${exAns}</strong></p></div>`;
                         } else {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${Engine.Utils.fmt(a)} ÷ ${b}</p><p>Use long division: divide, multiply, subtract, bring down</p><p>Answer: <strong>${Engine.Utils.fmt(answer)}</strong></p></div>`;
+                            result.workedExample = `<div style="text-align:center"><p><strong>Boss Tip:</strong> ${Engine.Utils.fmt(exA)} ÷ ${exB}</p><p>Use long division: divide, multiply, subtract, bring down</p><p>Answer: <strong>${Engine.Utils.fmt(exAns)}</strong></p></div>`;
                         }
                     }
 

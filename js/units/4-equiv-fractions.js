@@ -52,27 +52,33 @@ const EquivFractions4 = {
                         },
                         misconceptionHints: {
                             'didnt-multiply': `The numerator changes too! If the denominator is multiplied by ${multiplier}, the numerator must also be multiplied by ${multiplier}.`,
-                            'added-instead': `We multiply both parts, not add! ${numer} × ${multiplier} = ${answer}.`
+                            'added-instead': `We multiply both parts, not add! Try ${numer} × ${multiplier} = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 1/3 = ?/9</p><p>3 × 3 = 9 (denominator × 3)</p><p>1 × 3 = 3 (numerator × 3)</p><p>1/3 = <strong>3/9</strong></p></div>`;
+                        // Switch examples when the example's result (3) is this question's answer
+                        result.workedExample = answer === 3
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 2/5 = ?/10</p><p>5 × 2 = 10 (denominator × 2)</p><p>2 × 2 = 4 (numerator × 2)</p><p>2/5 = <strong>4/10</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 1/3 = ?/9</p><p>3 × 3 = 9 (denominator × 3)</p><p>1 × 3 = 3 (numerator × 3)</p><p>1/3 = <strong>3/9</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
+                        // Bottom bar is left EMPTY but lined up under the top bar (each top section sits over
+                        // exactly `multiplier` small pieces), so working out how many fall under the purple is her step
+                        const bigW = Math.floor(220 / denom);
                         result.visual = `<div style="text-align:center;padding:12px;background:rgba(124,58,237,0.1);border-radius:12px;margin-bottom:12px;">
                             <div style="font-size:1rem;color:var(--monster-purple);font-weight:700;">🐲 Monster Fraction Bars</div>
                             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">Each top bar section splits into ${multiplier} smaller pieces below!</p>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-purple);">${numer}/${denom}</div>
                             <div style="display:flex;gap:2px;justify-content:center;margin-bottom:8px;">
-                                ${Array.from({length: denom}, (_, i) => `<div style="width:${Math.floor(220 / denom)}px;height:36px;border-radius:4px;background:${i < numer ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: denom}, (_, i) => `<div style="width:${bigW}px;height:36px;border-radius:4px;background:${i < numer ? 'var(--monster-purple)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-red);">?/${newDenom}</div>
                             <div style="display:flex;gap:2px;justify-content:center;">
-                                ${Array.from({length: newDenom}, (_, i) => `<div style="width:${Math.floor(220 / newDenom)}px;height:36px;border-radius:4px;background:${i < answer ? 'var(--monster-red)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: newDenom}, () => `<div style="width:${((bigW - 2 * (multiplier - 1)) / multiplier).toFixed(2)}px;height:36px;border-radius:4px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
-                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">Count the 🔥 red sections — that's your answer!</p>
+                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">How many small pieces sit under the purple part? 🔥</p>
                         </div>`;
                     }
 
@@ -111,28 +117,34 @@ const EquivFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'didnt-divide': `You gave the original numerator! To simplify, divide both parts by ${multiplier}: ${numer} ÷ ${multiplier} = ${simpleNumer}.`,
-                            'subtracted-instead': `Simplifying means dividing, not subtracting! ${numer} ÷ ${multiplier} = ${simpleNumer}.`
+                            'didnt-divide': `You gave the original numerator! To simplify, divide both parts by ${multiplier}: ${numer} ÷ ${multiplier} = ?`,
+                            'subtracted-instead': `Simplifying means dividing, not subtracting! Try ${numer} ÷ ${multiplier} = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/8</p><p>GCD of 6 and 8 is 2</p><p>6 ÷ 2 = 3, 8 ÷ 2 = 4</p><p>6/8 = <strong>3/4</strong></p></div>`;
+                        // Switch examples when the example's result numerator (3) is this question's answer
+                        result.workedExample = answer === 3
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/9</p><p>GCD of 6 and 9 is 3</p><p>6 ÷ 3 = 2, 9 ÷ 3 = 3</p><p>6/9 = <strong>2/3</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/8</p><p>GCD of 6 and 8 is 2</p><p>6 ÷ 2 = 3, 8 ÷ 2 = 4</p><p>6/8 = <strong>3/4</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
+                        // The simplified bar is left EMPTY (and labelled ?) but lined up so each big piece sits over
+                        // exactly `multiplier` small pieces — how many big pieces the blue fills is her step
+                        const bigW = Math.floor(220 / simpleDenom);
                         result.visual = `<div style="text-align:center;padding:12px;background:rgba(59,130,246,0.1);border-radius:12px;margin-bottom:12px;">
                             <div style="font-size:1rem;color:var(--monster-blue);font-weight:700;">🦖 Monster Simplify Bars</div>
                             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">Merge every ${multiplier} small pieces into 1 big piece!</p>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-blue);">${numer}/${denom} (original)</div>
                             <div style="display:flex;gap:2px;justify-content:center;margin-bottom:8px;">
-                                ${Array.from({length: denom}, (_, i) => `<div style="width:${Math.floor(220 / denom)}px;height:36px;border-radius:4px;background:${i < numer ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: denom}, (_, i) => `<div style="width:${((bigW - 2 * (multiplier - 1)) / multiplier).toFixed(2)}px;height:36px;border-radius:4px;background:${i < numer ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
-                            <div style="margin-bottom:4px;font-weight:700;color:var(--monster-green);">${simpleNumer}/${simpleDenom} (simplified)</div>
+                            <div style="margin-bottom:4px;font-weight:700;color:var(--monster-green);">?/${simpleDenom} (simplified)</div>
                             <div style="display:flex;gap:2px;justify-content:center;">
-                                ${Array.from({length: simpleDenom}, (_, i) => `<div style="width:${Math.floor(220 / simpleDenom)}px;height:36px;border-radius:4px;background:${i < simpleNumer ? 'var(--monster-green)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: simpleDenom}, () => `<div style="width:${bigW}px;height:36px;border-radius:4px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
-                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">Both bars are filled the same amount — same fraction, simpler form! ⚡</p>
+                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">How many big pieces would the blue part fill? ⚡</p>
                         </div>`;
                     }
 
@@ -181,26 +193,31 @@ const EquivFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'missed-equivalent': `These ARE equivalent! Cross multiply to check: ${numer1} × ${denom2} = ${cross1} and ${numer2} × ${denom1} = ${cross1}. Equal products mean equal fractions! 🐲`,
-                            'false-equivalent': `These are NOT equivalent! Cross multiply: ${numer1} × ${denom2} = ${cross1} but ${numer2} × ${denom1} = ${cross2}. Different products mean different fractions! 👾`
+                            'missed-equivalent': `Bigger numbers don't always mean a different amount! Cross multiply to check: ${numer1} × ${denom2} = ? and ${numer2} × ${denom1} = ? Equal products mean equal fractions! 🐲`,
+                            'false-equivalent': `Close isn't the same as equal! Cross multiply to check: ${numer1} × ${denom2} = ? and ${numer2} × ${denom1} = ? The products must match EXACTLY. 👾`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Are 2/3 and 6/9 equivalent?</p><p>Cross multiply: 2 × 9 = 18, 6 × 3 = 18</p><p>18 = 18, so <strong>Yes</strong>!</p></div>`;
+                        result.workedExample = (numer1 === 2 && denom1 === 3 && numer2 === 6 && denom2 === 9)
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Are 1/2 and 3/6 equivalent?</p><p>Cross multiply: 1 × 6 = 6, 3 × 2 = 6</p><p>6 = 6, so <strong>Yes</strong>!</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Are 2/3 and 6/9 equivalent?</p><p>Cross multiply: 2 × 9 = 18, 6 × 3 = 18</p><p>18 = 18, so <strong>Yes</strong>!</p></div>`;
                     }
 
                     if (modality === 'visual') {
+                        // Bottom bar lined up under the top one (each top section sits over exactly `multiplier` pieces) —
+                        // with separately rounded widths, 1/6 vs 5/24 looked level and the true 4/24 didn't
+                        const bigW = Math.floor(220 / denom1);
                         result.visual = `<div style="text-align:center;padding:12px;background:rgba(124,58,237,0.1);border-radius:12px;margin-bottom:12px;">
                             <div style="font-size:1rem;color:var(--monster-purple);font-weight:700;">🔮 Monster Potion Bars</div>
                             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">If both potion bars are filled to the same level, the fractions are equivalent!</p>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-blue);">⚡ ${numer1}/${denom1}</div>
                             <div style="display:flex;gap:2px;justify-content:center;margin-bottom:8px;">
-                                ${Array.from({length: denom1}, (_, i) => `<div style="width:${Math.floor(220 / denom1)}px;height:36px;border-radius:4px;background:${i < numer1 ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: denom1}, (_, i) => `<div style="width:${bigW}px;height:36px;border-radius:4px;background:${i < numer1 ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-red);">🔥 ${numer2}/${denom2}</div>
                             <div style="display:flex;gap:2px;justify-content:center;">
-                                ${Array.from({length: denom2}, (_, i) => `<div style="width:${Math.floor(220 / denom2)}px;height:36px;border-radius:4px;background:${i < numer2 ? 'var(--monster-red)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: denom2}, (_, i) => `<div style="width:${((bigW - 2 * (multiplier - 1)) / multiplier).toFixed(2)}px;height:36px;border-radius:4px;background:${i < numer2 ? 'var(--monster-red)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
                             <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">Do the filled portions look the same? 👾</p>
                         </div>`;
@@ -256,12 +273,16 @@ const EquivFractions4 = {
                         },
                         misconceptionHints: {
                             'said-equal': `These fractions are NOT equal! ${sameDenom ? `Same denominator, so compare numerators: ${n1} ≠ ${n2}.` : `Cross multiply: ${n1} × ${d2} = ${cross1} and ${n2} × ${d1} = ${cross2}. They differ!`} 🐲`,
-                            'reversed-comparison': `You got the direction backwards! ${sameDenom ? `Compare numerators: ${n1} ${answer} ${n2}.` : `Cross multiply: ${cross1} ${answer} ${cross2}, so ${n1}/${d1} ${answer} ${n2}/${d2}.`} ⚡`
+                            'reversed-comparison': `Check which way your symbol points — the open side faces the BIGGER fraction! ${sameDenom ? `Same denominator, so compare numerators: which is bigger, ${n1} or ${n2}?` : `Cross multiply: ${n1} × ${d2} = ${cross1} (for ${n1}/${d1}) and ${n2} × ${d1} = ${cross2} (for ${n2}/${d2}). The bigger product goes with the bigger fraction.`} ⚡`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Compare 2/3 and 3/4</p><p>Cross multiply: 2 × 4 = 8, 3 × 3 = 9</p><p>8 < 9, so 2/3 < 3/4</p></div>`;
+                        // Use a different example if the question is the same pair (in either order)
+                        const pairKey = [`${n1}/${d1}`, `${n2}/${d2}`].sort().join(',');
+                        result.workedExample = pairKey === '2/3,3/4'
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/2 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 2 = 4</p><p>5 > 4, so 1/2 > 2/5</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Compare 2/3 and 3/4</p><p>Cross multiply: 2 × 4 = 8, 3 × 3 = 9</p><p>8 < 9, so 2/3 < 3/4</p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -288,24 +309,24 @@ const EquivFractions4 = {
                 skillId: '4ef-common-denom',
                 generate(diff, modality) {
                     const d1 = pick([2, 3, 4, 5, 6]);
-                    const d2 = pick([2, 3, 4, 5, 6].filter(d => d !== d1));
+                    // Skip d2 values that divide d1 (e.g. 6 and 3) — the LCD would be d1 itself and the answer just n1 × 1
+                    const d2 = pick([2, 3, 4, 5, 6].filter(d => d !== d1 && d1 % d !== 0));
                     const n1 = R(1, d1 - 1);
                     const n2 = R(1, d2 - 1);
 
                     // Find LCD
                     const lcm = (d1 * d2) / gcd(d1, d2);
                     const mult1 = lcm / d1;
-                    const mult2 = lcm / d2;
                     const newN1 = n1 * mult1;
                     const answer = newN1;
 
                     const result = {
                         type: 'input',
-                        questionText: `🐾 Rewrite with a common denominator of ${lcm}:<br>${n1}/${d1} = ?/${lcm}`,
+                        questionText: `🐾 ${n1}/${d1} and ${n2}/${d2} need a common denominator — use ${lcm}.<br>Rewrite ${n1}/${d1} = ?/${lcm}`,
                         subText: `What's the new numerator?`,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:1.6rem;font-weight:700;color:var(--monster-blue);">${n1}/${d1} = ?/${lcm}</div>
-                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">Common denominator: ${lcm}</div>
+                            <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">Common denominator of ${n1}/${d1} and ${n2}/${d2}: ${lcm}</div>
                         </div>`,
                         answer,
                         hint1: `${d1} × ${mult1} = ${lcm}, so multiply the numerator by ${mult1} too`,
@@ -317,28 +338,34 @@ const EquivFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'added-instead': `Don't add the multiplier — multiply! ${n1} × ${mult1} = ${newN1}, not ${n1} + ${mult1} = ${n1 + mult1}. ⚡`,
-                            'didnt-multiply': `The numerator must change too! Since ${d1} × ${mult1} = ${lcm}, the numerator also gets × ${mult1}: ${n1} × ${mult1} = ${newN1}. 🐲`
+                            'added-instead': `Don't add the multiplier — multiply! Try ${n1} × ${mult1} = ?, not ${n1} + ${mult1}. ⚡`,
+                            'didnt-multiply': `The numerator must change too! Since ${d1} × ${mult1} = ${lcm}, the numerator also gets × ${mult1}: ${n1} × ${mult1} = ? 🐲`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Rewrite 2/3 with denominator 12</p><p>3 × 4 = 12, so multiply numerator by 4 too</p><p>2 × 4 = 8</p><p>2/3 = <strong>8/12</strong></p></div>`;
+                        // Switch examples when the example's result (8) is this question's answer
+                        result.workedExample = answer === 8
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Rewrite 3/4 with denominator 12</p><p>4 × 3 = 12, so multiply numerator by 3 too</p><p>3 × 3 = 9</p><p>3/4 = <strong>9/12</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Rewrite 2/3 with denominator 12</p><p>3 × 4 = 12, so multiply numerator by 4 too</p><p>2 × 4 = 8</p><p>2/3 = <strong>8/12</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
+                        // New-form bar is left EMPTY but lined up so each original slice sits over exactly
+                        // `mult1` small pieces — how many fall under the blue is her step
+                        const bigW = Math.floor(220 / d1);
                         result.visual = `<div style="text-align:center;padding:12px;background:rgba(34,197,94,0.1);border-radius:12px;margin-bottom:12px;">
                             <div style="font-size:1rem;color:var(--monster-green);font-weight:700;">🦖 Monster Pizza Bars</div>
                             <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">Splitting each slice into ${mult1} smaller pieces — same amount, more slices!</p>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-blue);">${n1}/${d1} (original)</div>
                             <div style="display:flex;gap:2px;justify-content:center;margin-bottom:8px;">
-                                ${Array.from({length: d1}, (_, i) => `<div style="width:${Math.floor(220 / d1)}px;height:36px;border-radius:4px;background:${i < n1 ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: d1}, (_, i) => `<div style="width:${bigW}px;height:36px;border-radius:4px;background:${i < n1 ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-green);">?/${lcm} (new form)</div>
                             <div style="display:flex;gap:2px;justify-content:center;">
-                                ${Array.from({length: lcm}, (_, i) => `<div style="width:${Math.floor(220 / lcm)}px;height:36px;border-radius:4px;background:${i < newN1 ? 'var(--monster-green)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: lcm}, () => `<div style="width:${((bigW - 2 * (mult1 - 1)) / mult1).toFixed(2)}px;height:36px;border-radius:4px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
-                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">Count the green sections — that's the new numerator! 🔥</p>
+                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-top:8px;">How many small pieces sit under the blue part? That's the new numerator! 🔥</p>
                         </div>`;
                     }
 
@@ -378,19 +405,22 @@ const EquivFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'counted-all': `You counted ALL parts, not just the shaded ones! Only ${answer} out of ${newDenom} are shaded. 👾`,
+                            'counted-all': `You counted ALL ${newDenom} parts, not just the shaded ones! Count only the blue shaded parts in the bottom bar. 👾`,
                             'used-top-numerator': `That's the top bar's numerator! The bottom bar has more sections — count the blue shaded ones. Each top piece becomes ${multiplier} bottom pieces. 🔥`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 1/2 = ?/6</p><p>The bar is split into 6 parts instead of 2</p><p>Each original piece becomes 3 smaller pieces</p><p>1 shaded piece becomes <strong>3</strong> shaded pieces</p></div>`;
+                        // Switch examples when the example's result (3) is this question's answer
+                        result.workedExample = answer === 3
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 1/3 = ?/6</p><p>The bar is split into 6 parts instead of 3</p><p>Each original piece becomes 2 smaller pieces</p><p>1 shaded piece becomes <strong>2</strong> shaded pieces</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 1/2 = ?/6</p><p>The bar is split into 6 parts instead of 2</p><p>Each original piece becomes 3 smaller pieces</p><p>1 shaded piece becomes <strong>3</strong> shaded pieces</p></div>`;
                     }
 
                     if (modality === 'visual') {
                         result.visual = `<div style="text-align:center;padding:12px;background:rgba(239,68,68,0.1);border-radius:12px;margin-bottom:12px;">
                             <div style="font-size:1rem;color:var(--monster-red);font-weight:700;">🔥 Monster Fraction Bars — Visual Mode</div>
-                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">Each shaded top section = ${multiplier} shaded bottom sections!</p>
+                            <p style="font-size:0.85rem;color:var(--text-secondary);margin-bottom:8px;">Each top section splits into ${multiplier} bottom sections!</p>
                             <div style="margin-bottom:4px;font-weight:700;color:var(--monster-red);">${numer}/${denom} (top bar)</div>
                             <div style="display:flex;gap:2px;justify-content:center;margin-bottom:8px;">
                                 ${Array.from({length: denom}, (_, i) => `<div style="width:${Math.floor(220 / denom)}px;height:40px;border-radius:4px;background:${i < numer ? 'var(--monster-red)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:white;font-weight:700;">${i < numer ? '🔥' : ''}</div>`).join('')}
@@ -412,12 +442,14 @@ const EquivFractions4 = {
                 generate(diff, modality) {
                     const type = pick(['equiv', 'compare', 'simplify']);
                     let result;
+                    let sameAsExample = false; // the fixed worked example would show this question (or its answer) → show an alternate one
 
                     if (type === 'equiv') {
                         const d = pick([2, 3, 4, 5]);
                         const n = R(1, d - 1);
                         const m = R(2, 4);
                         const answer = n * m;
+                        sameAsExample = answer === 9; // 3/5 = 9/15 example
                         result = {
                             type: 'input',
                             questionText: `🔮 WIZARD BOSS! ${n}/${d} = ?/${d * m}`,
@@ -432,8 +464,8 @@ const EquivFractions4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'didnt-multiply': `The numerator must change too! Multiply by ${m}: ${n} × ${m} = ${answer}. 🐲`,
-                                'added-instead': `Multiply, don't add! ${n} × ${m} = ${answer}, not ${n} + ${m} = ${n + m}. ⚡`
+                                'didnt-multiply': `The numerator must change too! Multiply by ${m}: ${n} × ${m} = ? 🐲`,
+                                'added-instead': `Multiply, don't add! Try ${n} × ${m} = ?, not ${n} + ${m}. ⚡`
                             }
                         };
                     } else if (type === 'compare') {
@@ -444,6 +476,7 @@ const EquivFractions4 = {
                         const answer = (n1 / d1) > (n2 / d2) ? '>' : (n1 / d1) < (n2 / d2) ? '<' : '=';
                         const cross1 = n1 * d2;
                         const cross2 = n2 * d1;
+                        sameAsExample = [`${n1}/${d1}`, `${n2}/${d2}`].sort().join(',') === '1/3,2/5';
                         result = {
                             type: 'multiple-choice',
                             questionText: `🔮 WIZARD BOSS! Compare: ${n1}/${d1} ☐ ${n2}/${d2}`,
@@ -461,7 +494,7 @@ const EquivFractions4 = {
                             },
                             misconceptionHints: {
                                 'said-equal': `Not equal! Cross multiply: ${n1} × ${d2} = ${cross1} and ${n2} × ${d1} = ${cross2}. They're different! 👾`,
-                                'reversed-comparison': `Flip it! Cross multiply: ${cross1} ${answer} ${cross2}, so ${n1}/${d1} ${answer} ${n2}/${d2}. 🔥`
+                                'reversed-comparison': `Check which way your symbol points — the open side faces the BIGGER fraction! Cross multiply: ${n1} × ${d2} = ${cross1} (for ${n1}/${d1}) and ${n2} × ${d1} = ${cross2} (for ${n2}/${d2}). The bigger product goes with the bigger fraction. 🔥`
                             }
                         };
                     } else {
@@ -471,6 +504,7 @@ const EquivFractions4 = {
                         while (gcd(sn, sd) !== 1) sn = R(1, sd - 1);
                         const m = R(2, 4);
                         const answer = sn;
+                        sameAsExample = answer === 2; // 8/12 = 2/3 example
                         result = {
                             type: 'input',
                             questionText: `🔮 WIZARD BOSS! Simplify ${sn * m}/${sd * m}. What's the numerator?`,
@@ -485,19 +519,25 @@ const EquivFractions4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'didnt-divide': `You gave the original numerator! Divide by ${m}: ${sn * m} ÷ ${m} = ${sn}. 🐲`,
-                                'subtracted-instead': `Simplifying means dividing, not subtracting! ${sn * m} ÷ ${m} = ${sn}. ⚡`
+                                'didnt-divide': `You gave the original numerator! Divide by ${m}: ${sn * m} ÷ ${m} = ? 🐲`,
+                                'subtracted-instead': `Simplifying means dividing, not subtracting! Try ${sn * m} ÷ ${m} = ? ⚡`
                             }
                         };
                     }
 
                     if (modality === 'worked-example') {
                         if (type === 'equiv') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 3/5 = ?/15</p><p>5 × 3 = 15, so numerator × 3</p><p>3 × 3 = <strong>9</strong></p></div>`;
+                            result.workedExample = sameAsExample
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> 2/3 = ?/12</p><p>3 × 4 = 12, so numerator × 4</p><p>2 × 4 = <strong>8</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> 3/5 = ?/15</p><p>5 × 3 = 15, so numerator × 3</p><p>3 × 3 = <strong>9</strong></p></div>`;
                         } else if (type === 'compare') {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/3 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 3 = 6</p><p>5 < 6, so 1/3 <strong><</strong> 2/5</p></div>`;
+                            result.workedExample = sameAsExample
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/4 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 4 = 8</p><p>5 < 8, so 1/4 <strong><</strong> 2/5</p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> Compare 1/3 and 2/5</p><p>Cross multiply: 1 × 5 = 5, 2 × 3 = 6</p><p>5 < 6, so 1/3 <strong><</strong> 2/5</p></div>`;
                         } else {
-                            result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Simplify 8/12</p><p>GCD is 4: 8 ÷ 4 = 2, 12 ÷ 4 = 3</p><p>8/12 = <strong>2/3</strong></p></div>`;
+                            result.workedExample = sameAsExample
+                                ? `<div style="text-align:center"><p><strong>Example:</strong> Simplify 6/8</p><p>GCD is 2: 6 ÷ 2 = 3, 8 ÷ 2 = 4</p><p>6/8 = <strong>3/4</strong></p></div>`
+                                : `<div style="text-align:center"><p><strong>Example:</strong> Simplify 8/12</p><p>GCD is 4: 8 ÷ 4 = 2, 12 ÷ 4 = 3</p><p>8/12 = <strong>2/3</strong></p></div>`;
                         }
                     }
 
