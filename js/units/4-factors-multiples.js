@@ -27,6 +27,27 @@ const FactorsMultiples4 = {
             return `${k}${suffix}`;
         }
 
+        // Prime test WITHOUT the verdict — the same text for primes and composites so it can't be a tell.
+        // Only divisors smaller than n (2 ÷ 2 DOES work, so don't list it for n = 2)
+        function trialDivisors(n) {
+            return [2, 3, 5, 7].filter(p => p < n);
+        }
+        function primeTestText(n) {
+            const divs = trialDivisors(n);
+            return divs.length
+                ? `Try dividing ${n} by ${divs.join(', ')}. Does ${divs.length === 1 ? 'it' : 'any of them'} divide evenly (no remainder)?`
+                : `Which numbers divide ${n} evenly? Count them.`;
+        }
+        // 1 and n always divide n; the middle boxes are the divisions left for her to try
+        function primeTestBoxes(n) {
+            const box = (text, color, bg) => `<div style="padding:5px 12px;background:${bg};border:2px solid ${color};border-radius:8px;font-weight:700;color:${color};">${text}</div>`;
+            return [
+                box(1, 'var(--dance-purple)', 'rgba(168,85,247,0.15)'),
+                ...trialDivisors(n).map(d => box(`${n} ÷ ${d} = ?`, 'var(--dance-gold)', 'rgba(234,179,8,0.2)')),
+                box(n, 'var(--dance-purple)', 'rgba(168,85,247,0.15)')
+            ].join('');
+        }
+
         return [
             // 1. List all factor pairs
             {
@@ -36,6 +57,10 @@ const FactorsMultiples4 = {
                     const factors = getFactors(n);
                     const pairCount = Math.floor(factors.length / 2) + (Math.sqrt(n) % 1 === 0 ? 1 : 0);
                     const answer = factors.length;
+                    // The small half of each factor pair — she finds the partners and does the counting
+                    const small = factors.filter(f => f * f <= n);
+                    const root = Math.sqrt(n);
+                    const isSquare = Number.isInteger(root);
 
                     const result = {
                         type: 'input',
@@ -46,14 +71,14 @@ const FactorsMultiples4 = {
                         </div>`,
                         answer,
                         hint1: `Start checking: 1 × ? = ${n}, 2 × ? = ${n}, 3 × ? = ${n}...`,
-                        hint2: `The factors are: ${factors.join(', ')}`,
+                        hint2: `Factor pairs of ${n}: ${small.map(f => `${f} × ?`).join(', ')}. Find each partner, then count EVERY number${isSquare ? ` (${root} × ${root} counts once!)` : ''}.`,
                         hint3: `${n} has ${answer} factors: ${factors.join(', ')}`,
                         diagnose(userAnswer) {
                             if (userAnswer === pairCount) return 'counted-pairs-not-factors';
                             return null;
                         },
                         misconceptionHints: {
-                            'counted-pairs-not-factors': `You counted factor PAIRS, not individual factors! List each number separately: ${factors.join(', ')} = ${answer} factors total.`
+                            'counted-pairs-not-factors': `You counted factor PAIRS, not individual factors! Each pair gives you TWO factors (${small[1]} × ${n / small[1]} gives ${small[1]} AND ${n / small[1]}) — count every number in every pair${isSquare ? `, but ${root} × ${root} is just one number` : ''}.`
                         }
                     };
 
@@ -97,7 +122,8 @@ const FactorsMultiples4 = {
                         answer,
                         options: [{label: 'Yes — it divides evenly!', value: 'Yes'}, {label: 'No — there\'s a remainder!', value: 'No'}],
                         hint1: `Does ${n} ÷ ${testNum} have a remainder?`,
-                        hint2: `${n} ÷ ${testNum} = ${Math.floor(n / testNum)} R ${n % testNum}`,
+                        // Give the quotient to try, but leave the multiply-and-compare (the remainder check) to her
+                        hint2: `Try ${testNum} × ${Math.floor(n / testNum)} = ? Does it land exactly on ${n}, or is some left over?`,
                         hint3: `${n} ÷ ${testNum} = ${n % testNum === 0 ? n / testNum + ' (no remainder!)' : Math.floor(n / testNum) + ' R ' + (n % testNum)}, so ${answer}!`,
                         diagnose(userAnswer) {
                             if (answer === 'Yes' && userAnswer === 'No') return 'confused-factor-multiple';
@@ -105,7 +131,7 @@ const FactorsMultiples4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'confused-factor-multiple': `Remember: a FACTOR divides evenly into the number. ${n} ÷ ${testNum} = ${n % testNum === 0 ? n / testNum + ' (exact!)' : Math.floor(n / testNum) + ' R ' + (n % testNum) + ' (remainder!)'}`
+                            'confused-factor-multiple': `Remember: a FACTOR divides evenly into the number, with nothing left over. Work out ${n} ÷ ${testNum} — is there a remainder?`
                         }
                     };
 
@@ -116,12 +142,14 @@ const FactorsMultiples4 = {
                     }
 
                     if (modality === 'visual') {
+                        // Only the FIRST group is coloured (testNum < n, so it's always a full group) — marking every
+                        // group would show the leftover dots; making the rest of the groups is her step
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🕺 Dance Division Check 🕺</div>
                             <div style="display:flex;gap:4px;justify-content:center;flex-wrap:wrap;">
-                                ${Array.from({length: n}, (_, i) => `<div style="width:18px;height:18px;border-radius:50%;background:${(i + 1) % testNum === 0 ? 'var(--dance-pink)' : 'var(--dance-cyan)'};opacity:0.8;"></div>`).join('')}
+                                ${Array.from({length: n}, (_, i) => `<div style="width:18px;height:18px;border-radius:50%;background:${i < testNum ? 'var(--dance-pink)' : 'var(--dance-cyan)'};opacity:0.8;"></div>`).join('')}
                             </div>
-                            <div style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);">Can ${n} dots be split into equal groups of ${testNum}?</div>
+                            <div style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);">${n} dots. Here's the first group of ${testNum}. Keep making groups of ${testNum} — are any dots left over?</div>
                         </div>`;
                     }
 
@@ -159,7 +187,7 @@ const FactorsMultiples4 = {
                         },
                         misconceptionHints: {
                             'gave-factor-not-multiple': `That's a FACTOR of ${n}, not a multiple! A multiple is ${n} × something. The ${ordinal(position)} multiple = ${n} × ${position}.`,
-                            'added-instead-of-multiplied': `It looks like you added ${n} + ${position} = ${n + position}. The ${ordinal(position)} MULTIPLE means ${n} × ${position} = ${answer}.`
+                            'added-instead-of-multiplied': `It looks like you added ${n} + ${position} = ${n + position}. The ${ordinal(position)} MULTIPLE means ${n} × ${position} = ?`
                         }
                     };
 
@@ -171,10 +199,11 @@ const FactorsMultiples4 = {
                     }
 
                     if (modality === 'visual') {
+                        // Every step up to the one before hers — the last +n step stays a gold "?"
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">💃 Skip-Counting Dance Steps 💃</div>
                             <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;">
-                                ${Array.from({length: position}, (_, i) => `<div style="padding:6px 12px;background:${i === position - 1 ? 'var(--dance-gold)' : 'rgba(236,72,153,0.15)'};border:2px solid ${i === position - 1 ? 'var(--dance-gold)' : 'var(--dance-pink)'};border-radius:8px;font-weight:700;color:${i === position - 1 ? '#fff' : 'var(--dance-pink)'};">${n * (i + 1)}</div>`).join('')}
+                                ${Array.from({length: position - 1}, (_, i) => `<div style="padding:6px 12px;background:rgba(236,72,153,0.15);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${n * (i + 1)}</div>`).join('')}<div style="padding:6px 12px;background:var(--dance-gold);border:2px solid var(--dance-gold);border-radius:8px;font-weight:700;color:#fff;">?</div>
                             </div>
                             <div style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);">Each step is +${n}. What's step #${position}?</div>
                         </div>`;
@@ -206,7 +235,8 @@ const FactorsMultiples4 = {
                         answer,
                         options: [{label: 'Yes — divides evenly!', value: 'Yes'}, {label: 'No — has a remainder!', value: 'No'}],
                         hint1: `Divide ${testNum} by ${base}. Is there a remainder?`,
-                        hint2: `${testNum} ÷ ${base} = ${Math.floor(testNum / base)} R ${testNum % base}`,
+                        // Give the quotient to try, but leave the multiply-and-compare (the remainder check) to her
+                        hint2: `Try ${base} × ${Math.floor(testNum / base)} = ? Does it land exactly on ${testNum}, or is some left over?`,
                         hint3: `${testNum} ÷ ${base} = ${testNum % base === 0 ? testNum / base : Math.floor(testNum / base) + ' R ' + (testNum % base)}, so ${answer}!`,
                         diagnose(userAnswer) {
                             if (answer === 'No' && userAnswer === 'Yes') return 'ignored-remainder';
@@ -214,8 +244,9 @@ const FactorsMultiples4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'ignored-remainder': `Look again — ${testNum} ÷ ${base} = ${Math.floor(testNum / base)} remainder ${testNum % base}. That leftover means it does NOT divide evenly, so ${testNum} is NOT a multiple of ${base}.`,
-                            'skip-count-error': `Try skip-counting by ${base}: ${Array.from({length: Math.min(Math.floor(testNum / base) + 1, 6)}, (_, i) => base * (i + 1)).join(', ')}... Does ${testNum} appear?`
+                            'ignored-remainder': `Look again — a multiple of ${base} divides by ${base} with NO remainder. Work out ${testNum} ÷ ${base} carefully: is anything left over?`,
+                            // Start the count but stop short of testNum — landing on it (or not) is her step
+                            'skip-count-error': `Try skip-counting by ${base}: ${Array.from({length: Math.min(Math.floor(testNum / base) - 1, 5)}, (_, i) => base * (i + 1)).join(', ')}... keep going! Do you land exactly on ${testNum}?`
                         }
                     };
 
@@ -224,17 +255,15 @@ const FactorsMultiples4 = {
                             ? `<div style="text-align:center"><p><strong>Example:</strong> Is 24 a multiple of 6?</p><p>24 ÷ 6 = 4 (no remainder)</p><p>Yes! 24 = 6 × 4, so 24 IS a multiple of 6.</p><p><strong>Non-example:</strong> Is 25 a multiple of 6? 25 ÷ 6 = 4 R 1. No!</p></div>`
                             : `<div style="text-align:center"><p><strong>Example:</strong> Is 21 a multiple of 7?</p><p>21 ÷ 7 = 3 (no remainder)</p><p>Yes! 21 = 7 × 3, so 21 IS a multiple of 7.</p><p><strong>Non-example:</strong> Is 22 a multiple of 7? 22 ÷ 7 = 3 R 1. No!</p></div>`;
                     } else if (modality === 'visual') {
-                        const steps = Math.min(Math.ceil(testNum / base), 12);
+                        // Stop one beat BEFORE the last multiple at or below testNum (the same list length for Yes and No),
+                        // so testNum never shows up — counting on and checking whether she lands on it is her step
+                        const steps = Math.floor(testNum / base) - 1;
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🕺 Skip-Count Dance Floor 🕺</div>
                             <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
-                                ${Array.from({length: steps}, (_, i) => {
-                                    const val = base * (i + 1);
-                                    const isTarget = val === testNum;
-                                    return `<div style="padding:5px 10px;background:${isTarget ? 'var(--dance-gold)' : 'rgba(236,72,153,0.12)'};border:2px solid ${isTarget ? 'var(--dance-gold)' : 'var(--dance-pink)'};border-radius:8px;font-weight:700;color:${isTarget ? '#fff' : 'var(--dance-pink)'};">${val}</div>`;
-                                }).join('')}
+                                ${Array.from({length: steps}, (_, i) => `<div style="padding:5px 10px;background:rgba(236,72,153,0.12);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${base * (i + 1)}</div>`).join('')}<div style="padding:5px 10px;background:var(--dance-gold);border:2px solid var(--dance-gold);border-radius:8px;font-weight:700;color:#fff;">?</div>
                             </div>
-                            <div style="font-size:0.85rem;color:var(--text-muted);">Multiples of ${base} — does ${testNum} land on a beat?</div>
+                            <div style="font-size:0.85rem;color:var(--text-muted);">Keep counting by +${base} — do you land exactly on ${testNum}?</div>
                         </div>`;
                     }
 
@@ -251,11 +280,6 @@ const FactorsMultiples4 = {
                     const n = isPrime ? pick(diff >= 2 ? primes : primes.slice(0, 6)) : pick(diff >= 2 ? composites : composites.slice(0, 8));
                     const answer = isPrime ? 'Prime' : 'Composite';
                     const nFactors = getFactors(n);
-                    // Only suggest trial divisors smaller than n (2 ÷ 2 DOES work, so don't list it for n = 2)
-                    const tryDivs = [2, 3, 5, 7].filter(p => p < n);
-                    const tryText = tryDivs.length
-                        ? `Try dividing ${n} by ${tryDivs.join(', ')} — ${tryDivs.length === 1 ? 'it leaves a remainder' : 'each one leaves a remainder'}!`
-                        : `No whole number between 1 and ${n} divides it evenly!`;
 
                     const result = {
                         type: 'multiple-choice',
@@ -270,7 +294,7 @@ const FactorsMultiples4 = {
                             {label: `Composite (more than 2 factors)`, value: 'Composite'}
                         ],
                         hint1: `Can any number besides 1 and ${n} divide into ${n} evenly?`,
-                        hint2: isPrime ? tryText : `${n} ÷ ${nFactors[1]} = ${n / nFactors[1]} — it has more than 2 factors!`,
+                        hint2: `${primeTestText(n)} Exactly 2 factors means prime; more than 2 means composite.`,
                         hint3: `${n} is ${answer} (factors: ${nFactors.join(', ')})`,
                         diagnose(userAnswer) {
                             if (n === 2 && userAnswer === 'Composite') return 'two-is-prime';
@@ -279,9 +303,9 @@ const FactorsMultiples4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'two-is-prime': `2 is the ONLY even prime number! It has exactly 2 factors: 1 and 2. All other even numbers are composite because 2 is also a factor.`,
-                            'missed-prime': `${n} is prime — it can ONLY be divided evenly by 1 and ${n} itself. ${tryText}`,
-                            'missed-composite': `${n} is composite because it has MORE than 2 factors: ${nFactors.join(', ')}. The extra factor ${nFactors[1]} divides evenly into ${n}!`
+                            'two-is-prime': `Being even doesn't make a number composite! Which numbers divide 2 evenly? Count them — exactly 2 factors means prime, more than 2 means composite.`,
+                            'missed-prime': `Composite means there's a factor besides 1 and ${n}. Which one did you find? Check it! ${primeTestText(n)}`,
+                            'missed-composite': `A prime has ONLY 2 factors: 1 and itself. Did you check for others? ${primeTestText(n)}`
                         }
                     };
 
@@ -291,13 +315,14 @@ const FactorsMultiples4 = {
                         const exComposite = n === 12 ? 10 : 12;
                         result.workedExample = `<div style="text-align:center"><p><strong>Prime:</strong> ${exPrime} → factors are just ${getFactors(exPrime).join(', ')} ✓</p><p><strong>Composite:</strong> ${exComposite} → factors: ${getFactors(exComposite).join(', ')} ✗</p><p>Note: 1 is NEITHER prime nor composite!</p></div>`;
                     } else if (modality === 'visual') {
+                        // Show the test (1, the divisions to try, n) — not the full factor list or a verdict
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">💃 Factor Dance Test 💃</div>
                             <div style="font-size:2.2rem;font-weight:800;color:var(--dance-gold);margin-bottom:10px;">✨ ${n} ✨</div>
                             <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
-                                ${nFactors.map(f => `<div style="padding:5px 12px;background:${f === 1 || f === n ? 'rgba(168,85,247,0.15)' : 'rgba(234,179,8,0.2)'};border:2px solid ${f === 1 || f === n ? 'var(--dance-purple)' : 'var(--dance-gold)'};border-radius:8px;font-weight:700;color:${f === 1 || f === n ? 'var(--dance-purple)' : 'var(--dance-gold)'};">${f}</div>`).join('')}
+                                ${primeTestBoxes(n)}
                             </div>
-                            <div style="font-size:0.85rem;color:var(--text-muted);">${nFactors.length === 2 ? 'Only 1 and itself — that\'s a PRIME! 🎵' : `${nFactors.length} factors — that\'s COMPOSITE! 🎵`}</div>
+                            <div style="font-size:0.85rem;color:var(--text-muted);">1 and ${n} always divide ${n}. ${trialDivisors(n).length ? 'Do any of the middle ones divide evenly too?' : 'Is there any other factor?'} Exactly 2 factors means PRIME. More than 2 means COMPOSITE. 🎵</div>
                         </div>`;
                     }
 
@@ -337,8 +362,9 @@ const FactorsMultiples4 = {
                             </div>
                         </div>`,
                         answer,
-                        hint1: `Common factors of ${a} and ${b}: ${common.join(', ')}`,
-                        hint2: `The GREATEST of these is?`,
+                        // No sorted common-factor list before hint3 — its last number IS the GCF
+                        hint1: `Which numbers are in BOTH factor lists?`,
+                        hint2: `Start at the BIGGEST factor of ${Math.min(a, b)} and work down: does it divide ${Math.max(a, b)} evenly too? The first one that does is the GCF!`,
                         hint3: `GCF(${a}, ${b}) = ${gcf}`,
                         diagnose(userAnswer) {
                             if (userAnswer === lcm) return 'gave-lcm';
@@ -346,8 +372,8 @@ const FactorsMultiples4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'gave-lcm': `You found the LCM (Least Common Multiple), not the GCF! The GCF is the GREATEST factor they SHARE. Common factors: ${common.join(', ')} → GCF = ${gcf}.`,
-                            'gave-common-not-greatest': `That is a common factor, but not the GREATEST one. Common factors: ${common.join(', ')} → pick the biggest!`
+                            'gave-lcm': `You found the LCM (Least Common Multiple), not the GCF! The GCF is the GREATEST factor they SHARE — which numbers are in both factor lists? Pick the biggest.`,
+                            'gave-common-not-greatest': `That is a common factor, but not the GREATEST one. Is there a bigger number in BOTH lists?`
                         }
                     };
 
@@ -359,23 +385,25 @@ const FactorsMultiples4 = {
                     }
 
                     if (modality === 'visual') {
+                        // Both full factor lists, with one "?" slot per shared factor in the middle — sorting the
+                        // numbers into the middle (and picking the greatest) is her step
                         result.visual = `<div style="text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🎤 Venn Diagram Dance 🎤</div>
                             <div style="display:flex;justify-content:center;align-items:center;gap:0;">
                                 <div style="padding:10px 20px 10px 16px;background:rgba(236,72,153,0.1);border:2px solid var(--dance-pink);border-radius:20px 0 0 20px;min-width:80px;">
-                                    <div style="font-weight:700;font-size:0.8rem;color:var(--dance-pink);">Only ${a}</div>
-                                    <div style="font-size:0.85rem;">${aFactors.filter(f => !common.includes(f)).join(', ') || '—'}</div>
+                                    <div style="font-weight:700;font-size:0.8rem;color:var(--dance-pink);">Factors of ${a}</div>
+                                    <div style="font-size:0.85rem;">${aFactors.join(', ')}</div>
                                 </div>
                                 <div style="padding:10px 14px;background:rgba(168,85,247,0.15);border:2px solid var(--dance-purple);min-width:70px;z-index:1;">
                                     <div style="font-weight:700;font-size:0.8rem;color:var(--dance-purple);">Both</div>
-                                    <div style="font-size:0.85rem;font-weight:700;">${common.join(', ')}</div>
+                                    <div style="font-size:0.85rem;font-weight:700;">${common.map(() => '?').join(' ')}</div>
                                 </div>
                                 <div style="padding:10px 16px 10px 20px;background:rgba(34,211,238,0.1);border:2px solid var(--dance-cyan);border-radius:0 20px 20px 0;min-width:80px;">
-                                    <div style="font-weight:700;font-size:0.8rem;color:var(--dance-cyan);">Only ${b}</div>
-                                    <div style="font-size:0.85rem;">${bFactors.filter(f => !common.includes(f)).join(', ') || '—'}</div>
+                                    <div style="font-weight:700;font-size:0.8rem;color:var(--dance-cyan);">Factors of ${b}</div>
+                                    <div style="font-size:0.85rem;">${bFactors.join(', ')}</div>
                                 </div>
                             </div>
-                            <div style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);">Pick the GREATEST from the middle!</div>
+                            <div style="margin-top:8px;font-size:0.85rem;color:var(--text-muted);">Find the numbers in BOTH lists (one for each ?), then pick the GREATEST!</div>
                         </div>`;
                     }
 
@@ -392,6 +420,10 @@ const FactorsMultiples4 = {
                         const n = pick(diff >= 2 ? [24, 30, 36, 48] : [18, 24, 30, 36]);
                         const factors = getFactors(n);
                         const pairCount = Math.floor(factors.length / 2) + (Math.sqrt(n) % 1 === 0 ? 1 : 0);
+                        // The small half of each factor pair — she finds the partners and does the counting
+                        const small = factors.filter(f => f * f <= n);
+                        const root = Math.sqrt(n);
+                        const isSquare = Number.isInteger(root);
 
                         const result = {
                             type: 'input',
@@ -399,7 +431,7 @@ const FactorsMultiples4 = {
                             visual: `<div style="font-size:3rem;text-align:center;animation:bounce 0.6s ease-in-out infinite;">🎤💃🕺</div>`,
                             answer: factors.length,
                             hint1: `List factor pairs: 1×${n}, 2×?, 3×?...`,
-                            hint2: `Factors: ${factors.join(', ')}`,
+                            hint2: `Factor pairs of ${n}: ${small.map(f => `${f} × ?`).join(', ')}. Find each partner, then count EVERY number${isSquare ? ` (${root} × ${root} counts once!)` : ''}.`,
                             hint3: `${n} has ${factors.length} factors`,
                             diagnose(userAnswer) {
                                 if (userAnswer === pairCount) return 'counted-pairs-not-factors';
@@ -407,8 +439,9 @@ const FactorsMultiples4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'counted-pairs-not-factors': `You counted factor PAIRS, not individual factors! List each number: ${factors.join(', ')} = ${factors.length} individual factors (not ${pairCount} pairs).`,
-                                'missed-a-factor': `Almost! You're one short. Did you forget to check every divisor? Full list: ${factors.join(', ')}.`
+                                'counted-pairs-not-factors': `You counted factor PAIRS, not individual factors! Each of your ${pairCount} pairs has TWO numbers — count every one${isSquare ? ` (but ${root} × ${root} is just one number)` : ''}.`,
+                                // Don't say how many she's missing (diagnose only fires on one-short, so that would be the answer)
+                                'missed-a-factor': `Some factors are hiding! Did you check every number from 1 up to ${Math.floor(root)}? Each one that divides ${n} evenly gives a PAIR — count both numbers${isSquare ? ` (${root} × ${root} counts once)` : ''}, and don't forget 1 and ${n}!`
                             }
                         };
 
@@ -418,12 +451,13 @@ const FactorsMultiples4 = {
                             const exFactors = getFactors(exN);
                             result.workedExample = `<div style="text-align:center"><p><strong>Strategy:</strong> Check pairs from 1 up to √${exN} ≈ ${Math.sqrt(exN).toFixed(1)}</p><p>Each pair gives TWO factors (unless it's a perfect square).</p><p>Example — factors of ${exN}: ${exFactors.join(', ')} = <strong>${exFactors.length} factors</strong></p></div>`;
                         } else if (modality === 'visual') {
+                            // One dancer from each pair; finding the partners and counting everyone is her step
                             result.visual = `<div style="text-align:center;">
                                 <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🎤 Factor Pair Dance 🎤</div>
                                 <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
-                                    ${factors.map(f => `<div style="padding:5px 12px;background:rgba(236,72,153,0.12);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${f}</div>`).join('')}
+                                    ${small.map(f => `<div style="padding:5px 12px;background:rgba(236,72,153,0.12);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${f} × ?</div>`).join('')}
                                 </div>
-                                <div style="font-size:0.85rem;color:var(--text-muted);">Count ALL of them — that's your answer! 💃</div>
+                                <div style="font-size:0.85rem;color:var(--text-muted);">Find each dancer's partner, then count EVERY number — not just the pairs${isSquare ? ` (${root} × ${root} counts once)` : ''}! 💃</div>
                             </div>`;
                         }
 
@@ -443,7 +477,7 @@ const FactorsMultiples4 = {
                             answer,
                             options: [{label: 'Prime (only 2 factors)', value: 'Prime'}, {label: 'Composite (more than 2 factors)', value: 'Composite'}],
                             hint1: `Check for factors besides 1 and ${n}`,
-                            hint2: `Factors of ${n}: ${nFactors.join(', ')}`,
+                            hint2: `${primeTestText(n)} Exactly 2 factors means prime; more than 2 means composite.`,
                             hint3: `${n} is ${answer} — it has ${nFactors.length} factor${nFactors.length !== 1 ? 's' : ''}`,
                             diagnose(userAnswer) {
                                 if (n === 2 && userAnswer === 'Composite') return 'two-is-prime';
@@ -452,9 +486,9 @@ const FactorsMultiples4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'two-is-prime': `2 is the ONLY even prime! It only has 2 factors: 1 and 2. Don't let the "even" fool you — 2 is prime! 🎵`,
-                                'missed-prime': `${n} has exactly 2 factors (1 and ${n}) — that makes it PRIME! No other number divides in evenly. ✨`,
-                                'missed-composite': `${n} has ${nFactors.length} factors: ${nFactors.join(', ')}. Since it has MORE than 2, it's COMPOSITE! 🕺`
+                                'two-is-prime': `Don't let the "even" fool you — being even doesn't make a number composite! Which numbers divide 2 evenly? Count them: exactly 2 factors means prime, more means composite. 🎵`,
+                                'missed-prime': `Composite needs an extra factor besides 1 and ${n}. Which one did you find? ${primeTestText(n)} ✨`,
+                                'missed-composite': `Prime means ONLY 1 and itself. Look for another factor! ${primeTestText(n)} 🕺`
                             }
                         };
 
@@ -464,13 +498,14 @@ const FactorsMultiples4 = {
                             const exFactors = getFactors(exN);
                             result.workedExample = `<div style="text-align:center"><p><strong>Rule:</strong> Exactly 2 factors → Prime. More than 2 → Composite.</p><p>Example — factors of ${exN}: ${exFactors.join(', ')}</p><p>${exN} is <strong>${exFactors.length === 2 ? 'Prime' : 'Composite'}</strong>!</p><p style="font-size:0.85rem;color:var(--text-muted);">Remember: 1 is NEITHER prime nor composite.</p></div>`;
                         } else if (modality === 'visual') {
+                            // Show the test (1, the divisions to try, n) — not the full factor list or a verdict
                             result.visual = `<div style="text-align:center;">
                                 <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">✨ Prime or Composite Spotlight ✨</div>
                                 <div style="font-size:2.5rem;font-weight:800;color:var(--dance-gold);margin-bottom:10px;">🎤 ${n} 🎤</div>
                                 <div style="display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;">
-                                    ${nFactors.map(f => `<div style="padding:5px 12px;background:${f === 1 || f === n ? 'rgba(168,85,247,0.15)' : 'rgba(234,179,8,0.2)'};border:2px solid ${f === 1 || f === n ? 'var(--dance-purple)' : 'var(--dance-gold)'};border-radius:8px;font-weight:700;color:${f === 1 || f === n ? 'var(--dance-purple)' : 'var(--dance-gold)'};">${f}</div>`).join('')}
+                                    ${primeTestBoxes(n)}
                                 </div>
-                                <div style="font-size:0.85rem;color:var(--text-muted);">${nFactors.length === 2 ? '2 factors only → PRIME! 🎵' : `${nFactors.length} factors → COMPOSITE! 🎵`}</div>
+                                <div style="font-size:0.85rem;color:var(--text-muted);">1 and ${n} always divide ${n}. ${trialDivisors(n).length ? 'Do any of the middle ones divide evenly too?' : 'Is there any other factor?'} Only 2 factors means PRIME. More means COMPOSITE. 🎵</div>
                             </div>`;
                         }
 
@@ -496,8 +531,9 @@ const FactorsMultiples4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'added-instead-of-multiplied': `You added ${base} + ${pos} = ${base + pos}, but multiples use MULTIPLICATION! The ${pos}th multiple = ${base} × ${pos} = ${answer}. 🕺`,
-                                'off-by-one': `Almost! Double-check your count. The ${pos}th multiple is ${base} × ${pos} = ${answer}. Did you start counting from 0 instead of 1? 🎵`
+                                'added-instead-of-multiplied': `You added ${base} + ${pos} = ${base + pos}, but multiples use MULTIPLICATION! The ${pos}th multiple = ${base} × ${pos} = ? 🕺`,
+                                // Fires for BOTH base × (pos − 1) and base × (pos + 1), so no direction and no "one beat" count
+                                'off-by-one': `Almost! Your count slipped onto a different beat. The 1st multiple of ${base} is ${base} itself, so the ${pos}th multiple is ${base} × ${pos} = ? 🎵`
                             }
                         };
 
@@ -511,18 +547,15 @@ const FactorsMultiples4 = {
                             const exAnswer = exBase * exPos;
                             result.workedExample = `<div style="text-align:center"><p><strong>Shortcut:</strong> The Nth multiple of a number = number × N</p><p>Example: the ${ordinal(exPos)} multiple of ${exBase} = ${exBase} × ${exPos} = <strong>${exAnswer}</strong></p><p>Skip-count check: ${Array.from({length: Math.min(exPos, 5)}, (_, i) => exBase * (i + 1)).join(', ')}${exPos > 5 ? `, ... ${exAnswer}` : ''}</p></div>`;
                         } else if (modality === 'visual') {
-                            const displayCount = Math.min(pos, 8);
+                            // Count up to (at most) the beat before hers — beat #pos itself stays a gold "?"
+                            const displayCount = Math.min(pos - 1, 7);
                             result.visual = `<div style="text-align:center;">
                                 <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🪩 Skip-Count to the Beat 🪩</div>
                                 <div style="display:flex;gap:5px;justify-content:center;flex-wrap:wrap;margin-bottom:6px;">
-                                    ${Array.from({length: displayCount}, (_, i) => {
-                                        const val = base * (i + 1);
-                                        const isLast = i === displayCount - 1 && displayCount === pos;
-                                        return `<div style="padding:5px 10px;background:${isLast ? 'var(--dance-gold)' : 'rgba(236,72,153,0.12)'};border:2px solid ${isLast ? 'var(--dance-gold)' : 'var(--dance-pink)'};border-radius:8px;font-weight:700;color:${isLast ? '#fff' : 'var(--dance-pink)'};">${val}</div>`;
-                                    }).join('')}
-                                    ${pos > displayCount ? `<div style="padding:5px 10px;color:var(--text-muted);font-weight:700;">... ${answer} 🎯</div>` : ''}
+                                    ${Array.from({length: displayCount}, (_, i) => `<div style="padding:5px 10px;background:rgba(236,72,153,0.12);border:2px solid var(--dance-pink);border-radius:8px;font-weight:700;color:var(--dance-pink);">${base * (i + 1)}</div>`).join('')}
+                                    ${pos - 1 > displayCount ? `<div style="padding:5px 10px;color:var(--text-muted);font-weight:700;">...</div>` : ''}<div style="padding:5px 10px;background:var(--dance-gold);border:2px solid var(--dance-gold);border-radius:8px;font-weight:700;color:#fff;">?</div>
                                 </div>
-                                <div style="font-size:0.85rem;color:var(--text-muted);">Each beat = +${base}. Beat #${pos} = ${answer}!</div>
+                                <div style="font-size:0.85rem;color:var(--text-muted);">Each beat = +${base}. Beat #${pos} = ?</div>
                             </div>`;
                         }
 

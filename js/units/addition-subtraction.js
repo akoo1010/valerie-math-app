@@ -58,7 +58,9 @@ const AdditionSubtraction = {
                     };
 
                     if (modality === 'worked-example') {
-                        const weA = R(10, 30), weB = R(10, 30);
+                        // Re-roll so the example never is (or shares the answer with) her own problem
+                        let weA, weB;
+                        do { weA = R(10, 30); weB = R(10, 30); } while (weA + weB === answer);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${weA} + ${weB} = ?</p><p>Ones: ${weA % 10} + ${weB % 10} = ${(weA % 10) + (weB % 10)}${(weA % 10) + (weB % 10) >= 10 ? ' (carry the 1!)' : ''}</p><p>Tens: ${Math.floor(weA/10)} + ${Math.floor(weB/10)}${(weA % 10) + (weB % 10) >= 10 ? ' + 1' : ''} = ${Math.floor((weA + weB)/10)}</p><p>Answer: <strong>${weA + weB}</strong></p></div>`;
                     } else if (modality === 'visual') {
                         // Column sums include the carried 1, and the total is left for her to build.
@@ -130,8 +132,13 @@ const AdditionSubtraction = {
 
                     if (modality === 'worked-example') {
                         const weOp = isAdd ? '+' : '−';
-                        const weA = R(10, 30), weB = R(5, 15);
-                        const weAnswer = isAdd ? weA + weB : weA - weB;
+                        // Re-roll so the example never is (or shares the answer with) her own
+                        // problem, and never takes away more than it starts with
+                        let weA, weB, weAnswer;
+                        do {
+                            weA = R(10, 30); weB = R(5, 15);
+                            weAnswer = isAdd ? weA + weB : weA - weB;
+                        } while (weAnswer === answer || weAnswer < 0);
                         result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> ${isAdd ? 'You have' : 'You start with'} ${weA} and ${isAdd ? 'get' : 'use'} ${weB}.</p><p>${weA} ${weOp} ${weB} = <strong>${weAnswer}</strong></p></div>`;
                     }
 
@@ -247,7 +254,8 @@ const AdditionSubtraction = {
                         hint2: isAdd
                             ? `Ones: ${a % 10} + ${b % 10} = ${(a % 10) + (b % 10)}${(a % 10) + (b % 10) >= 10 ? ' (carry the 1!)' : ''}`
                             : ((a % 10) >= (b % 10)
-                                ? `Ones: ${a % 10} − ${b % 10} = ${(a % 10) - (b % 10)}`
+                                // When the tens and hundreds match, the ones difference IS the answer — leave it open
+                                ? `Ones: ${a % 10} − ${b % 10} = ${answer < 10 ? '?' : (a % 10) - (b % 10)}`
                                 : `Ones: ${a % 10} is smaller than ${b % 10} → borrow from the tens column!`),
                         hint3: `${a} ${isAdd ? '+' : '−'} ${b} = ${answer}`
                     };

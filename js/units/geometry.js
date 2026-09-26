@@ -123,13 +123,14 @@ const Geometry = {
             {
                 skillId: 'geo-tf',
                 generate(diff) {
+                    // test = the check to apply (hint2); why = the verdict's explanation, saved for hint3
                     const statements = [
-                        { text: 'All squares are rectangles', answer: true, why: 'Squares have 4 right angles and 2 pairs of equal sides, so they ARE rectangles!' },
-                        { text: 'All rectangles are squares', answer: false, why: 'Rectangles can have different length and width, so they are NOT always squares!' },
-                        { text: 'A square is a rhombus', answer: true, why: 'A square has 4 equal sides, so it IS a rhombus!' },
-                        { text: 'All trapezoids are parallelograms', answer: false, why: 'Trapezoids have only 1 pair of parallel sides, parallelograms need 2!' },
-                        { text: 'All quadrilaterals have 4 sides', answer: true, why: 'Quad = 4! All quadrilaterals have exactly 4 sides.' },
-                        { text: 'A triangle is a quadrilateral', answer: false, why: 'A triangle has 3 sides, not 4!' },
+                        { text: 'All squares are rectangles', answer: true, test: 'A rectangle needs 4 right angles. Does every square have 4 right angles?', why: 'Squares have 4 right angles and 2 pairs of equal sides, so they ARE rectangles!' },
+                        { text: 'All rectangles are squares', answer: false, test: 'A square needs 4 equal sides. Does every rectangle have 4 equal sides?', why: 'Rectangles can have different length and width, so they are NOT always squares!' },
+                        { text: 'A square is a rhombus', answer: true, test: 'A rhombus needs 4 equal sides. Does a square have 4 equal sides?', why: 'A square has 4 equal sides, so it IS a rhombus!' },
+                        { text: 'All trapezoids are parallelograms', answer: false, test: 'A parallelogram needs 2 pairs of parallel sides. How many pairs does a trapezoid have?', why: 'Trapezoids have only 1 pair of parallel sides, parallelograms need 2!' },
+                        { text: 'All quadrilaterals have 4 sides', answer: true, test: '"Quad" means 4. What does a quadrilateral have 4 of?', why: 'Quad = 4! All quadrilaterals have exactly 4 sides.' },
+                        { text: 'A triangle is a quadrilateral', answer: false, test: 'A quadrilateral has exactly 4 sides. How many sides does a triangle have?', why: 'A triangle has 3 sides, not 4!' },
                     ];
                     const s = pick(statements);
                     return {
@@ -138,8 +139,8 @@ const Geometry = {
                         visual: `<div style="font-size:2rem">🃏</div>`,
                         answer: s.answer,
                         hint1: `Think about the definition of each shape`,
-                        hint2: s.why,
-                        hint3: `${s.text} — ${s.answer ? 'TRUE!' : 'FALSE!'}`
+                        hint2: s.test,
+                        hint3: `${s.text} — ${s.answer ? 'TRUE!' : 'FALSE!'} ${s.why}`
                     };
                 }
             },

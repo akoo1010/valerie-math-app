@@ -34,7 +34,7 @@ const MultiplyFractions4 = {
                         </div>`,
                         answer,
                         hint1: `Multiply the whole number by the numerator: ${whole} × ${numer} = ?`,
-                        hint2: `${whole} × ${numer} = ${answerNumer}, so the answer is ${answerNumer}/${denom}`,
+                        hint2: `${whole} × ${numer}/${denom} means ${numer}/${denom} added up ${whole} times: ${Array(whole).fill(numer).join(' + ')} = ?/${denom}`,
                         hint3: `${whole} × ${numer}/${denom} = ${answerNumer}/${denom} — the numerator is ${answerNumer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === whole * denom) return 'multiplied-denominator';
@@ -42,8 +42,8 @@ const MultiplyFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'multiplied-denominator': `Don't multiply the denominator! Only multiply the numerator by the whole number: ${whole} × ${numer} = ${answerNumer}.`,
-                            'added-instead-of-multiplied': `We need to multiply, not add! ${whole} × ${numer} = ${answerNumer}, not ${whole} + ${numer} = ${whole + numer}.`
+                            'multiplied-denominator': `Don't multiply the denominator! Only multiply the numerator by the whole number: ${whole} × ${numer} = ?`,
+                            'added-instead-of-multiplied': `We need to multiply, not add! ${whole} + ${numer} = ${whole + numer} is adding — try ${whole} × ${numer} = ?`
                         }
                     };
 
@@ -63,9 +63,9 @@ const MultiplyFractions4 = {
                     if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(255,59,48,0.1);border:1px solid var(--monster-red);border-radius:10px;">
                             <p style="font-weight:700;color:var(--monster-red);">🔥 Dragon Strategy:</p>
-                            <p>1. Multiply only the numerator: ${whole} × ${numer} = <strong>${answerNumer}</strong></p>
+                            <p>1. Multiply only the numerator: ${whole} × ${numer} = ${Array(whole).fill(numer).join(' + ')} = <strong>?</strong></p>
                             <p>2. Keep the denominator: <strong>${denom}</strong></p>
-                            <p>3. Answer: <strong>${answerNumer}/${denom}</strong></p>
+                            <p>3. Answer: <strong>?/${denom}</strong></p>
                         </div>`;
                     }
 
@@ -91,14 +91,14 @@ const MultiplyFractions4 = {
                         answer,
                         options: Engine.Utils.shuffle([answer, ...([whole - 1, whole + 1, whole * denom, denom].filter(d => d > 0 && d !== answer))].slice(0, 4)),
                         hint1: `A unit fraction has 1 on top. Multiply: ${whole} × 1 = ?`,
-                        hint2: `${whole} × 1/${denom} = ${whole}/${denom} — the numerator is ${whole}`,
+                        hint2: `Add up the zaps: ${Array(whole).fill(`1/${denom}`).join(' + ')} = ?/${denom}`,
                         hint3: `The numerator is ${whole}`,
                         diagnose(userAnswer) {
                             if (userAnswer === whole * denom) return 'multiplied-denominator';
                             return null;
                         },
                         misconceptionHints: {
-                            'multiplied-denominator': `The denominator stays the same! Only multiply the numerator: ${whole} × 1 = ${whole}.`
+                            'multiplied-denominator': `The denominator stays the same! Only multiply the numerator: ${whole} × 1 = ?`
                         }
                     };
 
@@ -117,9 +117,9 @@ const MultiplyFractions4 = {
                     if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(255,204,0,0.1);border:1px solid var(--monster-yellow);border-radius:10px;">
                             <p style="font-weight:700;color:var(--monster-yellow);">⚡ Lightning Strategy:</p>
-                            <p>1. A unit fraction has 1 on top, so: ${whole} × 1 = <strong>${whole}</strong></p>
+                            <p>1. A unit fraction has 1 on top, so multiply: ${whole} × 1 = <strong>?</strong></p>
                             <p>2. Keep the denominator exactly the same: <strong>${denom}</strong></p>
-                            <p>3. Answer: <strong>${whole}/${denom}</strong> — numerator is <strong>${whole}</strong></p>
+                            <p>3. Answer: <strong>?/${denom}</strong> — pick that numerator!</p>
                         </div>`;
                     }
 
@@ -136,6 +136,8 @@ const MultiplyFractions4 = {
                     const answer = (numer * groupSize) / denom;
                     const creatures = pick(['dragons', 'goblins', 'phoenixes', 'griffins']);
                     const emojis = { dragons: '🐲', goblins: '👹', phoenixes: '🔥', griffins: '🦅' };
+                    // With 1 on top, the divide step IS the answer, so hint2 and the scaffold leave it to her
+                    const unitFrac = numer === 1;
 
                     const result = {
                         type: 'input',
@@ -145,7 +147,9 @@ const MultiplyFractions4 = {
                         </div>`,
                         answer,
                         hint1: `Find ${numer}/${denom} of ${groupSize}: first divide ${groupSize} by ${denom}`,
-                        hint2: `${groupSize} ÷ ${denom} = ${groupSize / denom}. Now multiply by ${numer}: ${groupSize / denom} × ${numer} = ?`,
+                        hint2: unitFrac
+                            ? `Share the ${groupSize} ${creatures} into ${denom} equal groups. How many are in 1 group? (${groupSize} ÷ ${denom} = ?)`
+                            : `${groupSize} ÷ ${denom} = ${groupSize / denom}. Now multiply by ${numer}: ${groupSize / denom} × ${numer} = ?`,
                         hint3: `${numer}/${denom} of ${groupSize} = ${answer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === groupSize / denom) return 'forgot-to-multiply-numerator';
@@ -153,8 +157,8 @@ const MultiplyFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'forgot-to-multiply-numerator': `You divided by ${denom} but forgot to multiply by ${numer}! ${groupSize} ÷ ${denom} = ${groupSize / denom}, then × ${numer} = ${answer}.`,
-                            'found-complement': `That's how many DON'T breathe fire! We want the ones that DO: ${numer}/${denom} of ${groupSize} = ${answer}.`
+                            'forgot-to-multiply-numerator': `You divided by ${denom} but forgot to multiply by ${numer}! ${groupSize} ÷ ${denom} = ${groupSize / denom}, then × ${numer} = ?`,
+                            'found-complement': `That's how many DON'T breathe fire! We want the ones that DO: ${numer}/${denom} of ${groupSize} — divide by ${denom}${unitFrac ? '' : `, then multiply by ${numer}`}.`
                         }
                     };
 
@@ -171,10 +175,11 @@ const MultiplyFractions4 = {
 
                     if (modality === 'visual') {
                         const perGroup = groupSize / denom;
+                        // Unit fraction: groups are left empty for her to deal into (a filled 🔥 group would be the answer)
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(255,59,48,0.1);border-radius:10px;">
-                            <p>Split into ${denom} equal groups of ${perGroup}:</p>
-                            ${Array.from({length: denom}, (_, i) => `<div style="margin:4px 0;">${i < numer ? '🔥' : '⬜'} Group ${i + 1}: ${Array(perGroup).fill(emojis[creatures]).join('')}</div>`).join('')}
-                            <div style="font-weight:700;margin-top:6px;">${numer} groups = ${answer} ${creatures}</div>
+                            <p>${unitFrac ? `Deal the ${groupSize} ${creatures} into ${denom} equal groups, one at a time:` : `Split into ${denom} equal groups of ${perGroup}:`}</p>
+                            ${Array.from({length: denom}, (_, i) => `<div style="margin:4px 0;">${i < numer ? '🔥' : '⬜'} Group ${i + 1}: ${unitFrac ? '<span style="display:inline-block;min-width:60px;border:2px dashed var(--monster-red);border-radius:6px;padding:0 8px;">?</span>' : Array(perGroup).fill(emojis[creatures]).join('')}</div>`).join('')}
+                            <div style="font-weight:700;margin-top:6px;">${unitFrac ? `1 🔥 group = ? ${creatures}` : `${numer} 🔥 groups × ${perGroup} = ? ${creatures}`}</div>
                         </div>`;
                     }
 
@@ -215,8 +220,8 @@ const MultiplyFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'multiplied-denominators': `You multiplied by the denominator instead of the numerator! Shade ${numer} parts per row, not ${denom}: ${whole} × ${numer} = ${shadedParts}.`,
-                            'counted-one-row-only': `${numer} is just one row! You have ${whole} rows, each with ${numer} shaded: ${whole} × ${numer} = ${shadedParts}.`
+                            'multiplied-denominators': `You multiplied by the denominator instead of the numerator! Shade ${numer} parts per row, not ${denom}: ${whole} × ${numer} = ?`,
+                            'counted-one-row-only': `${numer} is just one row! You have ${whole} rows, each with ${numer} shaded: ${whole} × ${numer} = ?`
                         }
                     };
 
@@ -236,7 +241,7 @@ const MultiplyFractions4 = {
                             <p style="font-weight:700;color:var(--monster-purple);">💎 Grid Strategy:</p>
                             <p>1. Cells to shade in each row: <strong>${numer}</strong> of ${denom}</p>
                             <p>2. Count number of rows: <strong>${whole}</strong></p>
-                            <p>3. Multiply: ${whole} × ${numer} = <strong>${shadedParts}</strong></p>
+                            <p>3. Multiply: ${whole} × ${numer} = <strong>?</strong></p>
                         </div>`;
                     }
 
@@ -263,7 +268,7 @@ const MultiplyFractions4 = {
                         </div>`,
                         answer,
                         hint1: `Add the numerators: ${Array(whole).fill(numer).join(' + ')} = ?`,
-                        hint2: `${whole} × ${numer} = ${answerNumer}`,
+                        hint2: `${whole} strikes that each add ${numer} to the numerator is the same as ${whole} × ${numer} = ? — the denominator stays ${denom}.`,
                         hint3: `${addExpr} = ${answerNumer}/${denom} — the numerator is ${answerNumer}`,
                         diagnose(userAnswer) {
                             if (userAnswer === whole * denom) return 'added-denominators';
@@ -271,8 +276,8 @@ const MultiplyFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'added-denominators': `Don't add the denominators! The denominator stays ${denom}. Just add the numerators: ${Array(whole).fill(numer).join(' + ')} = ${answerNumer}.`,
-                            'counted-one-fraction': `That's just one fraction! You need to add all ${whole} of them: ${Array(whole).fill(numer).join(' + ')} = ${answerNumer}.`
+                            'added-denominators': `Don't add the denominators! The denominator stays ${denom}. Just add the numerators: ${Array(whole).fill(numer).join(' + ')} = ?`,
+                            'counted-one-fraction': `That's just one fraction! You need to add all ${whole} of them: ${Array(whole).fill(numer).join(' + ')} = ?`
                         }
                     };
 
@@ -291,9 +296,9 @@ const MultiplyFractions4 = {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(59,130,246,0.1);border:1px solid var(--monster-blue);border-radius:10px;">
                             <p style="font-weight:700;color:var(--monster-blue);">🗡️ Knight's Repeated Addition Strategy:</p>
                             <p>1. Each strike adds ${numer} to the numerator</p>
-                            <p>2. After ${whole} strikes: ${Array(whole).fill(numer).join(' + ')} = <strong>${answerNumer}</strong></p>
+                            <p>2. After ${whole} strikes: ${Array(whole).fill(numer).join(' + ')} = <strong>?</strong></p>
                             <p>3. Denominator stays <strong>${denom}</strong> — never add denominators!</p>
-                            <p>4. Answer numerator: <strong>${answerNumer}</strong></p>
+                            <p>4. Answer: <strong>?/${denom}</strong> — type the numerator</p>
                         </div>`;
                     }
 
@@ -331,7 +336,7 @@ const MultiplyFractions4 = {
                         </div>`,
                         answer,
                         hint1: `Multiply the whole number by the numerator: ${whole} × ${numer} = ?`,
-                        hint2: `${whole} × ${numer} = ${answerNumer}. The fraction is ${answerNumer}/${denom}.`,
+                        hint2: `${whole} × ${numer}/${denom} means ${numer}/${denom} added up ${whole} times: ${Array(whole).fill(numer).join(' + ')} = ?/${denom}`,
                         hint3: `${whole} × ${numer}/${denom} = ${answerNumer}/${denom} = ${wholeResult}${remainNumer > 0 ? ` ${remainNumer}/${denom}` : ''}`,
                         diagnose(userAnswer) {
                             if (userAnswer === wholeResult) return 'gave-whole-part-only';
@@ -339,8 +344,8 @@ const MultiplyFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'gave-whole-part-only': `${wholeResult} is only the whole number part! We need the improper fraction numerator: ${whole} × ${numer} = ${answerNumer}.`,
-                            'gave-remainder-only': `${remainNumer} is just the leftover! The full numerator is ${whole} × ${numer} = ${answerNumer}.`
+                            'gave-whole-part-only': `${wholeResult} is only the whole number part! We need the improper fraction numerator: ${whole} × ${numer} = ?`,
+                            'gave-remainder-only': `${remainNumer} is just the leftover! The full numerator is ${whole} × ${numer} = ?`
                         }
                     };
 
@@ -362,10 +367,10 @@ const MultiplyFractions4 = {
                     if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(255,59,48,0.1);border:1px solid var(--monster-red);border-radius:10px;">
                             <p style="font-weight:700;color:var(--monster-red);">🛡️ Shield Monster Strategy:</p>
-                            <p>1. Multiply only the numerator: ${whole} × ${numer} = <strong>${answerNumer}</strong></p>
+                            <p>1. Multiply only the numerator: ${whole} × ${numer} = <strong>?</strong></p>
                             <p>2. Keep the denominator: <strong>${denom}</strong></p>
-                            <p>3. Improper fraction: <strong>${answerNumer}/${denom}</strong></p>
-                            ${remainNumer > 0 ? `<p>4. As a mixed number: <strong>${wholeResult} ${remainNumer}/${denom}</strong> (but we want the improper numerator: <strong>${answerNumer}</strong>)</p>` : `<p>4. This simplifies to a whole number: <strong>${wholeResult}</strong> (improper numerator is still <strong>${answerNumer}</strong>)</p>`}
+                            <p>3. Improper fraction: <strong>?/${denom}</strong></p>
+                            ${remainNumer > 0 ? `<p>4. As a mixed number that's <strong>${wholeResult} ${remainNumer}/${denom}</strong> — but we want the improper numerator from step 1</p>` : `<p>4. This simplifies to a whole number: <strong>${wholeResult}</strong> — but we want the improper numerator from step 1</p>`}
                         </div>`;
                     }
 
@@ -380,6 +385,7 @@ const MultiplyFractions4 = {
                     let questionText, visual, answer, hint1, hint2, hint3;
 
                     let diagnoseFn, misconceptionHints;
+                    let shareTotal = 0, shareDenom = 0; // fraction-of-a-group numbers, for the visual scaffold below
 
                     if (problemType === 1) {
                         // Fraction × whole
@@ -391,7 +397,7 @@ const MultiplyFractions4 = {
                         visual = `<div style="font-size:3rem;text-align:center;">🐉⚔️🐉</div>
                             <div style="text-align:center;font-size:1.3rem;font-weight:700;color:var(--monster-red);margin-top:8px;">${whole} × ${numer}/${denom} = ?/${denom}</div>`;
                         hint1 = `Multiply: ${whole} × ${numer} = ?`;
-                        hint2 = `${whole} × ${numer} = ${answer}`;
+                        hint2 = `${whole} × ${numer}/${denom} means ${numer}/${denom} added up ${whole} times: ${Array(whole).fill(numer).join(' + ')} = ?/${denom}`;
                         hint3 = `The numerator is ${answer}`;
                         diagnoseFn = function(userAnswer) {
                             if (userAnswer === whole * denom) return 'multiplied-denominator';
@@ -399,13 +405,14 @@ const MultiplyFractions4 = {
                             return null;
                         };
                         misconceptionHints = {
-                            'multiplied-denominator': `Don't multiply the denominator! Only multiply the numerator: ${whole} × ${numer} = ${answer}.`,
-                            'added-instead-of-multiplied': `We need to multiply, not add! ${whole} × ${numer} = ${answer}, not ${whole} + ${numer} = ${whole + numer}.`
+                            'multiplied-denominator': `Don't multiply the denominator! Only multiply the numerator: ${whole} × ${numer} = ?`,
+                            'added-instead-of-multiplied': `We need to multiply, not add! ${whole} + ${numer} = ${whole + numer} is adding — try ${whole} × ${numer} = ?`
                         };
                     } else if (problemType === 2) {
                         // Fraction of a group
                         const denom = pick([2, 3, 4, 5]);
                         const total = denom * R(2, 3);
+                        shareTotal = total; shareDenom = denom;
                         answer = total / denom;
                         questionText = `🐉 A dragon has ${total} treasure gems. It gives away 1/${denom} of them.<br>How many gems does it give away?`;
                         visual = `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
@@ -420,8 +427,8 @@ const MultiplyFractions4 = {
                             return null;
                         };
                         misconceptionHints = {
-                            'gave-total-not-fraction': `${total} is the total! We need 1/${denom} of it: ${total} ÷ ${denom} = ${answer}.`,
-                            'found-complement': `That's how many the dragon KEEPS, not gives away! 1/${denom} of ${total} = ${answer}.`
+                            'gave-total-not-fraction': `${total} is the total! We need 1/${denom} of it: ${total} ÷ ${denom} = ?`,
+                            'found-complement': `That's how many the dragon KEEPS, not gives away! Find 1/${denom} of ${total}: ${total} ÷ ${denom} = ?`
                         };
                     } else {
                         // Repeated addition
@@ -435,7 +442,7 @@ const MultiplyFractions4 = {
                             ${Array.from({length: whole}, () => '<span style="font-size:1.5rem">🐲</span>').join('')}
                         </div>`;
                         hint1 = `Add the numerators: ${Array(whole).fill(numer).join(' + ')} = ?`;
-                        hint2 = `${whole} × ${numer} = ${answer}`;
+                        hint2 = `Each baby dragon adds ${numer} to the numerator: ${whole} × ${numer} = ? — the denominator stays ${denom}.`;
                         hint3 = `The numerator is ${answer}`;
                         diagnoseFn = function(userAnswer) {
                             if (userAnswer === whole * denom) return 'added-denominators';
@@ -443,8 +450,8 @@ const MultiplyFractions4 = {
                             return null;
                         };
                         misconceptionHints = {
-                            'added-denominators': `Don't add the denominators! The denominator stays ${denom}. Just add the numerators: ${Array(whole).fill(numer).join(' + ')} = ${answer}.`,
-                            'counted-one-fraction': `That's just one fraction! You need to add all ${whole} of them: ${Array(whole).fill(numer).join(' + ')} = ${answer}.`
+                            'added-denominators': `Don't add the denominators! The denominator stays ${denom}. Just add the numerators: ${Array(whole).fill(numer).join(' + ')} = ?`,
+                            'counted-one-fraction': `That's just one fraction! You need to add all ${whole} of them: ${Array(whole).fill(numer).join(' + ')} = ?`
                         };
                     }
 
@@ -472,9 +479,13 @@ const MultiplyFractions4 = {
                     }
 
                     if (modality === 'visual') {
+                        // Fraction-of-a-group is a sharing (divide) step, not "multiply the numerator"
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(255,59,48,0.1);border:1px solid var(--monster-red);border-radius:10px;">
-                            <p>🔥 Dragon Tip: When multiplying a fraction by a whole number, multiply only the numerator!</p>
-                            <p>The denominator always stays the same.</p>
+                            ${problemType === 2
+                                ? `<p>🔥 Dragon Tip: 1/${shareDenom} of the gems means 1 of ${shareDenom} equal shares.</p>
+                            <p>Share the ${shareTotal} gems into ${shareDenom} equal piles. How many in 1 pile? ${shareTotal} ÷ ${shareDenom} = ?</p>`
+                                : `<p>🔥 Dragon Tip: When multiplying a fraction by a whole number, multiply only the numerator!</p>
+                            <p>The denominator always stays the same.</p>`}
                         </div>`;
                     }
 

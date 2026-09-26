@@ -23,13 +23,13 @@ const Multiply2Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 The DJ plays ${a} songs, each ${b} seconds long.<br>Total seconds of music?`,
+                        questionText: `🎵 The DJ plays ${a} short jingles, each ${b} seconds long.<br>Total seconds of music?`,
                         visual: `<div style="text-align:center;font-size:1.6rem;font-weight:700;color:var(--dance-pink);">
                             ${a} × ${b} = ?
                         </div>`,
                         answer,
                         hint1: `${a} × ${b} = ${a} × ${b / 10} × 10`,
-                        hint2: `${a} × ${b / 10} = ${a * (b / 10)}, then add a zero: ${Engine.Utils.fmt(answer)}`,
+                        hint2: `${a} × ${b / 10} = ${a * (b / 10)}, then add a zero: ${a} × ${b} = ?`,
                         hint3: `${a} × ${b} = ${Engine.Utils.fmt(answer)}`
                     };
 
@@ -38,11 +38,14 @@ const Multiply2Digit4 = {
                         return null;
                     };
                     result.misconceptionHints = {
-                        'forgot-zero': `Almost! You found ${a} × ${b / 10} = ${a * (b / 10)}, but ${b} is ${b / 10} × 10. Don't forget to add a zero! ${a} × ${b} = ${Engine.Utils.fmt(answer)}.`
+                        'forgot-zero': `Almost! You found ${a} × ${b / 10} = ${a * (b / 10)}, but ${b} is ${b / 10} × 10. Don't forget to add a zero! ${a} × ${b} = ?`
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 25 × 30 = ?</p><p>25 × 3 = 75</p><p>Add a zero: <strong>750</strong></p></div>`;
+                        // Question shares the example's answer (e.g. it IS 25 × 30): show a second example so it can't be copied
+                        result.workedExample = answer !== 750
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 25 × 30 = ?</p><p>25 × 3 = 75</p><p>Add a zero: <strong>750</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 32 × 40 = ?</p><p>32 × 4 = 128</p><p>Add a zero: <strong>1,280</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -66,7 +69,9 @@ const Multiply2Digit4 = {
                 skillId: '4m2-area-model',
                 generate(diff, modality) {
                     const a = R(11, diff >= 2 ? 50 : 30);
-                    const b = R(11, diff >= 2 ? 50 : 30);
+                    // Two round factors (e.g. 20 × 30) leave one non-zero box that already equals the answer
+                    let b = R(11, diff >= 2 ? 50 : 30);
+                    while (a % 10 === 0 && b % 10 === 0) b = R(11, diff >= 2 ? 50 : 30);
                     const aTens = Math.floor(a / 10) * 10;
                     const aOnes = a % 10;
                     const bTens = Math.floor(b / 10) * 10;
@@ -109,11 +114,14 @@ const Multiply2Digit4 = {
                         return null;
                     };
                     result.misconceptionHints = {
-                        'missed-a-partial-product': `It looks like you missed one of the four partial products! Make sure to add all four: ${p1} + ${p2} + ${p3} + ${p4} = ${Engine.Utils.fmt(answer)}.`
+                        'missed-a-partial-product': `It looks like you missed one of the four partial products! Make sure to add all four: ${p1} + ${p2} + ${p3} + ${p4} = ?`
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 23 × 14</p><p>20×10=200, 20×4=80, 3×10=30, 3×4=12</p><p>200+80+30+12 = <strong>322</strong></p></div>`;
+                        // Question shares the example's answer (it IS 23 × 14 or 14 × 23): show a second example so it can't be copied
+                        result.workedExample = answer !== 322
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 23 × 14</p><p>20×10=200, 20×4=80, 3×10=30, 3×4=12</p><p>200+80+30+12 = <strong>322</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 32 × 13</p><p>30×10=300, 30×3=90, 2×10=20, 2×3=6</p><p>300+90+20+6 = <strong>416</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -163,21 +171,29 @@ const Multiply2Digit4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'forgot-tens-zero': `When multiplying by the tens digit, don't forget the zero! ${a} × ${Math.floor(b / 10)} = ${a * Math.floor(b / 10)}, but it represents ${a} × ${Math.floor(b / 10) * 10} = ${a * Math.floor(b / 10) * 10}.`
+                            // For a round b the tens partial IS the answer, so leave it as "?"
+                            'forgot-tens-zero': `When multiplying by the tens digit, don't forget the zero! ${a} × ${Math.floor(b / 10)} = ${a * Math.floor(b / 10)}, but it represents ${a} × ${Math.floor(b / 10) * 10} = ${b % 10 === 0 ? '?' : `${a * Math.floor(b / 10) * 10}.`}`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 34 × 12</p><p>34 × 2 = 68</p><p>34 × 10 = 340</p><p>68 + 340 = <strong>408</strong></p></div>`;
+                        // Question shares the example's answer (e.g. it IS 34 × 12): show a second example so it can't be copied
+                        result.workedExample = answer !== 408
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 34 × 12</p><p>34 × 2 = 68</p><p>34 × 10 = 340</p><p>68 + 340 = <strong>408</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 27 × 14</p><p>27 × 4 = 108</p><p>27 × 10 = 270</p><p>108 + 270 = <strong>378</strong></p></div>`;
                     } else if (modality === 'visual') {
+                        // Round b: Step 2 alone is the answer, so stop it at the digit product
+                        const step2 = b % 10 === 0
+                            ? `${a} × ${b / 10} = ${a * (b / 10)}, then add a zero`
+                            : `${a} × ${Math.floor(b / 10) * 10} = ${a * Math.floor(b / 10) * 10}`;
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:6px;">✨ Two-Step Standard Algorithm</div>
                             <div style="display:inline-block;text-align:right;line-height:2;font-size:1.2rem;">
                                 <div style="color:var(--dance-gold);">${a}</div>
                                 <div style="border-bottom:2px solid var(--dance-pink);color:var(--dance-pink);">× ${b}</div>
                                 <div style="color:var(--dance-cyan);">Step 1: ${a} × ${b % 10} = ${a * (b % 10)}</div>
-                                <div style="color:var(--dance-purple);">Step 2: ${a} × ${Math.floor(b / 10) * 10} = ${a * Math.floor(b / 10) * 10}</div>
-                                <div style="border-top:2px solid var(--dance-gold);color:var(--dance-gold);font-weight:800;">Total: ${Engine.Utils.fmt(answer)}</div>
+                                <div style="color:var(--dance-purple);">Step 2: ${step2}</div>
+                                <div style="border-top:2px solid var(--dance-gold);color:var(--dance-gold);font-weight:800;">Total: ?</div>
                             </div>
                         </div>`;
                     }
@@ -215,12 +231,15 @@ const Multiply2Digit4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'used-exact': `You calculated the exact product (${Engine.Utils.fmt(exact)}), but this asks for an estimate. Round each factor to the nearest 10 first: ${a} ≈ ${estA}, ${b} ≈ ${estB}, so ${estA} × ${estB} = ${Engine.Utils.fmt(answer)}.`
+                            'used-exact': `You calculated the exact product (${Engine.Utils.fmt(exact)}), but this asks for an estimate. Round each factor to the nearest 10 first: ${a} ≈ ${estA}, ${b} ≈ ${estB}, so ${estA} × ${estB} = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> Estimate 38 × 22</p><p>38 ≈ 40, 22 ≈ 20</p><p>40 × 20 = <strong>800</strong></p></div>`;
+                        // Question shares the example's answer (e.g. 41 × 19 also rounds to 40 × 20): show a second example so it can't be copied
+                        result.workedExample = answer !== 800
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> Estimate 38 × 22</p><p>38 ≈ 40, 22 ≈ 20</p><p>40 × 20 = <strong>800</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> Estimate 71 × 34</p><p>71 ≈ 70, 34 ≈ 30</p><p>70 × 30 = <strong>2,100</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🎵 Round Each Factor First!</div>
@@ -273,11 +292,14 @@ const Multiply2Digit4 = {
                         return null;
                     };
                     result.misconceptionHints = {
-                        'added-instead': `It looks like you added ${a} + ${b} = ${a + b} instead of multiplying. This problem asks for the total when you have ${a} groups of ${b}, so you need ${a} × ${b} = ${Engine.Utils.fmt(answer)}.`
+                        'added-instead': `It looks like you added ${a} + ${b} = ${a + b} instead of multiplying. This problem asks for the total when you have ${a} groups of ${b}, so you need ${a} × ${b} = ?`
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 15 rows × 12 seats</p><p>15 × 12 = (15 × 10) + (15 × 2)</p><p>= 150 + 30 = <strong>180</strong></p></div>`;
+                        // Question shares the example's answer (it IS 15 × 12 or 12 × 15): show a second example so it can't be copied
+                        result.workedExample = answer !== 180
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 15 rows × 12 seats</p><p>15 × 12 = (15 × 10) + (15 × 2)</p><p>= 150 + 30 = <strong>180</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 16 rows × 13 seats</p><p>16 × 13 = (16 × 10) + (16 × 3)</p><p>= 160 + 48 = <strong>208</strong></p></div>`;
                     }
 
                     if (modality === 'visual') {
@@ -334,14 +356,18 @@ const Multiply2Digit4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'only-tens-part': `💃 You found ${a} × ${bTens} = ${part1}, but don't stop there! You also need to add ${a} × ${bOnes} = ${part2}. Both parts together: ${Engine.Utils.fmt(part1)} + ${part2} = ${Engine.Utils.fmt(answer)}.`,
-                            'only-ones-part': `🕺 You found ${a} × ${bOnes} = ${part2}, but you also need ${a} × ${bTens} = ${part1}. Add both parts: ${Engine.Utils.fmt(part1)} + ${part2} = ${Engine.Utils.fmt(answer)}.`,
-                            'forgot-tens-zero': `✨ Remember: ${bTens} is a tens number, so ${a} × ${bTens} = ${part1}, not ${a * Math.floor(b / 10)}. Then add ${a} × ${bOnes} = ${part2}. Total: ${Engine.Utils.fmt(answer)}.`
+                            'only-tens-part': `💃 You found ${a} × ${bTens} = ${part1}, but don't stop there! You also need to add ${a} × ${bOnes} = ${part2}. Both parts together: ${Engine.Utils.fmt(part1)} + ${part2} = ?`,
+                            'only-ones-part': `🕺 You found ${a} × ${bOnes} = ${part2}, but you also need ${a} × ${bTens} = ${part1}. Add both parts: ${Engine.Utils.fmt(part1)} + ${part2} = ?`,
+                            'forgot-tens-zero': `✨ Remember: ${bTens} is a tens number, so ${a} × ${bTens} = ${part1}, not ${a * Math.floor(b / 10)}. Then add ${a} × ${bOnes} = ${part2}. Total: ${Engine.Utils.fmt(part1)} + ${part2} = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 15 × 23 = 15 × 20 + 15 × 3</p><p>15 × 20 = 300</p><p>15 × 3 = 45</p><p>300 + 45 = <strong>345</strong></p></div>`;
+                        // Question shares the example's answer (it IS 15 × 23 or 23 × 15) or its "15 × 20 = 300" step
+                        // (20 × 15): show a second example so it can't be copied
+                        result.workedExample = answer !== 345 && answer !== 300
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 15 × 23 = 15 × 20 + 15 × 3</p><p>15 × 20 = 300</p><p>15 × 3 = 45</p><p>300 + 45 = <strong>345</strong></p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 14 × 26 = 14 × 20 + 14 × 6</p><p>14 × 20 = 280</p><p>14 × 6 = 84</p><p>280 + 84 = <strong>364</strong></p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🎵 Distributive Property Dance Steps</div>
@@ -379,6 +405,9 @@ const Multiply2Digit4 = {
                     const bOnes = b % 10;
                     const part1 = a * bTens;
                     const part2 = a * bOnes;
+                    // For a round b the tens part IS the answer, so hints and the scaffold stop it one step short
+                    const tensStep = bOnes ? `${a} × ${bTens} = ${part1}` : `${a} × ${bTens} = ${a * (bTens / 10)} × 10 = ?`;
+                    const addStep = bOnes ? `, then add both parts: ${Engine.Utils.fmt(part1)} + ${part2} = ?` : '';
 
                     const result = {
                         type: 'input',
@@ -399,14 +428,18 @@ const Multiply2Digit4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'only-ones-digit': `✨ You only multiplied by the ones digit (${bOnes}). Don't forget to also multiply ${a} × ${bTens} = ${part1} and add it! Total: ${Engine.Utils.fmt(part1)} + ${part2} = ${Engine.Utils.fmt(answer)}.`,
-                            'forgot-tens-zero': `🎵 When multiplying by the tens digit, remember ${Math.floor(b / 10)} represents ${bTens}! So ${a} × ${bTens} = ${part1}, not ${a * Math.floor(b / 10)}. Answer: ${Engine.Utils.fmt(answer)}.`,
-                            'missed-ones-partial': `🕺 Almost! It looks like you forgot to add the ones partial product (${a} × ${bOnes} = ${part2}). Add all parts: ${Engine.Utils.fmt(answer)}.`
+                            'only-ones-digit': `✨ You only multiplied by the ones digit (${bOnes}). Don't forget the tens part too! ${tensStep}${addStep}`,
+                            'forgot-tens-zero': `🎵 When multiplying by the tens digit, remember ${Math.floor(b / 10)} represents ${bTens}, not ${Math.floor(b / 10)}! ${tensStep}${addStep}`,
+                            'missed-ones-partial': `🕺 Almost! It looks like you forgot to add the ones partial product (${a} × ${bOnes} = ${part2}). Add all parts: ${Engine.Utils.fmt(part1)} + ${part2} = ?`
                         }
                     };
 
                     if (modality === 'worked-example') {
-                        result.workedExample = `<div style="text-align:center"><p><strong>Example:</strong> 47 × 23</p><p>47 × 3 = 141</p><p>47 × 20 = 940</p><p>141 + 940 = <strong>1,081</strong></p><p>💃 You've got the moves! Apply the same steps to ${a} × ${b}.</p></div>`;
+                        // Question shares the example's answer (it IS 47 × 23 or 23 × 47) or is its "47 × 20 = 940" step:
+                        // show a second example so it can't be copied
+                        result.workedExample = answer !== 1081 && answer !== 940
+                            ? `<div style="text-align:center"><p><strong>Example:</strong> 47 × 23</p><p>47 × 3 = 141</p><p>47 × 20 = 940</p><p>141 + 940 = <strong>1,081</strong></p><p>💃 You've got the moves! Apply the same steps to ${a} × ${b}.</p></div>`
+                            : `<div style="text-align:center"><p><strong>Example:</strong> 36 × 24</p><p>36 × 4 = 144</p><p>36 × 20 = 720</p><p>144 + 720 = <strong>864</strong></p><p>💃 You've got the moves! Apply the same steps to ${a} × ${b}.</p></div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                             <div style="font-size:1.1rem;font-weight:700;color:var(--dance-purple);margin-bottom:8px;">🪩 Boss Strategy: Break It Down!</div>
@@ -418,9 +451,9 @@ const Multiply2Digit4 = {
                                 <div style="font-size:1.5rem;color:var(--dance-gold);font-weight:700;">+</div>
                                 <div style="background:rgba(168,85,247,0.15);border:2px solid var(--dance-purple);border-radius:10px;padding:8px 14px;text-align:center;">
                                     <div style="font-size:0.8rem;color:var(--dance-purple);font-weight:700;">Tens part</div>
-                                    <div style="font-weight:800;">${a} × ${bTens} = ${part1}</div>
+                                    <div style="font-weight:800;">${bOnes ? `${a} × ${bTens} = ${part1}` : `${a} × ${bTens / 10} = ${a * (bTens / 10)}, then add a zero`}</div>
                                 </div>
-                                <div style="grid-column:1/-1;font-size:1.3rem;font-weight:800;color:var(--dance-gold);margin-top:4px;">${part2} + ${Engine.Utils.fmt(part1)} = ?</div>
+                                <div style="grid-column:1/-1;font-size:1.3rem;font-weight:800;color:var(--dance-gold);margin-top:4px;">${bOnes ? `${part2} + ${Engine.Utils.fmt(part1)}` : `${a} × ${b}`} = ?</div>
                             </div>
                         </div>`;
                     }

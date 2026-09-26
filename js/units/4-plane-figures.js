@@ -121,7 +121,7 @@ const PlaneFigures4 = {
                             {label: 'Scalene (none equal)', value: 'scalene'}
                         ],
                         hint1: `Count how many sides are the same length`,
-                        hint2: `${type.sides[0]}, ${type.sides[1]}, ${type.sides[2]} — ${type.desc}`,
+                        hint2: `Compare the sides in pairs: is ${type.sides[0]} = ${type.sides[1]}? Is ${type.sides[1]} = ${type.sides[2]}? Is ${type.sides[0]} = ${type.sides[2]}? Count how many sides match.`,
                         hint3: `This is ${article(type.name)} ${type.name} triangle (${type.desc})`,
                         diagnose(userAnswer) {
                             if (type.name === 'isosceles' && userAnswer === 'equilateral') return 'confused-isosceles-equilateral';
@@ -130,7 +130,7 @@ const PlaneFigures4 = {
                         },
                         misconceptionHints: {
                             'confused-isosceles-equilateral': `🕺 Close! Equilateral means ALL 3 sides are equal. Isosceles means exactly 2 sides are equal — the third side is different. Check those side lengths again!`,
-                            'miscount-scalene-sides': `✨ Nice try! Look carefully at all three numbers. If even two of them matched, it would be isosceles. But scalene means NONE of the sides are the same length. 💃`
+                            'miscount-scalene-sides': `✨ Nice try! Look carefully at all three numbers. If even two of them matched, it would be isosceles — do any two match? If NONE of the sides are the same length, it's scalene. 💃`
                         }
                     };
 
@@ -141,6 +141,8 @@ const PlaneFigures4 = {
                             {name: 'isosceles', text: 'Example: 5, 5, 3 → Isosceles 💃'},
                             {name: 'scalene', text: 'Example: 3, 4, 5 → Scalene 🕺'}
                         ].filter(e => e.name !== type.name);
+                        // Just one of the other two: listing both leaves the answer as the only type without an example
+                        examples.splice(Engine.Utils.rand(0, 1), 1);
                         result.workedExample = `<div style="text-align:center"><p><strong>💃 Classify Triangles by Sides:</strong></p><p>Step 1: List the three side lengths.</p><p>Step 2: Count how many sides are equal.</p><p>Step 3: All 3 equal → Equilateral | Exactly 2 equal → Isosceles | None equal → Scalene</p><hr style="margin:8px 0;">${examples.map(e => `<p>${e.text}</p>`).join('')}</div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(236,72,153,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-pink);">🎵 Side Check:</p><p style="margin:4px 0 0;font-size:0.9rem;">Compare the three colored numbers above. Are any of them the same? Count the matches to find the triangle type! ✨</p></div>`;
@@ -174,7 +176,7 @@ const PlaneFigures4 = {
                             {label: 'Obtuse (has > 90°)', value: 'obtuse'}
                         ],
                         hint1: `Look at each angle — is any one 90° or larger?`,
-                        hint2: `${type.desc}`,
+                        hint2: `Find the biggest angle of ${type.angles[0]}°, ${type.angles[1]}°, and ${type.angles[2]}°. Is it less than 90°, exactly 90°, or more than 90°?`,
                         hint3: `This is ${article(type.name)} ${type.name} triangle`,
                         diagnose(userAnswer) {
                             if (type.name === 'obtuse' && userAnswer === 'right') return 'confused-obtuse-right';
@@ -182,7 +184,7 @@ const PlaneFigures4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'confused-obtuse-right': `💃 A right triangle has an angle of exactly 90°. An obtuse triangle has an angle that is MORE than 90° — like ${type.angles[0]}°. Look at each angle carefully!`,
+                            'confused-obtuse-right': `💃 A right triangle has an angle of exactly 90°. An obtuse triangle has an angle that is MORE than 90°. Is any angle here exactly 90° — or bigger? Look at each angle carefully!`,
                             'thinks-any-angle-is-right': `🪩 A right angle is exactly 90° — like the corner of a square. If all the angles are less than 90°, it's an acute triangle. Check: are any of these angles exactly 90°? ✨`
                         }
                     };
@@ -194,6 +196,8 @@ const PlaneFigures4 = {
                             {name: 'right', text: 'Example: 90°, 45°, 45° → Right 💃'},
                             {name: 'obtuse', text: 'Example: 120°, 30°, 30° → Obtuse 🕺'}
                         ].filter(e => e.name !== type.name);
+                        // Just one of the other two: listing both leaves the answer as the only type without an example
+                        examples.splice(Engine.Utils.rand(0, 1), 1);
                         result.workedExample = `<div style="text-align:center"><p><strong>🎵 Classify Triangles by Angles:</strong></p><p>Step 1: Look at the largest angle.</p><p>Step 2: Is it less than 90°? → Acute</p><p>Step 3: Is it exactly 90°? → Right</p><p>Step 4: Is it greater than 90°? → Obtuse</p><hr style="margin:8px 0;">${examples.map(e => `<p>${e.text}</p>`).join('')}</div>`;
                     } else if (modality === 'visual') {
                         result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(168,85,247,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-purple);">🎵 Angle Check:</p><p style="margin:4px 0 0;font-size:0.9rem;">Find the BIGGEST angle above. Compare it to 90° (a square corner). Smaller → Acute | Equal → Right | Bigger → Obtuse! 💃</p></div>`;
@@ -206,12 +210,13 @@ const PlaneFigures4 = {
             {
                 skillId: '4pf-quadrilaterals',
                 generate(diff, modality) {
+                    // No picture of the shape — she'd name it on sight and skip the property clue
                     const quads = [
-                        {name: 'square', properties: '4 equal sides and 4 right angles', emoji: '⬜'},
-                        {name: 'rectangle', properties: 'opposite sides equal and 4 right angles, but not all 4 sides equal', emoji: '▬'},
-                        {name: 'rhombus', properties: '4 equal sides but no right angles', emoji: rhombusSvg(56, 80)},
-                        {name: 'parallelogram', properties: '2 pairs of parallel sides, with no right angles and not all sides equal', emoji: '▰'},
-                        {name: 'trapezoid', properties: 'exactly 1 pair of parallel sides', emoji: '⏢'}
+                        {name: 'square', properties: '4 equal sides and 4 right angles'},
+                        {name: 'rectangle', properties: 'opposite sides equal and 4 right angles, but not all 4 sides equal'},
+                        {name: 'rhombus', properties: '4 equal sides but no right angles'},
+                        {name: 'parallelogram', properties: '2 pairs of parallel sides, with no right angles and not all sides equal'},
+                        {name: 'trapezoid', properties: 'exactly 1 pair of parallel sides'}
                     ];
                     const quad = pick(diff >= 2 ? quads : quads.slice(0, 3));
                     const answer = quad.name;
@@ -224,7 +229,7 @@ const PlaneFigures4 = {
                     const result = {
                         type: 'multiple-choice',
                         questionText: `🕺 What shape has these properties?<br><em>${quad.properties}</em>`,
-                        visual: `<div style="text-align:center;font-size:4rem;">${quad.emoji}</div>`,
+                        visual: `<div style="font-size:3rem;text-align:center;">🕺✨🕺</div>`,
                         answer,
                         options: optionShapes.map(q => ({label: q.name.charAt(0).toUpperCase() + q.name.slice(1), value: q.name})),
                         hint1: `Think about the sides and angles described`,
@@ -242,17 +247,21 @@ const PlaneFigures4 = {
                     };
 
                     if (modality === 'worked-example') {
-                        // Leave out the shape being asked about so the guide doesn't hand over the answer
-                        const guide = [
+                        // Two of the OTHER shapes, at least one not offered as an option, so the guide neither
+                        // states the answer nor leaves it as the only option without a rule
+                        const others = [
                             {name: 'square', text: 'Square: 4 equal sides + 4 right angles ⬜'},
-                            {name: 'rectangle', text: 'Rectangle: opposite sides equal + 4 right angles ▬'},
-                            {name: 'rhombus', text: `Rhombus: 4 equal sides, angles vary ${rhombusSvg(14, 20)}`},
+                            {name: 'rectangle', text: 'Rectangle: opposite sides equal + 4 right angles, but not all 4 sides equal ▬'},
+                            {name: 'rhombus', text: `Rhombus: 4 equal sides but no right angles ${rhombusSvg(14, 20)}`},
                             {name: 'parallelogram', text: 'Parallelogram: opposite sides parallel ▰'},
                             {name: 'trapezoid', text: 'Trapezoid: exactly 1 pair parallel ⏢'}
                         ].filter(g => g.name !== quad.name);
+                        const offStage = pick(others.filter(g => !optionShapes.some(o => o.name === g.name)));
+                        const second = pick(others.filter(g => g !== offStage));
+                        const guide = others.filter(g => g === offStage || g === second);
                         result.workedExample = `<div style="text-align:center"><p><strong>🕺 Quadrilateral Guide:</strong></p><p>Step 1: Count equal sides. Step 2: Check for right angles. Step 3: Check parallel sides.</p><hr style="margin:8px 0;">${guide.map(g => `<p>${g.text}</p>`).join('')}</div>`;
                     } else if (modality === 'visual') {
-                        result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(251,191,36,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-gold);">🕺 Property Check:</p><p style="margin:4px 0 0;font-size:0.9rem;">Read the clue carefully: Are all sides equal? Are there right angles? Are sides parallel? Match those clues to the shape! ✨</p></div>`;
+                        result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(251,191,36,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-gold);">🕺 Property Check:</p><p style="margin:4px 0 0;font-size:0.9rem;">Read the clue carefully: Are all sides equal? Are there right angles? Are sides parallel? Match those clues to one of the shape names! ✨</p></div>`;
                     }
 
                     return result;
@@ -309,12 +318,13 @@ const PlaneFigures4 = {
                 skillId: '4pf-properties',
                 generate(diff, modality) {
                     const questions = [
-                        {q: 'How many sides does a hexagon have?', a: 6, hint: 'Hex = 6 (like the 6-sided cells in a honeycomb)', prefix: 'hex'},
-                        {q: 'How many sides does a pentagon have?', a: 5, hint: 'Pent = 5 (like the Pentagon building)', prefix: 'pent'},
-                        {q: 'How many sides does an octagon have?', a: 8, hint: 'Oct = 8 (like an octopus!)', prefix: 'oct'},
-                        {q: 'How many angles does a triangle have?', a: 3, hint: 'Tri = 3 (tricycle has 3 wheels)', prefix: 'tri'},
-                        {q: 'How many right angles does a rectangle have?', a: 4, hint: 'All 4 corners are right angles'},
-                        {q: 'How many pairs of parallel sides does a parallelogram have?', a: 2, hint: 'Both pairs of opposite sides are parallel'}
+                        // Hints set up the number (a real last step) instead of stating it
+                        {q: 'How many sides does a hexagon have?', a: 6, hint: 'Hex (like the cells in a honeycomb 🐝) comes right after pent: a hexagon has 1 more side than a pentagon (5 sides). 5 + 1 = ?', prefix: 'hex'},
+                        {q: 'How many sides does a pentagon have?', a: 5, hint: 'Pent (like the Pentagon building) comes right after quad: a pentagon has 1 more side than a square (4 sides). 4 + 1 = ?', prefix: 'pent'},
+                        {q: 'How many sides does an octagon have?', a: 8, hint: 'Oct is like an octopus 🐙 — one side for each arm! That\'s 2 more than a hexagon (6 sides). 6 + 2 = ?', prefix: 'oct'},
+                        {q: 'How many angles does a triangle have?', a: 3, hint: 'Tri is like a tricycle: a triangle has an angle at each corner, and as many corners as a tricycle has wheels. That\'s 1 fewer than a square (4 corners). 4 − 1 = ?', prefix: 'tri'},
+                        {q: 'How many right angles does a rectangle have?', a: 4, hint: 'Every corner of a rectangle is a square corner (a right angle). How many corners does a rectangle have?'},
+                        {q: 'How many pairs of parallel sides does a parallelogram have?', a: 2, hint: 'Each side of a parallelogram is parallel to the side across from it. Pair up its 4 sides with their opposites: 4 ÷ 2 = ? pairs.'}
                     ];
                     const selected = pick(diff >= 2 ? questions : questions.slice(0, 4));
 
@@ -335,9 +345,10 @@ const PlaneFigures4 = {
                         },
                         misconceptionHints: {
                             'off-by-one': selected.prefix
-                                ? `💃 So close! Remember the prefix is your clue: tri=3, quad=4, pent=5, hex=6, oct=8. ${selected.hint}. Try once more! ✨`
-                                : `💃 So close! ${selected.hint}. Count carefully and try once more! ✨`,
-                            'mixed-up-polygon-names': `🪩 Easy mix-up! Hexagon (hex=6) and Octagon (oct=8) sound similar but are different. Think of an octopus — it has 8 arms, just like an octagon has 8 sides! 🐙✨`
+                                ? `💃 So close! Remember the prefix is your clue — it's a number. ${selected.hint} ✨`
+                                : `💃 So close! ${selected.hint} Count carefully and try once more! ✨`,
+                            // Only fires for hexagon↔octagon, so naming HER number's shape rules it out without giving this one
+                            'mixed-up-polygon-names': `🪩 Easy mix-up! Hexagon and octagon sound similar but are different${selected.a === 6 ? ' — an OCTagon is the one with 8 sides (like an octopus has 8 arms 🐙), and your shape is a HEXagon' : selected.a === 8 ? ' — a HEXagon is the one with 6 sides (like a honeycomb cell 🐝), and your shape is an OCTagon' : ''}. ${selected.hint} ✨`
                         }
                     };
 
@@ -352,7 +363,12 @@ const PlaneFigures4 = {
                         ].filter(p => p.prefix !== selected.prefix);
                         result.workedExample = `<div style="text-align:center"><p><strong>🎵 Shape Properties:</strong></p><p>Step 1: Look at the prefix of the shape name.</p><p>Step 2: Match it to the number!</p><hr style="margin:8px 0;">${prefixes.map(p => `<p>${p.text}</p>`).join('')}</div>`;
                     } else if (modality === 'visual') {
-                        result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(251,191,36,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-gold);">🎵 Prefix Power:</p><p style="margin:4px 0 0;font-size:0.9rem;"><strong>tri</strong>=3 | <strong>quad</strong>=4 | <strong>pent</strong>=5 | <strong>hex</strong>=6 | <strong>oct</strong>=8</p><p style="margin:4px 0 0;font-size:0.9rem;">Find the prefix in the shape name to get your answer! 💃</p></div>`;
+                        // This question's prefix stays "?" — the full table would be an answer key
+                        const table = [['tri', 3], ['quad', 4], ['pent', 5], ['hex', 6], ['oct', 8]]
+                            .map(([p, n]) => `<strong>${p}</strong>=${p === selected.prefix ? '?' : n}`).join(' | ');
+                        result.visual += selected.prefix
+                            ? `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(251,191,36,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-gold);">🎵 Prefix Power:</p><p style="margin:4px 0 0;font-size:0.9rem;">${table}</p><p style="margin:4px 0 0;font-size:0.9rem;">${selected.hint} 💃</p></div>`
+                            : `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(251,191,36,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-gold);">🎵 Shape Check:</p><p style="margin:4px 0 0;font-size:0.9rem;">${selected.hint} 💃</p></div>`;
                     }
 
                     return result;
@@ -375,7 +391,7 @@ const PlaneFigures4 = {
                             answer: s.lines,
                             options: shuffle([{label: `${s.lines}`, value: s.lines}, {label: `${s.lines + 1}`, value: s.lines + 1}, {label: `${Math.max(0, s.lines - 1)}`, value: Math.max(0, s.lines - 1)}, {label: `${s.lines + 2}`, value: s.lines + 2}]),
                             hint1: `Fold the ${s.name} — how many ways?`,
-                            hint2: `${Article(s.name)} ${s.name} has ${s.lines} line(s) of symmetry`,
+                            hint2: `Picture folding the ${s.name} in half every way you can — up-and-down, side-to-side, slanted. Count only the folds where both halves match exactly.`,
                             hint3: `${s.lines}`,
                             diagnose(userAnswer) {
                                 if (Number(userAnswer) === s.lines + 1 || Number(userAnswer) === s.lines + 2) return 'overcounted-symmetry';
@@ -383,8 +399,8 @@ const PlaneFigures4 = {
                                 return null;
                             },
                             misconceptionHints: {
-                                'overcounted-symmetry': `💃 You counted a little too many! Remember, each line of symmetry must fold the shape into TWO perfectly matching halves. ${Article(s.name)} ${s.name} has exactly ${s.lines} — try counting each direction again! ✨`,
-                                'undercounted-symmetry': `🪩 You're close — just missed one or more! Don't forget to check ALL directions: horizontal, vertical, and diagonal lines. ${Article(s.name)} ${s.name} has ${s.lines} line(s) of symmetry. 🕺`
+                                'overcounted-symmetry': `💃 You counted a little too many! Remember, each line of symmetry must fold the shape into TWO perfectly matching halves.${s.name === 'rectangle' ? ' Folding a rectangle corner-to-corner (along a diagonal) does NOT make matching halves!' : ''} Test each direction again and count only the folds that match! ✨`,
+                                'undercounted-symmetry': `🪩 You're close — just missed one or more! Don't forget to check ALL directions: horizontal, vertical, and diagonal lines. Count every fold that makes matching halves! 🕺`
                             }
                         };
 
@@ -409,7 +425,7 @@ const PlaneFigures4 = {
                             answer: t.name,
                             options: [{label: 'Equilateral', value: 'equilateral'}, {label: 'Isosceles', value: 'isosceles'}, {label: 'Scalene', value: 'scalene'}],
                             hint1: `How many sides are equal?`,
-                            hint2: `${t.name}: ${t.sides.join(', ')}`,
+                            hint2: `Compare ${t.sides.join(', ')}: how many sides are the same number? All 3 equal → equilateral, exactly 2 → isosceles, none → scalene.`,
                             hint3: `${t.name}`,
                             diagnose(userAnswer) {
                                 if (t.name === 'isosceles' && userAnswer === 'equilateral') return 'confused-iso-equil';
@@ -461,10 +477,10 @@ const PlaneFigures4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            // Rules and example for the OTHER shapes only, so this question's answer isn't spelled out
-                            const others = quads.filter(x => x.name !== q.name);
-                            const weQ = pick(others);
-                            result.workedExample = `<div style="text-align:center"><p><strong>🕺 BOSS: Quadrilaterals</strong></p><p>Step 1: Check if all 4 sides are equal.</p><p>Step 2: Check for right angles.</p>${others.map(x => `<p>${x.rule}</p>`).join('')}<hr style="margin:8px 0;"><p>Example clue: "${weQ.prop}" → <strong>${weQ.name}</strong> 💃</p></div>`;
+                            // Rule and example for ONE other shape, so this question's answer isn't spelled out
+                            // and isn't the only option left without a rule
+                            const weQ = pick(quads.filter(x => x.name !== q.name));
+                            result.workedExample = `<div style="text-align:center"><p><strong>🕺 BOSS: Quadrilaterals</strong></p><p>Step 1: Check if all 4 sides are equal.</p><p>Step 2: Check for right angles.</p><p>${weQ.rule}</p><hr style="margin:8px 0;"><p>Example clue: "${weQ.prop}" → <strong>${weQ.name}</strong> 💃</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(251,191,36,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-gold);">🕺 Boss Tip:</p><p style="margin:4px 0 0;font-size:0.9rem;">Two questions: (1) Are all 4 sides equal? (2) Are there right angles? Your answers point to the shape! ✨</p></div>`;
                         }
