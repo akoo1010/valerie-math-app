@@ -232,7 +232,8 @@ const Time = {
                 generate(diff) {
                     // 24-hour "now", 8 AM–5:45 PM, so the race is always in the daytime
                     const now = R(8, 17);
-                    const nowM = pick([0, 15, 30, 45]);
+                    // Never on the hour: from 10:00 the answer is just the race's minutes (10:28 → 28)
+                    const nowM = diff <= 1 ? pick([15, 30, 45]) : pick([5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]);
                     const delta = R(10, 40);
                     const totalEventM = now * 60 + nowM + delta;
                     const eventH = Math.floor(totalEventM / 60);
