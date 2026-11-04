@@ -208,6 +208,13 @@ const Story = (() => {
         }
     };
 
+    /** The Fact Dash boss: fights with her weakest single-digit facts. */
+    const FACT_BOSS = {
+        name: 'Chompy the Fact-a-saurus', emoji: '🦖',
+        intro: 'ROAR! I chomped up your trickiest facts — all those 6s, 7s and 8s! Zap them back, FAST!',
+        win: 'Roar… you zap facts faster than I can chomp!'
+    };
+
     /** Lines bosses shout mid-battle. */
     const BOSS_HIT_LINES = ['Ouch!', 'Hey, that stung!', 'Lucky guess!', 'Grr… not bad!', 'No fair!', 'Whoa!'];
     const BOSS_ATTACK_LINES = ['Ha! Missed me!', 'Too slow!', 'My turn!', 'Is that all you\'ve got?', 'Hee hee!'];
@@ -279,6 +286,7 @@ const Story = (() => {
 
     return {
         WORLDS,
+        FACT_BOSS,
 
         /** @param {'3rd'|'4th'} grade */
         world(grade) { return WORLDS[grade] || WORLDS['3rd']; },
@@ -371,6 +379,12 @@ const Story = (() => {
          */
         guideLine(grade, units) {
             const w = this.world(grade);
+            if (typeof Facts !== 'undefined' && !Facts.goalReachedToday()) {
+                const left = Math.max(1, Math.ceil((Facts.DAILY_GOAL_MS - Facts.msToday()) / 60000));
+                return Facts.msToday() === 0
+                    ? `First, let's warm up with ⚡ <b>Fact Dash</b> — 10 minutes of quick + − × facts makes everything else easier!`
+                    : `Keep going in ⚡ <b>Fact Dash</b> — ${left} more minute${left === 1 ? '' : 's'} of facts today, then on to the bosses!`;
+            }
             const ready = units.find(u => Adaptive.isUnitUnlocked(u.id) && Adaptive.isBossUnlocked(u.id) && Adaptive.getBoss(u.id).wins === 0);
             if (ready) {
                 const b = BOSSES[ready.id];

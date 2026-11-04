@@ -536,10 +536,103 @@ function checkGenerators() {
     return { failures, generatedCount };
 }
 
+// --- Fact Dash: every single-digit fact, its tip, mastery rules, round builder ---
+function checkFacts() {
+    const failures = [];
+    const file = path.join(rootDir, 'js', 'facts.js');
+    const context = vm.createContext({ console, Math, Date });
+    try {
+        vm.runInContext(fs.readFileSync(file, 'utf8') + '\n;globalThis.__Facts = Facts;', context, { filename: 'js/facts.js', timeout: 1000 });
+    } catch (error) {
+        return { failures: [`js/facts.js: failed to load: ${error.message}`], factCount: 0 };
+    }
+    const F = context.__Facts;
+    const all = F.allFacts();
+    const fail = (fact, msg) => failures.push(`js/facts.js ${fact ? fact.key : ''}: ${msg}`);
+
+    if (all.length !== 300) fail(null, `expected 300 facts, found ${all.length}`);
+    if (new Set(all.map(f => f.key)).size !== all.length) fail(null, 'duplicate fact keys');
+
+    for (const f of all) {
+        const symbol = F.SYMBOL[f.op];
+        const expected = f.op === '+' ? f.a + f.b : f.op === '-' ? f.a : f.a * f.b;
+        if (f.answer !== expected) fail(f, `answer ${f.answer}, expected ${expected}`);
+        if (f.op === '-') {
+            if (f.left - f.right !== f.answer) fail(f, `${f.left} − ${f.right} is not ${f.answer}`);
+            if (f.left > 18 || f.right > 9 || f.answer > 9) fail(f, 'subtraction must stay within 20 with single-digit parts');
+        }
+        if (f.op === '+' && f.left + f.right !== f.answer) fail(f, 'addition answer mismatch');
+        if (f.op === 'x' && f.left * f.right !== f.answer) fail(f, 'multiplication answer mismatch');
+        if (f.text !== `${f.left} ${symbol} ${f.right}`) fail(f, `text "${f.text}" doesn't match the fact`);
+        if (typeof f.tip !== 'string' || f.tip.length < 10) fail(f, 'missing strategy tip');
+        findFalseStatements(f.tip).forEach(p => fail(f, `tip states something false: ${p}`));
+        if (!new RegExp(`(?<![\\d.])${f.answer}(?!\\d|\\.\\d)`).test(f.tip)) fail(f, `tip never reaches the answer ${f.answer}: "${f.tip}"`);
+        if (invalidHintPattern.test(f.tip)) fail(f, `tip has an unresolved value: "${f.tip}"`);
+    }
+
+    // Mastery: fast first sight → almost; fast again on another day → mastered; a miss resets
+    const day = 20000;
+    const fact = F.byKey('x:7:8');
+    let s = F.applyAnswer(undefined, true, 1500, day);
+    if (F.levelOf(s) !== F.ALMOST) fail(fact, 'a fast first answer should fast-track to "almost"');
+    s = F.applyAnswer(s, true, 1500, day);
+    if (F.levelOf(s) === F.MASTERED) fail(fact, 'mastery must need a second day');
+    s = F.applyAnswer(s, true, 1500, day + 1);
+    if (F.levelOf(s) !== F.MASTERED) fail(fact, 'three fast answers on two days should master');
+    s = F.applyAnswer(s, false, 1500, day + 2);
+    if (F.levelOf(s) !== F.LEARNING) fail(fact, 'a miss should send a fact back to learning');
+    let slow = F.applyAnswer(undefined, true, F.FAST_MS + 500, day);
+    slow = F.applyAnswer(slow, true, F.FAST_MS + 500, day + 1);
+    if (F.levelOf(slow) !== F.LEARNING) fail(fact, 'slow answers must not count toward mastery');
+
+    // Round builder
+    const today = day + 10;
+    const noAdjacentRepeats = (round, label) => {
+        for (let i = 1; i < round.length; i++) {
+            if (round[i].key === round[i - 1].key) fail(null, `${label}: ${round[i].key} twice in a row`);
+        }
+    };
+    for (const op of ['+', '-', 'x', 'mix']) {
+        for (let trial = 0; trial < 20; trial++) {
+            const round = F.buildRound({ op, stats: {}, today });
+            if (round.length !== F.ROUND_SIZE) fail(null, `${op} round has ${round.length} facts, expected ${F.ROUND_SIZE}`);
+            if (round.some(f => !f || !F.byKey(f.key))) fail(null, `${op} round contains an unknown fact`);
+            noAdjacentRepeats(round, `${op} round`);
+            if (op !== 'mix' && round.some(f => f.op !== op)) fail(null, `${op} round mixes in other operations`);
+            if (op !== 'mix' && round.filter(F.isFocus).length < F.ROUND_SIZE) fail(null, `a fresh ${op} round should be all 6s, 7s and 8s`);
+            if (op === 'mix' && new Set(round.map(f => f.op)).size !== 3) fail(null, 'a mixed round should include all three operations');
+        }
+    }
+    // Facts she's learning come first
+    const learningStats = {};
+    F.allFacts('x').slice(0, 30).forEach(f => { learningStats[f.key] = F.applyAnswer(undefined, false, 4000, today - 1); });
+    const learningRound = F.buildRound({ op: 'x', stats: learningStats, today });
+    if (learningRound.filter(f => F.levelOf(learningStats[f.key]) === F.LEARNING).length < 10) {
+        fail(null, 'rounds should be at least 40% facts she is learning');
+    }
+    // One-number practice only uses that number
+    for (const op of ['+', '-', 'x']) {
+        const round = F.buildRound({ op, stats: {}, today, family: 7 });
+        if (round.length !== F.ROUND_SIZE || round.some(f => f.a !== 7 && f.b !== 7)) fail(null, `${op} practice-7 round includes facts without 7`);
+        noAdjacentRepeats(round, `${op} practice-7 round`);
+    }
+    // Sprint and boss picks are valid facts
+    for (let i = 0; i < 50; i++) {
+        const f = F.pickSprintFact({ op: ['+', '-', 'x', 'mix'][i % 4], stats: learningStats });
+        if (!f || !F.byKey(f.key)) fail(null, 'sprint picked an unknown fact');
+    }
+    const deck = F.bossDeck({ stats: learningStats });
+    if (deck.length !== 30 || deck.some(f => !F.byKey(f.key))) fail(null, 'fact boss deck should be 30 valid facts');
+
+    return { failures, factCount: all.length };
+}
+
 function main() {
     const files = jsDirs.flatMap(listJsFiles).sort();
     const syntaxFailures = checkSyntax(files);
     const { failures: generatorFailures, generatedCount } = checkGenerators();
+    const { failures: factFailures, factCount } = checkFacts();
+    generatorFailures.push(...factFailures);
     // Repeated samples hit the same bug many times; report each message once.
     const failures = [...new Set([...syntaxFailures, ...generatorFailures])];
 
@@ -551,6 +644,7 @@ function main() {
 
     console.log(`Syntax OK for ${files.length} JavaScript files.`);
     console.log(`Generator sweep OK for ${generatedCount} generated questions.`);
+    console.log(`Fact Dash OK: ${factCount} facts and tips verified, mastery rules and round builder checked.`);
 }
 
 main();

@@ -40,6 +40,25 @@ const Boss = (() => {
      * @property {boolean} over
      * @property {number} correct
      * @property {number} crits
+     * @property {number} maxHp
+     * @property {CustomBattle|null} custom set for non-unit battles (the fact boss)
+     */
+
+    /**
+     * A battle that isn't tied to a unit: it supplies its own questions, records
+     * answers itself, and renders its own results.
+     *
+     * @typedef {Object} CustomBattle
+     * @property {string} theme screen background theme
+     * @property {{name: string, emoji: string, intro: string, win: string}} boss
+     * @property {{name: string, emoji: string}} guide
+     * @property {number} maxHp
+     * @property {number} timeLimitMs per question
+     * @property {number|null} bestMs best winning time so far (shown on the intro)
+     * @property {() => ExerciseQuestion} draw next question
+     * @property {(isCorrect: boolean, usedMs: number, question: ExerciseQuestion, userAnswer: AnswerValue) => void} record
+     * @property {(summary: {won: boolean, activeMs: number, hearts: number, crits: number, hp: number, maxHp: number, boss: {name: string, emoji: string, win: string}}) => string} results results-screen HTML
+     * @property {() => void} onExit where "Run" goes
      */
 
     /** @type {Battle|null} */
@@ -68,8 +87,8 @@ const Boss = (() => {
         const hp = Math.max(0, battle.hp);
         $('boss-portrait').textContent = battle.boss.emoji;
         $('boss-name').textContent = battle.boss.name;
-        $('boss-hp-fill').style.width = `${(hp / BOSS_HP) * 100}%`;
-        $('boss-hp-text').textContent = `${hp} / ${BOSS_HP} HP`;
+        $('boss-hp-fill').style.width = `${(hp / battle.maxHp) * 100}%`;
+        $('boss-hp-text').textContent = `${hp} / ${battle.maxHp} HP`;
         const hearts = $('boss-hearts');
         hearts.innerHTML = Array.from({ length: MAX_HEARTS }, (_, i) =>
             `<span class="boss-heart${i < battle.hearts ? '' : ' lost'}">${i < battle.hearts ? '❤️' : '🖤'}</span>`
@@ -175,15 +194,21 @@ const Boss = (() => {
     function nextQuestion() {
         if (!battle || battle.over) return;
         clearTimeout(battle.advanceTimer);
-        const exercise = drawExercise();
-        const skillId = exercise.skillId;
-        const question = exercise.generate(Adaptive.getDifficulty(skillId), 'practice');
-        question.skillId = skillId;
+        let question;
+        let skillId = null;
+        if (battle.custom) {
+            question = battle.custom.draw();
+        } else {
+            const exercise = drawExercise();
+            skillId = exercise.skillId;
+            question = exercise.generate(Adaptive.getDifficulty(skillId), 'practice');
+            question.skillId = skillId;
+        }
         battle.question = question;
         battle.skillId = skillId;
         battle.token++;
         Engine.showQuestion(question);
-        startTimer(timeLimitFor(question));
+        startTimer(battle.custom ? battle.custom.timeLimitMs : timeLimitFor(question));
     }
 
     /**
@@ -236,16 +261,19 @@ const Boss = (() => {
         stopTimer();
         const usedMs = Math.min(battle.limitMs, battle.limitMs - battle.remainingMs);
         battle.activeMs += usedMs;
-        const unitId = battle.unit.id;
-        Adaptive.recordDailyQuestion(isCorrect);
+        if (battle.custom) {
+            battle.custom.record(isCorrect, usedMs, question, userAnswer);
+        } else {
+            Adaptive.recordDailyQuestion(isCorrect);
+            if (isCorrect) Adaptive.recordCorrect(battle.skillId, battle.unit.id, true);
+            else Adaptive.recordWrong(battle.skillId, battle.unit.id, userAnswer, question, true);
+        }
 
         if (!isCorrect) {
-            Adaptive.recordWrong(battle.skillId, unitId, userAnswer, question, true);
             loseHeart('Ouch — not quite!', question);
             return;
         }
 
-        Adaptive.recordCorrect(battle.skillId, unitId, true);
         const crit = usedMs <= battle.limitMs * CRIT_SHARE;
         const damage = crit ? 2 : 1;
         battle.hp -= damage;
@@ -278,6 +306,9 @@ const Boss = (() => {
         stopTimer();
         battle.activeMs += battle.limitMs;
         Engine.lockAnswers();
+        // A fact she couldn't answer in time isn't fluent yet — the fact boss counts it as a miss.
+        // (Unit bosses don't: a slow word problem isn't a wrong answer.)
+        if (battle.custom) battle.custom.record(false, battle.limitMs, battle.question, null);
         loseHeart("Time's up! ⏰", battle.question);
     }
 
@@ -302,7 +333,7 @@ const Boss = (() => {
 
     function showIntro() {
         const b = battle;
-        const record = Adaptive.getBoss(b.unit.id);
+        const bestMs = b.custom ? b.custom.bestMs : (Adaptive.getBoss(b.unit.id).wins > 0 ? Adaptive.getBoss(b.unit.id).bestMs : null);
         const intro = document.createElement('div');
         intro.className = 'boss-intro';
         intro.setAttribute('role', 'dialog');
@@ -314,13 +345,13 @@ const Boss = (() => {
                 <div class="boss-intro-name">${escape(b.boss.name)}</div>
                 <p class="boss-intro-taunt">“${escape(b.boss.intro)}”</p>
                 <ul class="boss-intro-rules">
-                    <li>💥 Right answer = hit the boss (${BOSS_HP} HP)</li>
+                    <li>💥 Right answer = hit the boss (${b.maxHp} HP)</li>
                     <li>⚡ Answer in the gold zone for a <b>critical hit</b> — double damage!</li>
                     <li>❤️ Wrong answer or time runs out = lose a heart. You have ${MAX_HEARTS}.</li>
-                    <li>⌨️ Type and press Enter, or press 1–4 to pick an answer.</li>
+                    <li>⌨️ ${b.custom ? `You have ${Math.round(b.custom.timeLimitMs / 1000)} seconds per question. Type and press Enter.` : 'Type and press Enter, or press 1–4 to pick an answer.'}</li>
                 </ul>
-                ${record.wins > 0 && record.bestMs
-                    ? `<div class="boss-intro-record">🏆 Your best time: <b>${formatMs(record.bestMs)}</b> — can you beat it?</div>`
+                ${bestMs
+                    ? `<div class="boss-intro-record">🏆 Your best time: <b>${formatMs(bestMs)}</b> — can you beat it?</div>`
                     : ''}
                 <button type="button" class="btn btn-start boss-fight-btn">⚔️ FIGHT!</button>
             </div>`;
@@ -384,16 +415,16 @@ const Boss = (() => {
                     </div>
                 </div>`;
         } else {
-            const damage = BOSS_HP - Math.max(0, b.hp);
+            const damage = b.maxHp - Math.max(0, b.hp);
             content.innerHTML = `
                 <div class="boss-result lose">
                     <div class="boss-result-emoji" aria-hidden="true">${b.boss.emoji}</div>
                     <h2 class="results-title">${escape(b.boss.name)} got away… this time!</h2>
-                    <p class="results-subtitle">You knocked off <b>${damage}</b> of ${BOSS_HP} HP.</p>
-                    <div class="boss-hp boss-hp-result"><div class="boss-hp-fill" style="width:${(Math.max(0, b.hp) / BOSS_HP) * 100}%"></div><span class="boss-hp-text">${Math.max(0, b.hp)} / ${BOSS_HP} HP left</span></div>
+                    <p class="results-subtitle">You knocked off <b>${damage}</b> of ${b.maxHp} HP.</p>
+                    <div class="boss-hp boss-hp-result"><div class="boss-hp-fill" style="width:${(Math.max(0, b.hp) / b.maxHp) * 100}%"></div><span class="boss-hp-text">${Math.max(0, b.hp)} / ${b.maxHp} HP left</span></div>
                     <div class="guide-bubble static">
                         <span class="guide-emoji" aria-hidden="true">${b.guide.emoji}</span>
-                        <div class="guide-text"><b>${escape(b.guide.name)}:</b> ${damage >= BOSS_HP / 2 ? "So close! One more try and that boss is toast." : 'Bosses are tough! A practice round will power you up.'} 💪</div>
+                        <div class="guide-text"><b>${escape(b.guide.name)}:</b> ${damage >= b.maxHp / 2 ? "So close! One more try and that boss is toast." : 'Bosses are tough! A practice round will power you up.'} 💪</div>
                     </div>
                     <div class="results-buttons">
                         <button class="btn btn-boss" onclick="Boss.start('${b.unit.id}')">⚔️ Try Again</button>
@@ -412,6 +443,23 @@ const Boss = (() => {
         clearTimeout(b.advanceTimer);
         b.token++;
         Engine.setAnswerInterceptor(null);
+
+        if (b.custom) {
+            $('results-content').innerHTML = b.custom.results({
+                won, activeMs: b.activeMs, hearts: b.hearts, crits: b.crits, hp: b.hp, maxHp: b.maxHp, boss: b.boss
+            });
+            App.showScreen('screen-results');
+            if (won) {
+                AudioManager.fanfare();
+                setTimeout(() => {
+                    Animations.celebrate();
+                    Animations.emojiRain([b.boss.emoji, '⚡', '⭐', '🏆']);
+                }, 250);
+            } else {
+                AudioManager.star();
+            }
+            return;
+        }
 
         const result = Adaptive.recordBossResult(b.unit.id, { won, ms: b.activeMs, hearts: b.hearts });
         let unlockedNext = null;
@@ -457,6 +505,35 @@ const Boss = (() => {
         }
     }
 
+    /**
+     * Set up the screen for a new battle and show the boss intro.
+     * @param {Partial<Battle>} fields
+     * @param {string} theme
+     */
+    function begin(fields, theme) {
+        stop();
+        battle = /** @type {Battle} */ ({
+            unit: null, grade: '3rd', exercises: [], deck: [], lastIndex: -1, custom: null,
+            maxHp: BOSS_HP, hearts: MAX_HEARTS,
+            activeMs: 0, limitMs: TIME_CHOICE_MS, remainingMs: TIME_CHOICE_MS, lastTick: 0, lastWarnSecond: null,
+            timerId: null, advanceTimer: null, token: 0,
+            question: null, skillId: null, over: false, correct: 0, crits: 0,
+            ...fields
+        });
+        battle.hp = battle.maxHp;
+        App.showScreen('screen-exercise');
+        const screen = $('screen-exercise');
+        screen.className = `screen active theme-bg-${theme} boss-mode`;
+        const fb = $('exercise-feedback');
+        fb.className = 'exercise-feedback';
+        fb.innerHTML = '';
+        $('exercise-body').innerHTML = '';
+        renderHud();
+        updateTimerBar();
+        say(battle.boss, battle.boss.intro);
+        showIntro();
+    }
+
     return {
         BOSS_HP,
         MAX_HEARTS,
@@ -467,38 +544,23 @@ const Boss = (() => {
             const unit = App.getAllUnits().find(u => u.id === unitId);
             const boss = Story.boss(unitId);
             if (!unit || !boss) return;
-            stop();
             const grade = Story.gradeOf(unitId);
-            battle = {
-                unit, boss, grade,
-                guide: Story.world(grade).guide,
-                exercises: unit.getExercises(),
-                deck: [], lastIndex: -1,
-                hp: BOSS_HP, hearts: MAX_HEARTS,
-                activeMs: 0, limitMs: TIME_CHOICE_MS, remainingMs: TIME_CHOICE_MS, lastTick: 0, lastWarnSecond: null,
-                timerId: null, advanceTimer: null, token: 0,
-                question: null, skillId: null, over: false, correct: 0, crits: 0
-            };
-            App.showScreen('screen-exercise');
-            const screen = $('screen-exercise');
-            screen.className = `screen active theme-bg-${unit.theme} boss-mode`;
-            const fb = $('exercise-feedback');
-            fb.className = 'exercise-feedback';
-            fb.innerHTML = '';
-            $('exercise-body').innerHTML = '';
-            renderHud();
-            updateTimerBar();
-            say(boss, boss.intro);
-            showIntro();
+            begin({ unit, boss, grade, guide: Story.world(grade).guide, exercises: unit.getExercises() }, unit.theme);
+        },
+
+        /** @param {CustomBattle} config */
+        startCustom(config) {
+            begin({ boss: config.boss, guide: config.guide, maxHp: config.maxHp, custom: config }, config.theme);
         },
 
         stop,
 
         flee() {
+            const exit = battle && battle.custom ? battle.custom.onExit : () => App.showMap();
             if (!battle) { App.showMap(); return; }
             if (confirm(`Run away from ${battle.boss.name}? This battle won't count.`)) {
                 stop();
-                App.showMap();
+                exit();
             }
         },
 

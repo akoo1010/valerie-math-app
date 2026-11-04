@@ -12,6 +12,12 @@ A personalized, interactive math learning app for Valerie, aligned with **3rd an
 - **26 exercise units** covering the app's 3rd and 4th grade topic map, with several story contexts per skill so practice doesn't repeat
 - **Boss battles** — every unit has a boss. Timed questions mixed from the whole unit: right answers hit the boss, fast answers are ⚡ critical hits, wrong answers or running out of time cost a heart. Beating a boss unlocks the next unit and records a best time to race on rematches
 - **Story & characters** — each world has a guide (Coral 🧜‍♀️ in 3rd grade, Fizz 🐲 in 4th) who tells the story, points to the next boss, and cheers during battles. Each boss win returns a collectible (🐚 Star Shells / 💎 Rhythm Gems) and unlocks a story chapter
+- **Fact Dash** — daily practice of all 300 single-digit facts (addition 0+0–9+9, subtraction within 20 like 15 − 7, multiplication 0×0–9×9), 10 minutes a day:
+  - Every fact is tracked on its own. It's *mastered* after 3 correct answers in under 3 seconds on at least 2 different days; a fact answered fast the first time is fast-tracked, so known facts clear quickly
+  - Rounds of 25 favor facts she's learning, starting with the 6s, 7s and 8s (`FOCUS` in `js/facts.js`); a missed fact shows the answer and a strategy tip, she retypes it, and it comes back a few questions later
+  - Answers check themselves as soon as enough digits are typed; a 3-second ⚡ bar shows the fluency target
+  - 60-second sprints with personal bests, one-number practice (e.g. only 7s), a fact boss (Chompy the Fact-a-saurus) that uses her weakest facts, and 10×10 fact maps that light up as facts are mastered
+  - The guide sends her to Fact Dash first each day until the 10 minutes are done
 - **Keyboard friendly** — type and press Enter, press 1–4 to pick a multiple-choice answer, T/F for true/false, Enter to continue
 - **Adaptive difficulty** — questions get harder or easier based on consecutive correct/wrong streaks
 - **Misconception detection** — identifies specific error patterns and shows targeted hints
@@ -39,6 +45,8 @@ valerie-math-app/
     ├── engine.js           # Exercise rendering engine (all question types)
     ├── boss.js             # Boss battles: timer, HP/hearts, crits, results
     ├── story.js            # Guides, villains, per-unit bosses and story chapters
+    ├── facts.js            # Fact Dash core: 300 facts, strategy tips, mastery, round builder
+    ├── fact-dash.js        # Fact Dash screens: rounds, sprint, fact maps, fact boss
     ├── adaptive.js         # Adaptive difficulty, mastery tracking, cloud sync
     ├── types.js            # Shared JSDoc contracts for editor/type checking
     ├── animations.js       # Confetti, particle effects, mascot animations
@@ -114,6 +122,7 @@ The check script runs `node --check` across JavaScript files, then loads every u
 - True/false answers are booleans, click-to-build targets fit their grid, and custom `checkAnswer` functions accept the answer
 - Hint text and targeted misconception hints are complete and don't contain unresolved generated values
 - Declared `exerciseCount` values match the number of generated exercises
+- Fact Dash: all 300 facts have the right answer and a strategy tip whose arithmetic is true and reaches the answer; the mastery rules hold (fast-track, two-day rule, misses reset, slow answers don't count); rounds have 25 valid facts, no back-to-back repeats, start with 6s/7s/8s, and include the facts she's learning
 
 `npm test` runs the same checks.
 
@@ -180,7 +189,7 @@ Progress is saved in two places:
 1. **Cloud (Vercel KV)** — loaded first on every page visit, then debounced to avoid excessive writes. Works across any browser or device.
 2. **localStorage** — used as an offline fallback if the network is unavailable.
 
-Valerie's progress can also be exported from the "For grown-ups" page as a JSON backup file and restored on another device. Backups include unit completion, stars, skill mastery, wrong-answer study notes, misconception counts, the weakness queue, unlocked units, boss records (wins, best times) and which story scenes she has seen. The per-visit session state is not included.
+Valerie's progress can also be exported from the "For grown-ups" page as a JSON backup file and restored on another device. Backups include unit completion, stars, skill mastery, wrong-answer study notes, misconception counts, the weakness queue, unlocked units, boss records (wins, best times), which story scenes she has seen, and Fact Dash progress (per-fact stats, daily minutes, sprint bests). The per-visit session state is not included.
 
 No user accounts or personal data are collected. All progress is stored under a single key for Valerie.
 

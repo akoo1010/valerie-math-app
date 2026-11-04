@@ -202,6 +202,12 @@ const AudioManager = (() => {
             playTone(540, 0.04, 'sine', 0.04);
         },
 
+        // Fact Dash: a correct answer inside the 3-second ⚡ window
+        ding() {
+            playTone(1318, 0.07, 'sine', 0.12, 0);
+            playTone(1760, 0.1, 'sine', 0.1, 0.05);
+        },
+
         // Boss battle: she lands a hit (a crit gets a brighter double hit)
         hit(critical = false) {
             playSample('hit', 0.45, critical ? 1.25 : 1);

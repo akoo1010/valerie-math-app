@@ -11,7 +11,7 @@
     <!-- Load Google Fonts async to avoid render-blocking -->
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap"></noscript>
-    <link rel="stylesheet" href="css/styles.css?v=20261104-boss">
+    <link rel="stylesheet" href="css/styles.css?v=20261104-facts">
 </head>
 <body>
 <main>
@@ -42,6 +42,11 @@
                 <div class="world-card-icon">🐾</div>
                 <div class="world-card-title">4th Grade</div>
                 <div class="world-card-desc">Monster & Dance World</div>
+            </button>
+            <button type="button" class="world-card world-card-facts" onclick="FactDash.open('worlds')">
+                <div class="world-card-icon">⚡</div>
+                <div class="world-card-title">Fact Dash</div>
+                <div class="world-card-desc" id="facts-world-desc">Daily + − × facts · 10 minutes</div>
             </button>
         </div>
 
@@ -90,6 +95,7 @@
             </div>
             <div class="map-header-right">
                 <div class="daily-badge" id="daily-badge" title="Today's goal and days practiced"></div>
+                <button type="button" class="stats-badge fact-badge" id="fact-badge" onclick="App.showFacts()" aria-label="Fact Dash: today's fact practice">⚡ 0/10</button>
                 <button type="button" class="stats-badge collect-badge" id="collect-badge" onclick="App.showStoryLog()" aria-label="Story and collectibles">🐚 0/12</button>
                 <div class="stats-badge" id="total-stars">⭐ 0</div>
                 <button class="btn-mute" id="btn-mute" onclick="App.toggleMute()" title="Sound on/off" aria-label="Toggle sound" aria-pressed="false">🔊</button>
@@ -166,6 +172,15 @@
         </div>
     </div>
 
+    <!-- Fact Dash: daily single-digit fact practice -->
+    <div id="screen-facts" class="screen">
+        <button class="btn-back" onclick="FactDash.exit()">← Back</button>
+        <div class="facts-content" id="facts-home"><!-- populated by js/fact-dash.js --></div>
+    </div>
+    <div id="screen-facts-play" class="screen theme-bg-gd">
+        <div class="facts-play" id="facts-play"><!-- populated by js/fact-dash.js --></div>
+    </div>
+
     <!-- Celebration Canvas (overlays everything) -->
     <canvas id="celebration-canvas"></canvas>
 </main>
@@ -173,12 +188,14 @@
     <!-- Scripts — defer so they don't block rendering.
          The ?v= query busts caches poisoned by an old deploy that served /js and /css
          with a 1-year immutable Cache-Control; bump the value to force-refresh assets. -->
-    <script defer src="js/audio.js?v=20261104-boss"></script>
+    <script defer src="js/audio.js?v=20261104-facts"></script>
     <script defer src="js/animations.js?v=20261104-boss"></script>
-    <script defer src="js/adaptive.js?v=20261104-boss"></script>
-    <script defer src="js/engine.js?v=20261104-boss"></script>
-    <script defer src="js/story.js?v=20261104-boss"></script>
-    <script defer src="js/boss.js?v=20261104-boss"></script>
+    <script defer src="js/adaptive.js?v=20261104-facts"></script>
+    <script defer src="js/engine.js?v=20261104-facts"></script>
+    <script defer src="js/story.js?v=20261104-facts"></script>
+    <script defer src="js/boss.js?v=20261104-facts"></script>
+    <script defer src="js/facts.js?v=20261104-facts"></script>
+    <script defer src="js/fact-dash.js?v=20261104-facts"></script>
     <script defer src="js/units/multiplication.js?v=20261104"></script>
     <script defer src="js/units/multiplication-1digit.js?v=20261104"></script>
     <script defer src="js/units/addition-subtraction.js?v=20261104"></script>
@@ -206,6 +223,6 @@
     <script defer src="js/units/4-area-perimeter.js?v=20261104"></script>
     <script defer src="js/units/4-measurement.js?v=20261104"></script>
     <script defer src="js/units/4-plane-figures.js?v=20261104"></script>
-    <script defer src="js/app.js?v=20261104-boss"></script>
+    <script defer src="js/app.js?v=20261104-facts"></script>
 </body>
 </html>

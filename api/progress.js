@@ -165,6 +165,56 @@ function normalizeBosses(value) {
     return bosses;
 }
 
+const FACT_KEY = /^[+\-x]:[0-9]:[0-9]$/;
+const FACT_MODES = ['+', '-', 'x', 'mix'];
+const isIsoDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+function normalizeFacts(value) {
+    const facts = {
+        stats: {},
+        daily: { date: null, ms: 0, rounds: {}, celebrated: false },
+        goalDays: [],
+        sprintBest: {},
+        boss: { wins: 0, attempts: 0, bestMs: null }
+    };
+    if (!isPlainObject(value)) return facts;
+    if (isPlainObject(value.stats)) {
+        Object.entries(value.stats).forEach(([key, s]) => {
+            if (FACT_KEY.test(key) && Array.isArray(s) && s.length === 7
+                && s.every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0)) {
+                facts.stats[key] = s.map(n => Math.min(Math.trunc(n), 1e9));
+            }
+        });
+    }
+    if (isPlainObject(value.daily)) {
+        facts.daily.date = isIsoDate(value.daily.date) ? value.daily.date : null;
+        facts.daily.ms = toNonNegativeInteger(value.daily.ms);
+        facts.daily.celebrated = value.daily.celebrated === true;
+        if (isPlainObject(value.daily.rounds)) {
+            FACT_MODES.forEach(m => {
+                const n = toNonNegativeInteger(value.daily.rounds[m]);
+                if (n > 0) facts.daily.rounds[m] = n;
+            });
+        }
+    }
+    facts.goalDays = Array.isArray(value.goalDays) ? [...new Set(value.goalDays.filter(isIsoDate))].slice(-60) : [];
+    if (isPlainObject(value.sprintBest)) {
+        FACT_MODES.forEach(m => {
+            const n = toNonNegativeInteger(value.sprintBest[m]);
+            if (n > 0) facts.sprintBest[m] = n;
+        });
+    }
+    if (isPlainObject(value.boss)) {
+        facts.boss = {
+            wins: toNonNegativeInteger(value.boss.wins),
+            attempts: toNonNegativeInteger(value.boss.attempts),
+            bestMs: typeof value.boss.bestMs === 'number' && Number.isFinite(value.boss.bestMs) && value.boss.bestMs > 0
+                ? Math.round(value.boss.bestMs) : null
+        };
+    }
+    return facts;
+}
+
 function normalizeSession(value) {
     const defaultSession = {
         currentStreak: 0,
@@ -236,7 +286,8 @@ function normalizeProgressPayload(value) {
         bosses: normalizeBosses(value.bosses),
         storySeen: Array.isArray(value.storySeen)
             ? [...new Set(value.storySeen.filter(key => typeof key === 'string' && key.length > 0 && key.length < 64))].slice(0, 100)
-            : []
+            : [],
+        facts: normalizeFacts(value.facts)
     };
 }
 

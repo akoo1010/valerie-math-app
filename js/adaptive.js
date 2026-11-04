@@ -65,6 +65,17 @@ const Adaptive = (() => {
         return { wins: 0, attempts: 0, bestMs: null, bestHearts: 0 };
     }
 
+    /** Fact Dash progress: per-fact stats, today's minutes, personal bests. @returns {FactsState} */
+    function createDefaultFacts() {
+        return {
+            stats: {},           // { 'x:7:8': [fastHits, fastDays, lastFastDay, lastSeenDay, attempts, correct, lastMs] }
+            daily: { date: null, ms: 0, rounds: {}, celebrated: false },
+            goalDays: [],        // dates the 10-minute goal was reached (drives the streak)
+            sprintBest: {},      // { '+': 23, 'x': 18, mix: 20 }
+            boss: { wins: 0, attempts: 0, bestMs: null }
+        };
+    }
+
     /** @returns {ProgressState} */
     function createDefaultState() {
         return {
@@ -77,7 +88,8 @@ const Adaptive = (() => {
             daily: freshDaily(),
             session: freshSession(),
             bosses: {},   // { unitId: BossProgress }
-            storySeen: [] // story scenes already shown, e.g. 'prologue-3rd'
+            storySeen: [], // story scenes already shown, e.g. 'prologue-3rd'
+            facts: createDefaultFacts()
         };
     }
 
@@ -222,6 +234,51 @@ const Adaptive = (() => {
         };
     }
 
+    const FACT_KEY = /^[+\-x]:[0-9]:[0-9]$/;
+    const FACT_MODES = ['+', '-', 'x', 'mix'];
+    const isIsoDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+    /** @returns {FactsState} */
+    function normalizeFacts(value) {
+        const facts = createDefaultFacts();
+        if (!isPlainObject(value)) return facts;
+        if (isPlainObject(value.stats)) {
+            Object.entries(value.stats).forEach(([key, s]) => {
+                if (FACT_KEY.test(key) && Array.isArray(s) && s.length === 7
+                    && s.every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0)) {
+                    facts.stats[key] = s.map(n => Math.min(Math.trunc(n), 1e9));
+                }
+            });
+        }
+        if (isPlainObject(value.daily)) {
+            facts.daily.date = isIsoDate(value.daily.date) ? value.daily.date : null;
+            facts.daily.ms = toNonNegativeInteger(value.daily.ms);
+            facts.daily.celebrated = value.daily.celebrated === true;
+            if (isPlainObject(value.daily.rounds)) {
+                FACT_MODES.forEach(m => {
+                    const n = toNonNegativeInteger(value.daily.rounds[m]);
+                    if (n > 0) facts.daily.rounds[m] = n;
+                });
+            }
+        }
+        facts.goalDays = Array.isArray(value.goalDays) ? [...new Set(value.goalDays.filter(isIsoDate))].slice(-60) : [];
+        if (isPlainObject(value.sprintBest)) {
+            FACT_MODES.forEach(m => {
+                const n = toNonNegativeInteger(value.sprintBest[m]);
+                if (n > 0) facts.sprintBest[m] = n;
+            });
+        }
+        if (isPlainObject(value.boss)) {
+            facts.boss = {
+                wins: toNonNegativeInteger(value.boss.wins),
+                attempts: toNonNegativeInteger(value.boss.attempts),
+                bestMs: typeof value.boss.bestMs === 'number' && Number.isFinite(value.boss.bestMs) && value.boss.bestMs > 0
+                    ? Math.round(value.boss.bestMs) : null
+            };
+        }
+        return facts;
+    }
+
     function normalizeDaily(value) {
         if (!isPlainObject(value)) return freshDaily();
         const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -299,6 +356,7 @@ const Adaptive = (() => {
             });
         }
         normalized.storySeen = normalizeStringArray(value.storySeen);
+        normalized.facts = normalizeFacts(value.facts);
 
         return normalized;
     }
@@ -497,6 +555,24 @@ const Adaptive = (() => {
             daily.answeredToday = 0;
             daily.correctToday = 0;
             daily.goalCelebrated = false;
+        }
+    }
+
+    // Start today's Fact Dash minutes fresh when the calendar day changes.
+    function rolloverFacts() {
+        const today = todayStr();
+        if (state.facts.daily.date !== today) {
+            state.facts.daily = { date: today, ms: 0, rounds: {}, celebrated: false };
+        }
+    }
+
+    // Count today as a practiced day (the 7 day-dots on the map).
+    function notePracticeDay() {
+        rolloverDaily();
+        const daily = state.daily;
+        if (!daily.recentDays.includes(daily.date)) {
+            daily.recentDays.push(daily.date);
+            if (daily.recentDays.length > 30) daily.recentDays = daily.recentDays.slice(-30);
         }
     }
 
@@ -899,7 +975,8 @@ const Adaptive = (() => {
                 totalStars: state.totalStars,
                 unlockedUnits: [...state.unlockedUnits],
                 bosses: JSON.parse(JSON.stringify(state.bosses)),
-                storySeen: [...state.storySeen]
+                storySeen: [...state.storySeen],
+                facts: JSON.parse(JSON.stringify(state.facts))
             };
             return {
                 format: 'valerie-math-progress',
@@ -1014,6 +1091,20 @@ const Adaptive = (() => {
                 state.storySeen.push(key);
                 save();
             }
+        },
+
+        // --- Fact Dash API (js/facts.js reads and updates this) ---
+
+        /** Live Fact Dash state, with today's counters rolled over. @returns {FactsState} */
+        getFactsState() {
+            rolloverFacts();
+            return state.facts;
+        },
+
+        /** Persist Fact Dash changes and count today as a practice day. */
+        commitFacts() {
+            notePracticeDay();
+            save();
         },
 
         // --- Modality API ---
