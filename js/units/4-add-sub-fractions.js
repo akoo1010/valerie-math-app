@@ -29,7 +29,12 @@ const AddSubFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 Add the dance moves! ${n1}/${denom} + ${n2}/${denom} = ?/${denom}`,
+                        questionText: `${pick([
+                            '🎵 Add the dance moves!',
+                            `💃 Valerie practiced ${n1}/${denom} of the routine before lunch and ${n2}/${denom} after lunch.`,
+                            `🎨 The crew painted ${n1}/${denom} of the stage backdrop, then ${n2}/${denom} more.`,
+                            `🍕 The dance team ate ${n1}/${denom} of a pizza, then ${n2}/${denom} more.`
+                        ])}<br>${n1}/${denom} + ${n2}/${denom} = ?/${denom}`,
                         subText: `What is the numerator?`,
                         visual: `<div style="display:flex;gap:12px;align-items:center;justify-content:center;">
                             <div style="padding:12px 18px;background:rgba(236,72,153,0.15);border:2px solid var(--dance-pink);border-radius:12px;font-size:1.5rem;font-weight:800;color:var(--dance-pink);">💃 ${n1}/${denom}</div>
@@ -86,7 +91,12 @@ const AddSubFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎶 Subtract the moves! ${n1}/${denom} − ${n2}/${denom} = ?/${denom}`,
+                        questionText: `${pick([
+                            '🎶 Subtract the moves!',
+                            `🥤 A dancer had ${n1}/${denom} of a smoothie left and drank ${n2}/${denom}.`,
+                            `🎵 ${n1}/${denom} of the playlist was left. The DJ played ${n2}/${denom} more.`,
+                            `🧵 ${n1}/${denom} of the costume ribbon was left. ${n2}/${denom} was cut off for bows.`
+                        ])}<br>${n1}/${denom} − ${n2}/${denom} = ?/${denom}`,
                         subText: `What is the numerator?`,
                         visual: `<div style="display:flex;gap:12px;align-items:center;justify-content:center;">
                             <div style="padding:12px 18px;background:rgba(168,85,247,0.15);border:2px solid var(--dance-purple);border-radius:12px;font-size:1.5rem;font-weight:800;color:var(--dance-purple);">💃 ${n1}/${denom}</div>
@@ -144,7 +154,7 @@ const AddSubFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🪩 What fraction must you add to ${n1}/${denom} to make a whole?<br>${n1}/${denom} + ?/${denom} = ${denom}/${denom}`,
+                        questionText: `${pick([`🪩 What fraction must you add to ${n1}/${denom} to make a whole?`, `🎶 The song is ${n1}/${denom} done. What fraction is left to play?`, `🍰 ${n1}/${denom} of the party cake is gone. What fraction is left?`])}<br>${n1}/${denom} + ?/${denom} = ${denom}/${denom}`,
                         subText: `Give the numerator`,
                         visual: `<div style="text-align:center;">
                             <div style="display:flex;gap:2px;justify-content:center;">
@@ -207,7 +217,11 @@ const AddSubFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎤 Add: ${w1} ${n1}/${denom} + ${w2} ${n2}/${denom}<br>Give the total as a single number of ${denomName(denom)} (improper fraction numerator)`,
+                        questionText: `${pick([
+                            `🎤 Add: ${w1} ${n1}/${denom} + ${w2} ${n2}/${denom}`,
+                            `💃 Valerie danced ${w1} ${n1}/${denom} hours on Saturday and ${w2} ${n2}/${denom} hours on Sunday.<br>Add: ${w1} ${n1}/${denom} + ${w2} ${n2}/${denom}`,
+                            `🎀 Two costume ribbons are ${w1} ${n1}/${denom} feet and ${w2} ${n2}/${denom} feet long.<br>Add: ${w1} ${n1}/${denom} + ${w2} ${n2}/${denom}`
+                        ])}<br>Give the total as a single number of ${denomName(denom)} (improper fraction numerator)`,
                         visual: `<div style="display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;">
                             <div style="padding:10px 16px;background:rgba(236,72,153,0.1);border:2px solid var(--dance-pink);border-radius:10px;font-size:1.3rem;font-weight:700;color:var(--dance-pink);">${w1} ${n1}/${denom}</div>
                             <div style="font-size:1.5rem;color:var(--dance-gold);font-weight:800;">+</div>
@@ -354,7 +368,9 @@ const AddSubFractions4 = {
                         answer = n1 + n2;
                         const scenarios = [
                             `💃 Dancer A completed ${n1}/${denom} of the routine, then Dancer B added ${n2}/${denom} more. How much of the routine is done?`,
-                            `🎵 A song is ${n1}/${denom} recorded. The band records ${n2}/${denom} more. Total recorded?`
+                            `🎵 A song is ${n1}/${denom} recorded. The band records ${n2}/${denom} more. Total recorded?`,
+                            `🧃 Valerie drank ${n1}/${denom} of her juice at practice and ${n2}/${denom} after. How much did she drink?`,
+                            `🎨 Mia painted ${n1}/${denom} of the banner. Leo painted ${n2}/${denom}. How much of the banner is painted?`
                         ];
                         questionText = pick(scenarios);
                     } else {
@@ -363,7 +379,8 @@ const AddSubFractions4 = {
                         answer = n1 - n2;
                         const scenarios = [
                             `🪩 A disco ball was ${n1}/${denom} lit. ${n2}/${denom} of the lights burned out. How much is still lit?`,
-                            `🕺 ${n1}/${denom} of the dance floor is crowded. Then ${n2}/${denom} of the floor clears out. How much of the floor is still crowded?`
+                            `🕺 ${n1}/${denom} of the dance floor is crowded. Then ${n2}/${denom} of the floor clears out. How much of the floor is still crowded?`,
+                            `🍫 ${n1}/${denom} of a candy bar was left. Valerie shared ${n2}/${denom} with a friend. How much is left now?`
                         ];
                         questionText = pick(scenarios);
                     }

@@ -86,14 +86,20 @@ const Geometry = {
                         Square: '🟥', Rectangle: '▭', Rhombus: '🔷', Trapezoid: trapezoidIcon, Parallelogram: '▰',
                         Triangle: '🔺', Pentagon: '⬠', Hexagon: '⬡', Circle: '🔴', Octagon: '🛑'
                     };
+                    const art = /^[AEIOU]/.test(shape) ? 'an' : 'a';
+                    const Art = art === 'an' ? 'An' : 'A';
                     return {
                         type: 'true-false',
-                        questionText: `Is a ${shape} a quadrilateral?`,
+                        questionText: pick([
+                            `Is ${art} ${shape} a quadrilateral?`,
+                            `Valerie cut out ${art} ${shape} for her collage. Is it a quadrilateral?`,
+                            `True or False? ${Art} ${shape} is a quadrilateral.`
+                        ]),
                         visual: `<div style="font-size:3rem">${shapeEmoji[shape] || '❓'}</div>`,
                         answer: isQuad,
                         hint1: `A quadrilateral has exactly 4 sides!`,
-                        hint2: `A ${shape} has ${sides[shape] ?? '?'} sides`,
-                        hint3: `A ${shape} ${isQuad ? 'IS' : 'is NOT'} a quadrilateral!`
+                        hint2: shape === 'Circle' ? `A circle is round, so it has no straight sides at all` : `${Art} ${shape} has ${sides[shape]} sides`,
+                        hint3: `${Art} ${shape} ${isQuad ? 'IS' : 'is NOT'} a quadrilateral!`
                     };
                 }
             },
@@ -106,13 +112,18 @@ const Geometry = {
                         { q: 'Which shape has 4 right angles but sides can be different lengths?', a: 'Rectangle' },
                         { q: 'Which shape has 4 equal sides but angles are NOT always 90°?', a: 'Rhombus' },
                         { q: 'Which shape has exactly 1 pair of parallel sides?', a: 'Trapezoid' },
+                        { q: 'Which shape has 2 pairs of parallel sides, NO right angles, and sides that are NOT all the same length?', a: 'Parallelogram' },
+                        { q: 'Valerie wants a shape with 4 square corners and 4 sides all the same length. Which shape should she cut out?', a: 'Square' },
+                        { q: 'A kite-shaped craft has 4 equal sides but its corners are slanted. What shape is it?', a: 'Rhombus' },
+                        { q: 'A picture frame has 4 square corners. Its top is longer than its side. What shape is it?', a: 'Rectangle' },
                     ];
                     const q = pick(questions);
+                    const others = Engine.Utils.shuffle(['Square', 'Rectangle', 'Rhombus', 'Trapezoid', 'Parallelogram'].filter(o => o !== q.a)).slice(0, 3);
                     return {
                         type: 'multiple-choice',
                         questionText: q.q,
                         answer: q.a,
-                        options: Engine.Utils.shuffle(['Square', 'Rectangle', 'Rhombus', 'Trapezoid']).map(o => ({label: o, value: o})),
+                        options: Engine.Utils.shuffle([q.a, ...others]).map(o => ({label: o, value: o})),
                         hint1: `Think about each shape's special properties`,
                         hint2: `Consider: equal sides? right angles? parallel sides?`,
                         hint3: `The answer is ${q.a}!`
@@ -131,6 +142,11 @@ const Geometry = {
                         { text: 'All trapezoids are parallelograms', answer: false, test: 'A parallelogram needs 2 pairs of parallel sides. How many pairs does a trapezoid have?', why: 'Trapezoids have only 1 pair of parallel sides, parallelograms need 2!' },
                         { text: 'All quadrilaterals have 4 sides', answer: true, test: '"Quad" means 4. What does a quadrilateral have 4 of?', why: 'Quad = 4! All quadrilaterals have exactly 4 sides.' },
                         { text: 'A triangle is a quadrilateral', answer: false, test: 'A quadrilateral has exactly 4 sides. How many sides does a triangle have?', why: 'A triangle has 3 sides, not 4!' },
+                        { text: 'Every rectangle is a parallelogram', answer: true, test: 'A parallelogram needs 2 pairs of parallel sides. Does a rectangle have 2 pairs?', why: 'A rectangle has 2 pairs of parallel sides, so it IS a parallelogram!' },
+                        { text: 'All rhombuses are squares', answer: false, test: 'A square needs 4 right angles. Does every rhombus have 4 right angles?', why: 'A rhombus can have slanted corners, so it is NOT always a square!' },
+                        { text: 'A pentagon is a quadrilateral', answer: false, test: '"Penta" means 5. How many sides does a pentagon have?', why: 'A pentagon has 5 sides, not 4!' },
+                        { text: 'A rhombus has 4 equal sides', answer: true, test: 'Picture a rhombus. Are all of its sides the same length?', why: 'Every rhombus has 4 sides of the same length!' },
+                        { text: 'A trapezoid has 4 right angles', answer: false, test: 'Picture a trapezoid. Are all of its corners square corners?', why: 'A trapezoid has slanted sides, so it does NOT have 4 right angles!' },
                     ];
                     const s = pick(statements);
                     return {
@@ -148,15 +164,37 @@ const Geometry = {
             {
                 skillId: 'geo-sides',
                 generate(diff) {
-                    const shape = pick(shapes);
+                    // Regular polygons drawn from their side count, plus the quadrilaterals above,
+                    // so the answer isn't always 4.
+                    const poly = (n, color) => {
+                        const pts = Array.from({length: n}, (_, i) => {
+                            const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+                            return `${(40 + 34 * Math.cos(a)).toFixed(1)},${(42 + 34 * Math.sin(a)).toFixed(1)}`;
+                        }).join(' ');
+                        return `<polygon points="${pts}" fill="none" stroke="${color}" stroke-width="3"/>`;
+                    };
+                    const pool = [
+                        { name: 'triangle', sides: 3, svg: poly(3, 'var(--craft-coral)') },
+                        { name: 'pentagon', sides: 5, svg: poly(5, 'var(--craft-mint)') },
+                        { name: 'hexagon', sides: 6, svg: poly(6, 'var(--craft-yellow)') },
+                        { name: 'octagon', sides: 8, svg: poly(8, 'var(--craft-lavender)') },
+                        ...shapes.map(s => ({ name: s.name.toLowerCase(), sides: 4, svg: s.svg }))
+                    ];
+                    const shape = diff >= 2 ? pick(pool) : pick(pool.slice(0, 5));
+                    const art = /^[aeiou]/.test(shape.name) ? 'an' : 'a';
+                    const askCorners = Math.random() < 0.4;
+                    const what = askCorners ? 'corners (vertices)' : 'sides';
                     return {
                         type: 'input',
-                        questionText: `How many sides does a ${shape.name} have?`,
+                        questionText: pick([
+                            `How many ${what} does ${art} ${shape.name} have?`,
+                            `Valerie traced ${art} ${shape.name} for her sticker. How many ${what} does it have?`
+                        ]),
                         visual: `<svg width="100" height="100" viewBox="0 0 80 80">${shape.svg}</svg>`,
-                        answer: 4,
-                        hint1: `Count each straight edge!`,
-                        hint2: `All quadrilaterals have the same number of sides...`,
-                        hint3: `All quadrilaterals have 4 sides!`
+                        answer: shape.sides,
+                        hint1: askCorners ? `Put your finger on each pointy corner and count!` : `Count each straight edge!`,
+                        hint2: askCorners ? `A polygon has the same number of corners as sides. Count the sides!` : `Start at the top and go around the shape, counting each side once.`,
+                        hint3: `${art === 'an' ? 'An' : 'A'} ${shape.name} has ${shape.sides} ${what}!`
                     };
                 }
             },

@@ -32,7 +32,7 @@ const PlaceValue4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `Write this number in standard form:<br><strong>${expanded}</strong>`,
+                        questionText: `${pick(['Write this number in standard form:', '🐲 The dragon wrote its treasure count in pieces. What is the number?', '🔮 Put the pieces together into one number:'])}<br><strong>${expanded}</strong>`,
                         visual: `<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                             ${parts.map(p => `<div style="background:var(--monster-red);color:#fff;padding:8px 14px;border-radius:10px;font-weight:700;font-size:1.2rem;">🐲 ${p}</div>`).join('<span style="font-size:1.5rem;align-self:center;">+</span>')}
                         </div>`,
@@ -87,7 +87,7 @@ const PlaceValue4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `In the number <strong>${num.toLocaleString()}</strong>, what digit is in the <strong>${place}</strong> place?`,
+                        questionText: `${pick(['In the number', '🦖 The monster scored', '🔐 The vault code is'])} <strong>${num.toLocaleString()}</strong>${pick(['.', '!'])} What digit is in the <strong>${place}</strong> place?`,
                         visual: `<div style="display:flex;gap:4px;justify-content:center;">
                             ${numStr.split('').map((d, i) => `<div style="width:44px;height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:rgba(255,255,255,0.1);border-radius:8px;font-weight:700;font-size:1.4rem;color:#fff;">${monsterEmojis[i % monsterEmojis.length]}<span>${d}</span></div>`).join('')}
                         </div>`,
@@ -145,7 +145,7 @@ const PlaceValue4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `Compare the numbers! Which symbol goes in the box?<br><strong>${a.toLocaleString()}</strong> ☐ <strong>${b.toLocaleString()}</strong>`,
+                        questionText: `${pick(['Compare the numbers!', '🐲 Which monster has more points?', '⚖️ Weigh the treasure piles!'])} Which symbol goes in the box?<br><strong>${a.toLocaleString()}</strong> ☐ <strong>${b.toLocaleString()}</strong>`,
                         visual: `<div style="display:flex;gap:16px;align-items:center;justify-content:center;font-size:1.8rem;font-weight:700;">
                             <span style="color:var(--monster-red);">🐲 ${a.toLocaleString()}</span>
                             <span style="font-size:2.5rem;color:var(--monster-yellow);">?</span>
@@ -194,7 +194,11 @@ const PlaceValue4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `Round <strong>${num.toLocaleString()}</strong> to the <strong>${roundLabel}</strong>.`,
+                        questionText: pick([
+                            `Round <strong>${num.toLocaleString()}</strong> to the <strong>${roundLabel}</strong>.`,
+                            `🐾 A monster herd has <strong>${num.toLocaleString()}</strong> members. Round that to the <strong>${roundLabel}</strong>.`,
+                            `🏔️ Monster Mountain is <strong>${num.toLocaleString()}</strong> feet tall. Round it to the <strong>${roundLabel}</strong>.`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2rem;font-weight:700;color:var(--monster-purple);">🐾 ${num.toLocaleString()} 🐾</div>
                             <div style="margin-top:8px;font-size:1rem;color:var(--text-muted);">Round to the ${roundLabel}</div>
@@ -276,7 +280,11 @@ const PlaceValue4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `Order these numbers from <strong>least to greatest</strong>:`,
+                        questionText: pick([
+                            `Order these numbers from <strong>least to greatest</strong>:`,
+                            `🗡️ Line up the monsters' power levels from <strong>least to greatest</strong>:`,
+                            `🏆 Rank these scores from <strong>least to greatest</strong>:`
+                        ]),
                         visual: `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
                             ${shown.map(n => `<div style="background:var(--monster-blue);color:#fff;padding:10px 16px;border-radius:10px;font-weight:700;font-size:1.1rem;">🗡️ ${n.toLocaleString()}</div>`).join('')}
                         </div>`,
@@ -350,7 +358,7 @@ const PlaceValue4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `Write this number using digits:<br><em>"${wordForm.trim()}"</em>`,
+                        questionText: `${pick(['Write this number using digits:', '📜 A wizard wrote this number in words. Write it with digits:', '🐲 The dragon shouted a number! Type it with digits:'])}<br><em>"${wordForm.trim()}"</em>`,
                         visual: `<div style="font-size:1.5rem;text-align:center;color:var(--monster-yellow);font-weight:700;">🐲 "${wordForm.trim()}" 🐲</div>`,
                         answer: num,
                         hint1: `Break it into parts: thousands, hundreds, tens, ones`,
@@ -403,12 +411,12 @@ const PlaceValue4 = {
 
                             const result = {
                                 type: 'input',
-                                questionText: `🐲 MONSTER BATTLE! What is ${base} x ${multiplier.toLocaleString()}?`,
+                                questionText: `🐲 MONSTER BATTLE! What is ${base} × ${multiplier.toLocaleString()}?`,
                                 visual: `<div style="font-size:3rem;animation:bounce 0.6s ease-in-out infinite;">🐲⚔️</div>`,
                                 answer,
                                 hint1: `Multiplying by ${multiplier.toLocaleString()} moves digits to the left`,
-                                hint2: `${base} x ${multiplier.toLocaleString()} — just add ${zeroCount} zero${zeroCount > 1 ? 's' : ''}`,
-                                hint3: `${base} x ${multiplier.toLocaleString()} = ${answer.toLocaleString()}`,
+                                hint2: `${base} × ${multiplier.toLocaleString()} — just add ${zeroCount} zero${zeroCount > 1 ? 's' : ''}`,
+                                hint3: `${base} × ${multiplier.toLocaleString()} = ${answer.toLocaleString()}`,
                                 diagnose(userAnswer) {
                                     if (userAnswer === wrongAnswer && multiplier > 10) return 'missing-zero';
                                     if (userAnswer === base + multiplier) return 'added-instead-of-multiplied';
@@ -427,7 +435,7 @@ const PlaceValue4 = {
                                 result.visual += `<div class="visual-scaffold" style="margin-top:12px;text-align:center;">
                                     <p>🐲 Each zero in ${multiplier.toLocaleString()} is a monster power-up!</p>
                                     <div style="font-size:1.4rem;">${multiplier.toLocaleString()} has ${zeroCount} zero${zeroCount > 1 ? 's' : ''} → ${Array.from({length: zeroCount}, () => '⚡').join(' ')}</div>
-                                    <p style="margin-top:4px;">Stick one 0 on the end of ${base} for each ⚡: ${base} x ${multiplier.toLocaleString()} = <strong>?</strong></p>
+                                    <p style="margin-top:4px;">Stick one 0 on the end of ${base} for each ⚡: ${base} × ${multiplier.toLocaleString()} = <strong>?</strong></p>
                                 </div>`;
                             }
 

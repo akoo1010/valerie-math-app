@@ -33,7 +33,12 @@ const Multiplication1Digit = {
                     }
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `${groups} groups of ${per} obstacles. How many obstacles total?`,
+                        questionText: pick([
+                            `${groups} groups of ${per} obstacles. How many obstacles total?`,
+                            `Your cube dashes past ${groups} rows of blocks with ${per} blocks in each row. How many blocks did it pass?`,
+                            `A level has ${groups} sections. Each section has ${per} jump pads. How many jump pads in the level?`,
+                            `${groups} players each smash ${per} blocks. How many blocks get smashed in all?`
+                        ]),
                         visual,
                         answer,
                         options: Engine.Utils.multipleChoice(answer),
@@ -68,7 +73,12 @@ const Multiplication1Digit = {
                     const answer = a * b;
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `⚡ Quick! What is ${a} × ${b}?`,
+                        questionText: pick([
+                            `⚡ Quick! What is ${a} × ${b}?`,
+                            `🚀 Rocket mode! Find ${a} × ${b}.`,
+                            `🟦 Your cube needs the answer to ${a} × ${b} to jump!`,
+                            `🌀 Through the portal! What is ${a} groups of ${b}?`
+                        ]),
                         subText: 'Dash past this obstacle!',
                         visual: `<div style="font-size:3rem; animation: glow 1s infinite; color: var(--gd-cyan);">${a} × ${b}</div>`,
                         answer,
@@ -102,20 +112,26 @@ const Multiplication1Digit = {
                     const levels = R(3, diff >= 2 ? 9 : 6);
                     const coins = R(2, diff >= 2 ? 9 : 5);
                     const answer = levels * coins;
+                    const loot = pick([
+                        { icon: '🪙', text: `Each level has ${coins} coins. You beat ${levels} levels!<br>How many coins did you collect?` },
+                        { icon: '⭐', text: `You earn ${coins} stars for every level. You finished ${levels} levels!<br>How many stars did you earn?` },
+                        { icon: '💎', text: `Each practice run gives ${coins} diamonds. You did ${levels} runs!<br>How many diamonds is that?` },
+                        { icon: '🔑', text: `Every level hides ${coins} secret keys. You cleared ${levels} levels!<br>How many keys did you find?` }
+                    ]);
                     return {
                         type: 'input',
-                        questionText: `Each level has ${coins} coins. You beat ${levels} levels!<br>How many coins did you collect?`,
+                        questionText: loot.text,
                         visual: `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
                             ${Array.from({length: Math.min(levels, 6)}, (_, i) =>
                                 `<div style="text-align:center;padding:8px;background:rgba(255,230,0,0.1);border-radius:8px;border:1px solid rgba(255,230,0,0.3);">
                                     <div style="font-size:0.7rem;color:var(--text-muted);">Lvl ${i + 1}</div>
-                                    <div>${Array(Math.min(coins, 5)).fill('🪙').join('')}${coins > 5 ? `<span style="font-size:0.65rem;color:var(--text-muted);"> +${coins - 5}</span>` : ''}</div>
+                                    <div>${Array(Math.min(coins, 5)).fill(loot.icon).join('')}${coins > 5 ? `<span style="font-size:0.65rem;color:var(--text-muted);"> +${coins - 5}</span>` : ''}</div>
                                 </div>`
                             ).join('')}
                             ${levels > 6 ? '<div style="font-size:1.2rem;align-self:center">...</div>' : ''}
                         </div>`,
                         answer,
-                        hint1: `Multiply the number of levels by coins per level`,
+                        hint1: `Multiply the number of levels by how many you get in each level`,
                         hint2: `${levels} × ${coins} = ?`,
                         hint3: `${levels} × ${coins} = ${answer}`
                     };
@@ -178,7 +194,7 @@ const Multiplication1Digit = {
                         questionText: hideFirst
                             ? `? × ${b} = ${product}`
                             : `${a} × ? = ${product}`,
-                        subText: 'Find the missing factor to complete the jump!',
+                        subText: pick(['Find the missing factor to complete the jump!', 'Fill the gap so your cube can land!', 'Which number unlocks the portal?']),
                         visual: `<div style="font-size:2rem;">
                             <span style="color:var(--gd-pink)">${hideFirst ? '❓' : a}</span>
                             <span> × </span>
@@ -245,7 +261,11 @@ const Multiplication1Digit = {
                     const display = sequence.map((n, i) => i === hideIdx ? '❓' : n);
                     return {
                         type: 'input',
-                        questionText: `Find the pattern and fill in the missing number!`,
+                        questionText: pick([
+                            `Find the pattern and fill in the missing number!`,
+                            `These jump pads count by the same amount. Which number is missing?`,
+                            `The music beats follow a pattern. What number fits in the ❓ block?`
+                        ]),
                         visual: `<div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
                             ${display.map((n, i) => `<div class="gd-block ${n === '❓' ? 'portal' : 'jump'}" style="width:50px;height:50px;font-size:${n === '❓' ? '1.2rem' : '1rem'};">${n}</div>`).join('')}
                         </div>`,

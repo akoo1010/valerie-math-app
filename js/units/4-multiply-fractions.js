@@ -27,7 +27,11 @@ const MultiplyFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🐉 The dragon attacks ${whole} times with ${numer}/${denom} power each!<br>What is ${whole} × ${numer}/${denom}?`,
+                        questionText: `${pick([
+                            `🐉 The dragon attacks ${whole} times with ${numer}/${denom} power each!`,
+                            `🧪 A wizard pours ${whole} scoops of potion. Each scoop is ${numer}/${denom} of a cup.`,
+                            `🥧 ${whole} trolls each eat ${numer}/${denom} of a pie.`
+                        ])}<br>What is ${whole} × ${numer}/${denom}?`,
                         subText: `Give the numerator of the answer (denominator is ${denom})`,
                         visual: `<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                             ${Array.from({length: whole}, (_, i) => `<div style="background:rgba(255,59,48,0.15);border:2px solid var(--monster-red);border-radius:10px;padding:8px 12px;font-weight:700;">${numer}/${denom} 🔥</div>`).join('')}
@@ -135,13 +139,14 @@ const MultiplyFractions4 = {
                     const groupSize = denom * R(2, diff >= 2 ? 4 : 3);
                     const answer = (numer * groupSize) / denom;
                     const creatures = pick(['dragons', 'goblins', 'phoenixes', 'griffins']);
+                    const action = pick(['breathe fire', 'can fly', 'are wearing hats', 'are asleep']);
                     const emojis = { dragons: '🐲', goblins: '👹', phoenixes: '🔥', griffins: '🦅' };
                     // With 1 on top, the divide step IS the answer, so hint2 and the scaffold leave it to her
                     const unitFrac = numer === 1;
 
                     const result = {
                         type: 'input',
-                        questionText: `🐾 A pack of ${groupSize} ${creatures} is in the arena. ${numer}/${denom} of them breathe fire!<br>How many ${creatures} breathe fire?`,
+                        questionText: `🐾 A pack of ${groupSize} ${creatures} is in the arena. ${numer}/${denom} of them ${action}!<br>How many ${creatures} ${action}?`,
                         visual: `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
                             ${Array.from({length: groupSize}, () => `<span style="font-size:1.5rem">${emojis[creatures]}</span>`).join('')}
                         </div>`,
@@ -324,7 +329,11 @@ const MultiplyFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🛡️ A shield monster blocks ${whole} attacks of ${numer}/${denom} each!<br>What is ${whole} × ${numer}/${denom}?`,
+                        questionText: `${pick([
+                            `🛡️ A shield monster blocks ${whole} attacks of ${numer}/${denom} each!`,
+                            `🍞 A troll eats ${numer}/${denom} of a loaf for each of ${whole} meals.`,
+                            `🏃 A goblin runs ${numer}/${denom} of a mile, ${whole} times.`
+                        ])}<br>What is ${whole} × ${numer}/${denom}?`,
                         subText: `Give the numerator of the improper fraction (denominator is ${denom})`,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2rem;font-weight:700;color:var(--monster-red);">

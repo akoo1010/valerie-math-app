@@ -27,7 +27,7 @@ const EquivFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🔮 Find the missing number!<br>${numer}/${denom} = ?/${newDenom}`,
+                        questionText: `${pick(['🔮 Find the missing number!', `🍕 A monster ate ${numer}/${denom} of a pizza. The same pizza is cut into ${newDenom} slices instead — how many slices did it eat?`, '🧪 Make an equivalent potion recipe!'])}<br>${numer}/${denom} = ?/${newDenom}`,
                         visual: `<div style="display:flex;gap:20px;align-items:center;justify-content:center;">
                             <div style="text-align:center;padding:12px 20px;background:rgba(124,58,237,0.15);border:2px solid var(--monster-purple);border-radius:12px;">
                                 <div style="font-size:2rem;font-weight:800;color:var(--monster-purple);">${numer}</div>
@@ -101,7 +101,7 @@ const EquivFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🐲 Simplify the fraction!<br>${numer}/${denom} = ?/${simpleDenom}`,
+                        questionText: `${pick(['🐲 Simplify the fraction!', '🔮 Shrink the spell to its simplest form!', '🍰 Write the cake fraction with fewer, bigger pieces!'])}<br>${numer}/${denom} = ?/${simpleDenom}`,
                         subText: `What is the simplified numerator?`,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2rem;font-weight:800;color:var(--monster-blue);">${numer}/${denom}</div>
@@ -176,7 +176,7 @@ const EquivFractions4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `⚡ Are these fractions equivalent?<br>${numer1}/${denom1} and ${numer2}/${denom2}`,
+                        questionText: `${pick(['⚡ Are these fractions equivalent?', '🐲 Two dragons ate parts of same-size pies. Did they eat the same amount?', '🧙 Do these two potions hold the same amount?'])}<br>${numer1}/${denom1} and ${numer2}/${denom2}`,
                         visual: `<div style="display:flex;gap:24px;align-items:center;justify-content:center;">
                             <div style="padding:12px 20px;background:rgba(59,130,246,0.15);border:2px solid var(--monster-blue);border-radius:12px;font-size:1.8rem;font-weight:800;color:var(--monster-blue);">⚡ ${numer1}/${denom1}</div>
                             <div style="font-size:2rem;color:var(--monster-yellow);">?</div>
@@ -254,7 +254,11 @@ const EquivFractions4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🔮 Compare the fractions — which is larger, or are they equal?`,
+                        questionText: pick([
+                            `🔮 Compare the fractions — which is larger, or are they equal?`,
+                            `🐾 Two monsters ran parts of the same race. Compare how far they went!`,
+                            `🍫 Two same-size candy bars were nibbled. Compare the amounts eaten!`
+                        ]),
                         visual: `<div style="display:flex;gap:20px;align-items:center;justify-content:center;">
                             <div style="padding:12px 20px;background:rgba(124,58,237,0.15);border:2px solid var(--monster-purple);border-radius:12px;font-size:1.8rem;font-weight:800;color:var(--monster-purple);">🐲 ${n1}/${d1}</div>
                             <div style="font-size:2rem;color:var(--monster-yellow);">?</div>
@@ -384,7 +388,10 @@ const EquivFractions4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `💎 Both bars show the same amount! How many parts are shaded in the bottom bar?`,
+                        questionText: pick([
+                            `💎 The bottom bar is the same size, but cut into ${newDenom} parts. How many parts must be shaded to show the same amount as the top bar?`,
+                            `🐲 A dragon ate ${numer}/${denom} of a candy bar. Its twin's identical bar is cut into ${newDenom} pieces. How many pieces must the twin eat to match?`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="margin-bottom:8px;font-weight:700;color:var(--monster-purple);">${numer}/${denom}</div>
                             <div style="display:flex;gap:2px;justify-content:center;">
@@ -392,11 +399,11 @@ const EquivFractions4 = {
                             </div>
                             <div style="margin-top:12px;font-weight:700;color:var(--monster-blue);">?/${newDenom}</div>
                             <div style="display:flex;gap:2px;justify-content:center;">
-                                ${Array.from({length: newDenom}, (_, i) => `<div style="width:${Math.floor(200 / newDenom)}px;height:36px;border-radius:4px;background:${i < answer ? 'var(--monster-blue)' : 'rgba(255,255,255,0.1)'};border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
+                                ${Array.from({length: newDenom}, () => `<div style="width:${Math.floor(200 / newDenom)}px;height:36px;border-radius:4px;background:rgba(255,255,255,0.1);border:2px solid rgba(255,255,255,0.2);"></div>`).join('')}
                             </div>
                         </div>`,
                         answer,
-                        hint1: `Count the shaded sections in the bottom bar!`,
+                        hint1: `Line the bars up: how many small bottom parts fit under the red part of the top bar?`,
                         hint2: `Each original section was split into ${multiplier} parts: ${numer} × ${multiplier} = ?`,
                         hint3: `${numer}/${denom} = ${answer}/${newDenom}`,
                         diagnose(userAnswer) {
@@ -405,8 +412,8 @@ const EquivFractions4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'counted-all': `You counted ALL ${newDenom} parts, not just the shaded ones! Count only the blue shaded parts in the bottom bar. 👾`,
-                            'used-top-numerator': `That's the top bar's numerator! The bottom bar has more sections — count the blue shaded ones. Each top piece becomes ${multiplier} bottom pieces. 🔥`
+                            'counted-all': `That's every part of the bottom bar! Only shade the parts that sit under the red part of the top bar. 👾`,
+                            'used-top-numerator': `That's the top bar's numerator! The bottom bar's parts are smaller — each top piece becomes ${multiplier} bottom pieces. 🔥`
                         }
                     };
 

@@ -20,14 +20,20 @@ const Division = {
                     const teams = R(2, diff >= 2 ? 6 : 4);
                     const perTeam = R(2, diff >= 2 ? 6 : 4);
                     const total = teams * perTeam;
+                    const sc = pick([
+                        { icon: '🏊', items: 'swimmers', groups: 'teams', text: `${total} swimmers need to split into ${teams} equal relay teams.<br>How many swimmers per team?` },
+                        { icon: '🐠', items: 'fish', groups: 'tanks', text: `The aquarium puts ${total} fish into ${teams} tanks, the same number in each.<br>How many fish go in each tank?` },
+                        { icon: '🦀', items: 'crabs', groups: 'rock pools', text: `${total} crabs hide in ${teams} rock pools, the same number in each pool.<br>How many crabs are in each pool?` },
+                        { icon: '🛟', items: 'life rings', groups: 'lifeguard stands', text: `${total} life rings are shared equally by ${teams} lifeguard stands.<br>How many life rings does each stand get?` }
+                    ]);
                     const result = {
                         type: 'input',
-                        questionText: `${total} swimmers need to split into ${teams} equal relay teams.<br>How many swimmers per team?`,
+                        questionText: sc.text,
                         visual: `<div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;">
-                            ${Array.from({length: total}, () => '<span style="font-size:1.3rem">🏊</span>').join('')}
+                            ${Array.from({length: total}, () => `<span style="font-size:1.3rem">${sc.icon}</span>`).join('')}
                         </div>`,
                         answer: perTeam,
-                        hint1: `Divide the total swimmers by the number of teams`,
+                        hint1: `Divide the total ${sc.items} by the number of ${sc.groups}`,
                         hint2: `${total} ÷ ${teams} = ?`,
                         hint3: `${total} ÷ ${teams} = ${perTeam}`,
                         diagnose(userAnswer) {
@@ -36,7 +42,7 @@ const Division = {
                             return null;
                         },
                         misconceptionHints: {
-                            'reversed-division': `You found the number of teams, not swimmers per team! Divide ${total} by ${teams}.`,
+                            'reversed-division': `That's the number of ${sc.groups}, not how many ${sc.items} go in each! Divide ${total} by ${teams}.`,
                             'gave-total-not-quotient': `That's the total! We need to split ${total} into ${teams} groups.`
                         }
                     };
@@ -61,16 +67,22 @@ const Division = {
                     const friends = R(2, diff >= 2 ? 6 : 4);
                     const each = R(2, diff >= 2 ? 8 : 5);
                     const total = friends * each;
+                    const sh = pick([
+                        { icon: '🥽', thing: 'pairs of goggles', who: 'friends', text: `Share ${total} pairs of goggles equally among ${friends} friends.<br>How many does each friend get?` },
+                        { icon: '🐚', thing: 'seashells', who: 'buckets', text: `Valerie sorts ${total} seashells into ${friends} buckets, the same number in each.<br>How many shells go in each bucket?` },
+                        { icon: '🍪', thing: 'cookies', who: 'swimmers', text: `After practice, ${total} cookies are shared equally by ${friends} swimmers.<br>How many cookies does each swimmer get?` },
+                        { icon: '⭐', thing: 'starfish', who: 'kids', text: `${friends} kids split ${total} starfish stickers evenly.<br>How many stickers does each kid get?` }
+                    ]);
                     return {
                         type: 'input',
-                        questionText: `Share ${total} pairs of goggles equally among ${friends} friends.<br>How many does each friend get?`,
+                        questionText: sh.text,
                         visual: `<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;">
-                            ${Array.from({length: total}, () => '<span style="font-size:1.2rem">🥽</span>').join('')}
+                            ${Array.from({length: total}, () => `<span style="font-size:1.2rem">${sh.icon}</span>`).join('')}
                         </div>`,
                         answer: each,
                         hint1: `Division means sharing equally!`,
-                        hint2: `${total} pairs ÷ ${friends} friends = ?`,
-                        hint3: `Each friend gets ${each} pairs of goggles`
+                        hint2: `${total} ${sh.thing} ÷ ${friends} ${sh.who} = ?`,
+                        hint3: `${total} ÷ ${friends} = ${each}, so each one gets ${each}`
                     };
                 }
             },
@@ -83,7 +95,12 @@ const Division = {
                     const product = a * b;
                     return {
                         type: 'input',
-                        questionText: `? × ${b} = ${product}<br>How many laps per set?`,
+                        questionText: pick([
+                            `Valerie swam ${product} laps in ${b} equal sets.<br>How many laps were in each set?<br>? × ${b} = ${product}`,
+                            `${product} fish swim in ${b} equal schools.<br>How many fish are in each school?<br>? × ${b} = ${product}`,
+                            `${product} pearls fill ${b} oyster shells equally.<br>How many pearls are in each shell?<br>? × ${b} = ${product}`,
+                            `Find the missing number:<br>? × ${b} = ${product}`
+                        ]),
                         visual: `<div style="font-size:1.8rem;font-weight:700;color:var(--ocean-glow);">
                             ❓ × ${b} = ${product}
                         </div>`,
@@ -102,13 +119,19 @@ const Division = {
                     const quotient = R(2, diff >= 2 ? 8 : 5);
                     const remainder = R(1, divisor - 1);
                     const total = divisor * quotient + remainder;
+                    const rem = pick([
+                        { icon: '🏊', text: `${total} swimmers divided into groups of ${divisor}.<br>How many are left over?` },
+                        { icon: '🐚', text: `Valerie packs ${total} shells into bags of ${divisor}.<br>How many shells are left over?` },
+                        { icon: '🧁', text: `${total} cupcakes go into boxes that hold ${divisor} each.<br>How many cupcakes are left over?` },
+                        { icon: '🦆', text: `${total} rubber ducks race in heats of ${divisor}.<br>How many ducks are left without a full heat?` }
+                    ]);
                     return {
                         type: 'input',
-                        questionText: `${total} swimmers divided into groups of ${divisor}.<br>How many are left over?`,
+                        questionText: rem.text,
                         subText: '(the remainder)',
                         visual: `<div style="text-align:center">
                             <div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:480px;margin:0 auto;">
-                                ${Array(divisor * quotient + remainder).fill('<span class="swimmer-item">🏊</span>').join('')}
+                                ${Array(divisor * quotient + remainder).fill(`<span class="swimmer-item">${rem.icon}</span>`).join('')}
                             </div>
                             <div style="margin-top:8px;color:var(--text-muted);font-size:0.85rem;">Try grouping them into ${divisor}s in your head!</div>
                         </div>`,
@@ -165,6 +188,9 @@ const Division = {
                         { text: (t, g) => `${t} swim caps shared equally among ${g} swimmers. How many each?`, emoji: '🧢' },
                         { text: (t, g) => `${t} towels laid out for ${g} lanes. How many towels per lane?`, emoji: '🏖️' },
                         { text: (t, g) => `Coach has ${t} water bottles for ${g} swimmers. How many each?`, emoji: '🍶' },
+                        { text: (t, g) => `${t} kids line up in ${g} equal rows for the diving board. How many kids in each row?`, emoji: '🤸' },
+                        { text: (t, g) => `A sea turtle lays ${t} eggs in ${g} equal nests. How many eggs are in each nest?`, emoji: '🐢' },
+                        { text: (t, g) => `${t} beach balls are split evenly into ${g} bins. How many balls go in each bin?`, emoji: '🏐' },
                     ];
                     const s = pick(scenarios);
                     const groups = R(2, diff >= 2 ? 8 : 5);

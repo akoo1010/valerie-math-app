@@ -24,7 +24,12 @@ const Division4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🛡️ Split ${a} monster gems equally among ${b} warriors!<br>How many gems does each warrior get?`,
+                        questionText: pick([
+                            `🛡️ Split ${a} monster gems equally among ${b} warriors!<br>How many gems does each warrior get?`,
+                            `🐲 ${a} dragon eggs go into ${b} nests, the same number in each.<br>How many eggs are in each nest?`,
+                            `🍖 A monster chef shares ${a} meatballs equally on ${b} plates.<br>How many meatballs go on each plate?`,
+                            `🏰 ${a} knights march in ${b} equal lines.<br>How many knights are in each line?`
+                        ]),
                         visual: `<div style="text-align:center;color:var(--monster-blue);font-size:1.6rem;font-weight:700;">
                             ${a} ÷ ${b} = ?
                         </div>`,
@@ -84,10 +89,15 @@ const Division4 = {
                     const remainder = R(1, b - 1);
                     const a = b * quotient + remainder;
                     const answer = quotient;
+                    const rs = pick([
+                        { text: `🐲 You have ${a} potions to share equally among ${b} dragons.<br>How many potions does each dragon get? (Ignore the remainder)`, each: 'each dragon gets', item: 'potions' },
+                        { text: `🧌 ${a} rocks are split equally among ${b} trolls.<br>How many rocks does each troll get? (Ignore the remainder)`, each: 'each troll gets', item: 'rocks' },
+                        { text: `🦄 ${a} carrots are shared by ${b} unicorns, the same number each.<br>How many carrots does each unicorn get? (Ignore the remainder)`, each: 'each unicorn gets', item: 'carrots' }
+                    ]);
 
                     const result = {
                         type: 'input',
-                        questionText: `🐲 You have ${a} potions to share equally among ${b} dragons.<br>How many potions does each dragon get? (Ignore the remainder)`,
+                        questionText: rs.text,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:1.6rem;font-weight:700;color:var(--monster-red);">${a} ÷ ${b} = ? R ${remainder}</div>
                             <div style="margin-top:6px;font-size:0.9rem;color:var(--text-muted);">Just enter the quotient (whole number part)</div>
@@ -102,8 +112,8 @@ const Division4 = {
                             return null;
                         },
                         misconceptionHints: {
-                            'gave-remainder': `${remainder} is the remainder, not the quotient! The quotient is how many each dragon gets.`,
-                            'rounded-up': `Don't round up! We want the whole number of potions each dragon gets, ignoring leftovers.`
+                            'gave-remainder': `${remainder} is the remainder, not the quotient! The quotient is how many ${rs.each}.`,
+                            'rounded-up': `Don't round up! We want the whole number of ${rs.item} ${rs.each}, ignoring leftovers.`
                         }
                     };
 
@@ -155,10 +165,18 @@ const Division4 = {
                     let questionText, answer;
 
                     if (needExtra) {
-                        questionText = `⚡ ${a} monsters need boats. Each boat holds ${b} monsters.<br>How many boats do we need so NO monster is left behind?`;
+                        questionText = pick([
+                            `⚡ ${a} monsters need boats. Each boat holds ${b} monsters.<br>How many boats do we need so NO monster is left behind?`,
+                            `🚡 ${a} monsters ride the sky gondola. Each car holds ${b}.<br>How many cars are needed so everyone gets a ride?`,
+                            `🎒 ${a} monster eggs must be packed in crates of ${b}.<br>How many crates are needed to pack ALL the eggs?`
+                        ]);
                         answer = quotient + 1;
                     } else {
-                        questionText = `🐾 A trainer has ${a} treats to put in bags of ${b}.<br>How many FULL bags can the trainer make?`;
+                        questionText = pick([
+                            `🐾 A trainer has ${a} treats to put in bags of ${b}.<br>How many FULL bags can the trainer make?`,
+                            `🧪 A wizard has ${a} drops of potion. Each bottle needs exactly ${b} drops.<br>How many bottles can be FILLED?`,
+                            `🪙 A goblin trades ${b} coins for one shield. It has ${a} coins.<br>How many shields can it buy?`
+                        ]);
                         answer = quotient;
                     }
 
@@ -225,7 +243,11 @@ const Division4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🦖 Monster math! What is ${Engine.Utils.fmt(a)} ÷ ${b}?`,
+                        questionText: pick([
+                            `🦖 Monster math! What is ${Engine.Utils.fmt(a)} ÷ ${b}?`,
+                            `🐉 ${b} dragons share ${Engine.Utils.fmt(a)} gold coins equally. How many coins does each dragon get?`,
+                            `🏹 ${Engine.Utils.fmt(a)} arrows are packed into ${b} equal quivers. How many arrows are in each quiver?`
+                        ]),
                         visual: `<div style="text-align:center;font-family:var(--font-display);color:var(--monster-green);font-size:1.4rem;">
                             <div style="border-bottom:2px solid var(--monster-green);display:inline-block;padding:4px 12px;">
                                 ${b} ) ${Engine.Utils.fmt(a)}
@@ -297,7 +319,7 @@ const Division4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🗡️ Quick slash! What is ${Engine.Utils.fmt(a)} ÷ ${divisor}?`,
+                        questionText: `${pick(['🗡️ Quick slash!', '⚡ Lightning round!', '🐾 Pounce!'])} What is ${Engine.Utils.fmt(a)} ÷ ${divisor}?`,
                         visual: `<div style="text-align:center;font-size:1.6rem;font-weight:700;color:var(--monster-yellow);">
                             ${Engine.Utils.fmt(a)} ÷ ${divisor} = ?
                         </div>`,

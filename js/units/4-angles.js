@@ -27,7 +27,12 @@ const Angles4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🐲 A monster's claw makes a ${degrees}° angle! What type of angle is it?`,
+                        questionText: pick([
+                            `🐲 A monster's claw makes a ${degrees}° angle! What type of angle is it?`,
+                            `🦇 A bat opens its wings to ${degrees}°. What type of angle is it?`,
+                            `🐊 A swamp monster opens its jaws ${degrees}°. What type of angle is that?`,
+                            `🕰️ The haunted clock's hands make a ${degrees}° angle. What type of angle is it?`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:3rem;font-weight:800;color:var(--monster-purple);">${degrees}°</div>
                             <div style="width:100px;height:100px;margin:10px auto;position:relative;">
@@ -77,7 +82,7 @@ const Angles4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `⚡ Estimate the angle! How many degrees?`,
+                        questionText: pick([`⚡ Estimate the angle! How many degrees?`, `🐲 How wide did the dragon open its jaws? Pick the best estimate.`, `🔦 About how many degrees is the flashlight beam?`]),
                         visual: `<div style="text-align:center;">
                             <div style="width:120px;height:120px;margin:10px auto;position:relative;">
                                 <div style="position:absolute;bottom:0;left:10px;width:100px;height:3px;background:var(--monster-yellow);"></div>
@@ -138,7 +143,11 @@ const Angles4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🔥 Two monster beams cross! One is ${a}° and the other is ${b}°.<br>What is the total angle?`,
+                        questionText: `${pick([
+                            `🔥 Two monster beams cross! One is ${a}° and the other is ${b}°.`,
+                            `🦖 A dino-monster turns ${a}°, then turns ${b}° more in the same direction.`,
+                            `🍕 Two pizza slices sit side by side. One has a ${a}° tip and the other a ${b}° tip.`
+                        ])}<br>What is the total angle?`,
                         visual: `<div style="display:flex;gap:16px;align-items:center;justify-content:center;">
                             <div style="padding:12px;background:rgba(239,68,68,0.15);border:2px solid var(--monster-red);border-radius:10px;font-weight:700;font-size:1.3rem;color:var(--monster-red);">🔥 ${a}°</div>
                             <div style="font-size:1.5rem;font-weight:800;color:var(--monster-yellow);">+</div>
@@ -185,8 +194,14 @@ const Angles4 = {
                     const result = {
                         type: 'input',
                         questionText: isComplementary
-                            ? `🐾 Two angles make a right angle (90°). One is ${known}°.<br>What is the other angle?`
-                            : `🐲 Two angles make a straight line (180°). One is ${known}°.<br>What is the other angle?`,
+                            ? pick([
+                                `🐾 Two angles make a right angle (90°). One is ${known}°.<br>What is the other angle?`,
+                                `📐 A monster splits a square corner (90°) into two angles. One is ${known}°.<br>What is the other angle?`
+                            ])
+                            : pick([
+                                `🐲 Two angles make a straight line (180°). One is ${known}°.<br>What is the other angle?`,
+                                `🪓 A goblin's axe cuts a straight log (180°) into two angles. One is ${known}°.<br>What is the other angle?`
+                            ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:1.6rem;font-weight:700;color:var(--monster-purple);">${known}° + ? = ${total}°</div>
                             <div style="margin-top:8px;font-size:1rem;color:var(--text-muted);">${isComplementary ? 'Complementary angles = 90°' : 'Supplementary angles = 180°'}</div>
@@ -241,7 +256,7 @@ const Angles4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🦖 A monster triangle has angles of ${a1}° and ${a2}°.<br>What is the third angle?`,
+                        questionText: `${pick(['🦖 A monster triangle has angles of', '⛰️ A triangle-shaped mountain has angles of', '🔺 A warning sign has angles of'])} ${a1}° and ${a2}°.<br>What is the third angle?`,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:1.4rem;font-weight:700;color:var(--monster-green);">Triangle angles add to 180°</div>
                             <div style="margin-top:10px;display:flex;gap:12px;justify-content:center;">
@@ -308,7 +323,7 @@ const Angles4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🐲 A monster makes a <strong>${selected.name}</strong>. How many degrees is that?`,
+                        questionText: `${pick(['🐲 A monster makes a', '🛹 A skater-monster spins a', '🌀 A ghost twirls a'])} <strong>${selected.name}</strong>. How many degrees is that?`,
                         visual: `<div style="text-align:center;font-size:3rem;">🐲🔄</div>`,
                         answer,
                         options: Engine.Utils.shuffle([

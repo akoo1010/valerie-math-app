@@ -20,13 +20,21 @@ const MultiplicationIntro = {
                     const rows = R(2, diff >= 2 ? 5 : 3);
                     const cols = R(2, diff >= 2 ? 5 : 3);
                     const answer = rows * cols;
+                    const groupScenes = [
+                        { icon: '🏊', text: `There are ${rows} swim lanes with ${cols} swimmers in each lane.<br>How many swimmers in total?` },
+                        { icon: '🐠', text: `${rows} coral reefs each have ${cols} fish swimming around them.<br>How many fish in all?` },
+                        { icon: '🦆', text: `${rows} pool floats each carry ${cols} rubber ducks.<br>How many ducks altogether?` },
+                        { icon: '🐚', text: `Valerie fills ${rows} buckets with ${cols} seashells each.<br>How many seashells is that?` },
+                        { icon: '🥽', text: `${rows} swim bags each hold ${cols} pairs of goggles.<br>How many pairs of goggles in total?` }
+                    ];
+                    const scene = pick(groupScenes);
                     let visual = Array.from({length: rows}, () =>
-                        `<div class="swimmer-group">${Array.from({length: cols}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>`
+                        `<div class="swimmer-group">${Array.from({length: cols}, () => `<span class="swimmer-item">${scene.icon}</span>`).join('')}</div>`
                     ).join('');
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `There are ${rows} swim lanes with ${cols} swimmers in each lane.<br>How many swimmers in total?`,
+                        questionText: scene.text,
                         visual,
                         answer,
                         options: Engine.Utils.multipleChoice(answer),
@@ -106,10 +114,12 @@ const MultiplicationIntro = {
                         { text: `There are ${n} starting blocks, but ${0} races happened today.<br>How many races were swum?`, visual: '🏁 × 0 = ?' },
                         { text: `${n} swimmers each swam ${0} laps.<br>How many laps were swum in total?`, visual: '🌊 × 0 = ?' },
                         { text: `The pool has ${n} lanes, but ${0} teams signed up.<br>How many teams are swimming?`, visual: '🏊 × 0 = ?' },
+                        { text: `${n} crabs each found ${0} shells on the beach.<br>How many shells did the crabs find?`, visual: '🦀 × 0 = ?' },
                     ];
 
                     const oneScenarios = [
                         { text: `There is ${1} swim team with ${n} swimmers.<br>How many swimmers total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🏊</span>').join('')}</div>` },
+                        { text: `There is ${1} treasure chest with ${n} pearls inside.<br>How many pearls are there?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🫧</span>').join('')}</div>` },
                         { text: `${n} swimmers each swam ${1} lap.<br>How many laps total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🌊</span>').join('')}</div>` },
                         { text: `There is ${1} pool with ${n} floaties in it.<br>How many floaties are there?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🛟</span>').join('')}</div>` },
                         { text: `The coach gave ${1} trophy to each of the ${n} swimmers.<br>How many trophies total?`, visual: `<div class="swimmer-group">${Array.from({length: n}, () => '<span class="swimmer-item">🏆</span>').join('')}</div>` },
@@ -140,14 +150,20 @@ const MultiplicationIntro = {
                     const rows = R(2, diff >= 2 ? 5 : 4);
                     const cols = R(2, diff >= 2 ? 5 : 4);
                     const answer = rows * cols;
+                    const arrayScene = pick([
+                        { icon: '🏊', text: `This array of swimmers shows ${rows} rows and ${cols} columns.` },
+                        { icon: '🐟', text: `A school of fish swims in ${rows} rows and ${cols} columns.` },
+                        { icon: '🧢', text: `Swim caps are hung in ${rows} rows and ${cols} columns.` },
+                        { icon: '🛟', text: `Life rings are stacked in ${rows} rows and ${cols} columns.` }
+                    ]);
                     let gridHTML = `<div class="array-grid" style="grid-template-columns: repeat(${cols}, 1fr)">`;
                     for (let i = 0; i < rows * cols; i++) {
-                        gridHTML += `<div class="array-item" style="animation-delay:${i * 0.03}s">🏊</div>`;
+                        gridHTML += `<div class="array-item" style="animation-delay:${i * 0.03}s">${arrayScene.icon}</div>`;
                     }
                     gridHTML += '</div>';
                     return {
                         type: 'input',
-                        questionText: `This array shows ${rows} rows and ${cols} columns.<br>Write the multiplication equation answer:`,
+                        questionText: `${arrayScene.text}<br>How many are there in all?`,
                         subText: `${rows} × ${cols} = ?`,
                         visual: gridHTML,
                         answer,
@@ -161,7 +177,7 @@ const MultiplicationIntro = {
             {
                 skillId: 'mult-intro-skip',
                 generate(diff) {
-                    const skipBy = pick([2, 5, 10]);
+                    const skipBy = pick(diff >= 2 ? [2, 3, 4, 5, 10] : [2, 5, 10]);
                     const steps = R(3, diff >= 2 ? 7 : 5);
                     const sequence = Array.from({length: steps}, (_, i) => skipBy * (i + 1));
                     const hideIndex = R(1, steps - 1);
@@ -169,7 +185,12 @@ const MultiplicationIntro = {
                     const display = sequence.map((n, i) => i === hideIndex ? '❓' : n).join(', ');
                     return {
                         type: 'input',
-                        questionText: `Skip count by ${skipBy}s! Find the missing number:`,
+                        questionText: pick([
+                            `Skip count by ${skipBy}s! Find the missing number:`,
+                            `A dolphin jumps ${skipBy} waves at a time. Which wave number is missing?`,
+                            `Coach counts laps by ${skipBy}s. Fill in the missing number:`,
+                            `Bubbles float up in groups of ${skipBy}. What number is hiding?`
+                        ]),
                         visual: `<div style="font-size: 1.4rem; font-weight: 700; letter-spacing: 2px;">${display}</div>`,
                         answer,
                         hint1: `We're counting by ${skipBy}s: each number is ${skipBy} more than the one before.`,
@@ -248,6 +269,10 @@ const MultiplicationIntro = {
                         { text: (a, b) => `The pool has ${a} lanes. Each lane has ${b} floating kickboards. How many kickboards are there?`, emoji: '🏄' },
                         { text: (a, b) => `${a} friends each swam ${b} laps. How many laps were swum in total?`, emoji: '🌊' },
                         { text: (a, b) => `There are ${a} swimming teams. Each team has ${b} members. How many swimmers total?`, emoji: '🤽' },
+                        { text: (a, b) => `Valerie made ${a} sandcastles. Each one has ${b} flags on top. How many flags did she use?`, emoji: '🏰' },
+                        { text: (a, b) => `${a} octopuses each have ${b} starfish friends. How many starfish friends is that altogether?`, emoji: '🐙' },
+                        { text: (a, b) => `The snack bar has ${a} boxes of popsicles with ${b} popsicles in each box. How many popsicles?`, emoji: '🍦' },
+                        { text: (a, b) => `${a} divers each found ${b} shiny shells. How many shells were found in all?`, emoji: '🤿' },
                     ];
                     const s = pick(scenarios);
                     const a = R(2, diff >= 2 ? 9 : 5);

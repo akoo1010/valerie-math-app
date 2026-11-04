@@ -64,7 +64,10 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎤 How many factors does ${n} have?<br>Count ALL the numbers that divide evenly into ${n}.`,
+                        questionText: pick([
+                            `🎤 How many factors does ${n} have?<br>Count ALL the numbers that divide evenly into ${n}.`,
+                            `💃 ${n} dancers want to stand in equal rows. Count every number that divides evenly into ${n} — how many factors does ${n} have?`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2rem;font-weight:800;color:var(--dance-gold);">🎵 ${n} 🎵</div>
                             <div style="margin-top:8px;font-size:0.9rem;color:var(--text-muted);">A factor divides evenly (no remainder)</div>
@@ -113,7 +116,11 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎶 Is ${testNum} a factor of ${n}?`,
+                        questionText: pick([
+                            `🎶 Is ${testNum} a factor of ${n}?`,
+                            `💃 Can ${n} dancers split into groups of ${testNum} with nobody left over? (Is ${testNum} a factor of ${n}?)`,
+                            `🎟️ Can ${n} tickets be shared equally by ${testNum} friends? (Is ${testNum} a factor of ${n}?)`
+                        ]),
                         visual: `<div style="display:flex;gap:16px;align-items:center;justify-content:center;font-size:1.5rem;font-weight:700;">
                             <span style="color:var(--dance-pink);">🎵 ${testNum}</span>
                             <span style="color:var(--dance-gold);">→</span>
@@ -167,7 +174,11 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 What is the ${ordinal(position)} multiple of ${n}?`,
+                        questionText: pick([
+                            `🕺 What is the ${ordinal(position)} multiple of ${n}?`,
+                            `🥁 A drummer hits the cymbal every ${n} beats. On which beat is the ${ordinal(position)} cymbal crash?`,
+                            `👟 Each dance step moves ${n} inches. How far after ${position} steps? (the ${ordinal(position)} multiple of ${n})`
+                        ]),
                         // Show the first few multiples, then a "?" box — never the answer itself
                         visual: `<div style="text-align:center;">
                             <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
@@ -228,7 +239,10 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎵 Is ${testNum} a multiple of ${base}?`,
+                        questionText: pick([
+                            `🎵 Is ${testNum} a multiple of ${base}?`,
+                            `🎶 A light flashes on every ${base}th beat. Does it flash on beat ${testNum}? (Is ${testNum} a multiple of ${base}?)`
+                        ]),
                         visual: `<div style="font-size:2rem;font-weight:800;text-align:center;color:var(--dance-purple);">
                             💃 ${testNum} ÷ ${base} = ?
                         </div>`,
@@ -283,7 +297,10 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `✨ Is ${n} prime or composite?`,
+                        questionText: pick([
+                            `✨ Is ${n} prime or composite?`,
+                            `💃 ${n} dancers try to make a rectangle with more than one row. Is ${n} prime or composite?`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:3rem;font-weight:800;color:var(--dance-gold);">✨ ${n} ✨</div>
                             <div style="font-size:0.9rem;color:var(--text-muted);margin-top:4px;">Prime = only 1 and itself. Composite = more factors.</div>
@@ -348,7 +365,10 @@ const FactorsMultiples4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎤 What is the greatest common factor (GCF) of ${a} and ${b}?`,
+                        questionText: pick([
+                            `🎤 What is the greatest common factor (GCF) of ${a} and ${b}?`,
+                            `🎁 ${a} glow sticks and ${b} bracelets go into identical party bags with nothing left over. What is the GREATEST number of bags? (GCF of ${a} and ${b})`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="display:flex;gap:20px;justify-content:center;">
                                 <div style="padding:10px 16px;background:rgba(236,72,153,0.1);border:2px solid var(--dance-pink);border-radius:10px;">

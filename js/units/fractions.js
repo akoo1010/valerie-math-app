@@ -21,7 +21,12 @@ const Fractions = {
                     const numer = R(1, denom - 1);
                     return {
                         type: 'fraction-click',
-                        questionText: `Color ${numer}/${denom} of the paper strip!`,
+                        questionText: pick([
+                            `Color ${numer}/${denom} of the paper strip!`,
+                            `Paint ${numer}/${denom} of the fence for the art show!`,
+                            `Glitter-glue ${numer}/${denom} of the bookmark!`,
+                            `Fill ${numer}/${denom} of the friendship bracelet with color!`
+                        ]),
                         subText: `Click ${numer} out of ${denom} parts`,
                         parts: denom,
                         targetNumerator: numer,
@@ -67,7 +72,12 @@ const Fractions = {
                     const options = Engine.Utils.shuffle(optionStrings.map(s => ({label: s, value: s})));
                     return {
                         type: 'multiple-choice',
-                        questionText: `What fraction of the ribbon is colored?`,
+                        questionText: pick([
+                            `What fraction of the ribbon is colored?`,
+                            `What fraction of the paper strip is painted?`,
+                            `Valerie decorated part of this bookmark. What fraction is decorated?`,
+                            `What fraction of the craft stick is covered in glitter?`
+                        ]),
                         visual: barHTML,
                         answer,
                         options,
@@ -86,15 +96,17 @@ const Fractions = {
                     const pairs = [
                         // equivalent
                         [1,2,2,4], [1,3,2,6], [2,4,1,2], [2,3,4,6], [1,4,2,8], [3,6,1,2],
+                        [3,4,6,8], [4,6,2,3], [2,8,1,4], [4,8,1,2], [6,8,3,4], [1,2,3,6], [2,6,1,3], [1,2,4,8],
                         // NOT equivalent
-                        [1,2,1,3], [1,3,2,5], [2,3,1,2], [1,4,1,3], [2,5,1,2], [3,4,2,3]
+                        [1,2,1,3], [1,3,2,5], [2,3,1,2], [1,4,1,3], [2,5,1,2], [3,4,2,3],
+                        [3,4,5,8], [2,6,1,2], [4,6,3,4], [2,8,1,3], [3,8,1,2], [1,3,3,8], [5,6,3,4], [5,8,2,3]
                     ];
                     const [n1,d1,n2,d2] = pick(pairs);
                     // Start from the smaller denominator so the multiply test works for every equivalent pair
                     const [sN, sD, bN, bD] = d1 < d2 ? [n1, d1, n2, d2] : [n2, d2, n1, d1];
                     return {
                         type: 'true-false',
-                        questionText: `Are these fractions equivalent?<br>${n1}/${d1} = ${n2}/${d2}?`,
+                        questionText: `${pick(['Are these fractions equivalent?', 'Do these two strips show the same amount?', 'Two friends painted strips the same size. Did they paint the same amount?'])}<br>${n1}/${d1} = ${n2}/${d2}?`,
                         visual: `<div style="display:flex;gap:20px;align-items:center;">
                             <div style="text-align:center">
                                 <div class="fraction-bar" style="width:200px;pointer-events:none">
@@ -128,7 +140,11 @@ const Fractions = {
                     const bigger = n1 > n2 ? `${n1}/${d}` : `${n2}/${d}`;
                     return {
                         type: 'multiple-choice',
-                        questionText: `Which fraction is bigger?`,
+                        questionText: pick([
+                            `Which fraction is bigger?`,
+                            `Two ribbons are the same length. Which one has MORE colored?`,
+                            `Which painted part is larger?`
+                        ]),
                         visual: `<div style="display:flex;gap:24px;align-items:center;flex-direction:column;">
                             <div>
                                 <div class="fraction-bar" style="width:300px;pointer-events:none">
@@ -189,7 +205,11 @@ const Fractions = {
                     const bigger = d1 < d2 ? `1/${d1}` : `1/${d2}`;
                     return {
                         type: 'multiple-choice',
-                        questionText: `Which unit fraction is bigger?<br>1/${d1} or 1/${d2}?`,
+                        questionText: pick([
+                            `Which unit fraction is bigger?<br>1/${d1} or 1/${d2}?`,
+                            `Would you rather have 1/${d1} or 1/${d2} of the same giant cookie?<br>Which piece is bigger?`,
+                            `Two same-size sheets of paper are cut into equal pieces.<br>Which piece is bigger: 1/${d1} or 1/${d2}?`
+                        ]),
                         visual: `<div style="display:flex;gap:20px;flex-direction:column;align-items:center;">
                             <div>
                                 <div class="fraction-bar" style="width:300px;pointer-events:none">
@@ -221,7 +241,9 @@ const Fractions = {
                     const numer = whole * denom;
                     return {
                         type: 'input',
-                        questionText: `Write ${whole} as a fraction with denominator ${denom}.<br>What is the numerator?`,
+                        questionText: denom > 1 && Math.random() < 0.5
+                            ? `Valerie has ${whole} whole paper plate${whole === 1 ? '' : 's'}. Each plate is cut into ${denom} equal pieces.<br>How many pieces is that? (That's the numerator!)`
+                            : `Write ${whole} as a fraction with denominator ${denom}.<br>What is the numerator?`,
                         subText: `${whole} = ?/${denom}`,
                         visual: `<div style="font-size:2rem;font-weight:700;color:var(--craft-pink);">${whole} = <span style="color:var(--craft-yellow)">?</span>/${denom}</div>`,
                         answer: numer,

@@ -29,7 +29,11 @@ const Decimals4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 The DJ plays fraction ${numer}/${denom} on the dance floor!<br>Write it as a decimal.`,
+                        questionText: pick([
+                            `🎵 The song is ${numer}/${denom} of the way done.<br>Write ${numer}/${denom} as a decimal.`,
+                            `💃 ${numer}/${denom} of the dancers wear sparkly shoes.<br>Write that fraction as a decimal.`,
+                            `🪩 The disco floor lights are ${numer}/${denom} on.<br>Write ${numer}/${denom} as a decimal.`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2.5rem;font-weight:800;color:var(--dance-pink);">
                                 <span style="border-bottom:3px solid var(--dance-purple);">${numer}</span>
@@ -101,7 +105,7 @@ const Decimals4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 The dance move is ${decStr}!<br>Write it as a fraction: ?/${denom}`,
+                        questionText: `${pick([`🕺 The dancer finished ${decStr} of the routine!`, `🎶 The playlist is ${decStr} done!`, `🥤 The smoothie cup is ${decStr} full!`])}<br>Write ${decStr} as a fraction: ?/${denom}`,
                         subText: `What is the numerator?`,
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2.8rem;font-weight:800;color:var(--dance-gold);">${decStr}</div>
@@ -176,7 +180,7 @@ const Decimals4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎤 Dance battle! Compare these decimals:`,
+                        questionText: pick([`🎤 Dance battle! Compare these decimals:`, `🏅 Compare the judges' scores:`, `⏱️ Compare the two spin times (in seconds):`]),
                         visual: `<div style="display:flex;gap:20px;align-items:center;justify-content:center;">
                             <div style="text-align:center;padding:16px 24px;background:rgba(255,105,180,0.15);border:2px solid var(--dance-pink);border-radius:12px;">
                                 <div style="font-size:0.8rem;color:var(--dance-pink);font-weight:700;">💃 Dancer A</div>
@@ -280,7 +284,7 @@ const Decimals4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `✨ Line up these dancers from LEAST to GREATEST!`,
+                        questionText: pick([`✨ Line up these dancers from LEAST to GREATEST!`, `🏅 Order the judges' scores from LEAST to GREATEST!`, `🎵 Sort these song lengths from LEAST to GREATEST!`]),
                         visual: `<div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
                             ${shuffled.map(n => `<div style="padding:12px 18px;background:rgba(148,0,211,0.15);border:2px solid var(--dance-purple);border-radius:12px;font-size:1.5rem;font-weight:800;color:var(--dance-gold);">💃 ${n}</div>`).join('')}
                         </div>`,
@@ -339,7 +343,7 @@ const Decimals4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎸 What decimal is the arrow pointing to on the number line?`,
+                        questionText: pick([`🎸 What decimal is the arrow pointing to on the number line?`, `🕺 A dancer slid along the stage from 0 to 1. Where did she stop?`, `🎚️ Where is the volume slider set? Read the decimal.`]),
                         visual: `<div style="position:relative;width:100%;max-width:350px;margin:20px auto;">
                             <div style="position:relative;height:4px;background:var(--dance-purple);border-radius:2px;margin:30px 10px 20px;">
                                 ${tickMarks.map((t, i) => `<div style="position:absolute;left:${i * 10}%;top:-8px;width:2px;height:20px;background:var(--dance-cyan);transform:translateX(-1px);"></div>`).join('')}
@@ -413,7 +417,7 @@ const Decimals4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎶 Two dancers combine their moves!<br>${a} + ${b} = ?`,
+                        questionText: `${pick(['🎶 Two dancers combine their moves!', '🥤 Two juice cups are poured together (in liters)!', '🏃 Valerie dances two warm-up laps (in miles)!'])}<br>${a} + ${b} = ?`,
                         visual: `<div style="display:flex;gap:16px;align-items:center;justify-content:center;">
                             <div style="padding:12px 20px;background:rgba(255,105,180,0.15);border:2px solid var(--dance-pink);border-radius:12px;">
                                 <div style="font-size:0.7rem;color:var(--dance-pink);">💃</div>

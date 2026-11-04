@@ -10,6 +10,9 @@ const jsDirs = ['js', 'api', 'scripts'].map(dir => path.join(rootDir, dir));
 const unitDir = path.join(rootDir, 'js', 'units');
 const difficulties = [1, 2, 3];
 const modalities = ['practice', 'visual', 'worked-example'];
+// Generators are random, so sample each (exercise, difficulty, modality) several
+// times to reach the rarer scenario branches.
+const SAMPLES_PER_COMBO = 8;
 const hintFields = ['hint1', 'hint2', 'hint3'];
 const invalidHintPattern = /\b(?:undefined|NaN|Infinity)\b|\[object Object\]|\$\{/;
 
@@ -254,6 +257,156 @@ function checkHints(question, context) {
     return failures;
 }
 
+// --- Answer verification -------------------------------------------------
+// These checks re-derive what they can from the generated question itself,
+// independently of the generator's own arithmetic.
+
+/** Plain text of an HTML snippet, with block elements kept as separators. */
+function toPlainText(html) {
+    return String(html ?? '')
+        .replace(/<sup>(\d+)<\/sup>\s*⁄?\s*<sub>(\d+)<\/sub>/g, '$1/$2')
+        .replace(/<br\s*\/?>/gi, ' | ')
+        .replace(/<\/?(?:div|p|li|tr|td|th|table)\b[^>]*>/gi, ' | ')
+        .replace(/<[^>]+>/g, ' ')
+        .replace(/&nbsp;/g, ' ').replace(/&times;/g, '×').replace(/&divide;/g, '÷').replace(/&minus;/g, '−')
+        .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&')
+        .replace(/\s+/g, ' ')
+        .trim();
+}
+
+const NUM = String.raw`\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?`;
+const parseNumber = s => Number(s.replace(/,/g, ''));
+const OPS = { '+': (a, b) => a + b, '-': (a, b) => a - b, '−': (a, b) => a - b, '×': (a, b) => a * b, '÷': (a, b) => a / b };
+
+/** Evaluate "a op b op c" with × ÷ before + −. */
+function evaluateChain(tokens) {
+    const nums = [parseNumber(tokens[0])];
+    const ops = [];
+    for (let i = 1; i < tokens.length; i += 2) {
+        const op = tokens[i];
+        const n = parseNumber(tokens[i + 1]);
+        if (op === '×' || op === '÷') nums.push(OPS[op](nums.pop(), n));
+        else { ops.push(op); nums.push(n); }
+    }
+    return ops.reduce((acc, op, i) => OPS[op](acc, nums[i + 1]), nums[0]);
+}
+
+/**
+ * Find every arithmetic statement like "12 × 4 = 48" or "3/8 + 2/8 = 5/8" in a
+ * string and return the ones that are false. Remainder statements
+ * ("23 ÷ 4 = 5 R 3") and deliberately false examples ("... is NOT in the
+ * fact family") are understood.
+ */
+function findFalseStatements(text) {
+    const problems = [];
+    const chain = new RegExp(String.raw`(?<![\d/.,])((?:${NUM})(?:\s*[+\-−×÷]\s*(?:${NUM}))+)\s*=\s*(${NUM})(?![\d/]|\s*[+\-−×÷]\s*\d)`, 'g');
+    let m;
+    while ((m = chain.exec(text))) {
+        const tokens = m[1].match(new RegExp(String.raw`${NUM}|[+\-−×÷]`, 'g'));
+        const value = evaluateChain(tokens);
+        const stated = parseNumber(m[2]);
+        if (!Number.isFinite(value) || Math.abs(value - stated) < 1e-9) continue;
+        const tail = text.slice(m.index + m[0].length, m.index + m[0].length + 16);
+        if (/^\s*(?:is NOT|is not|isn't|✗|❌)/.test(tail)) continue;
+        if (tokens.length === 3 && tokens[1] === '÷' && /^\s*(?:R\b|r\b|remainder)/.test(tail)
+            && Math.floor(parseNumber(tokens[0]) / parseNumber(tokens[2])) === stated) continue;
+        problems.push(`"${m[0]}" (really ${+value.toFixed(6)})`);
+    }
+    const frac = /(?<![\d/]\s*[+\-−×]\s*)(?<![\d/])(\d+)\/(\d+)\s*([+\-−])\s*(\d+)\/(\d+)\s*=\s*(\d+)\/(\d+)(?![\d/])/g;
+    while ((m = frac.exec(text))) {
+        const [, a, b, op, c, d, e, f] = m;
+        const value = OPS[op](a / b, c / d);
+        if (Math.abs(value - e / f) > 1e-9) problems.push(`"${m[0]}"`);
+    }
+    const wholeTimesFrac = /(?<![\d/.])(\d+)\s*×\s*(\d+)\/(\d+)\s*=\s*(\d+)\/(\d+)(?![\d/])/g;
+    while ((m = wholeTimesFrac.exec(text))) {
+        if (Math.abs((m[1] * m[2]) / m[3] - m[4] / m[5]) > 1e-9) problems.push(`"${m[0]}"`);
+    }
+    return problems;
+}
+
+/** Numeric value of an option label like "12", "0.5", "3/4" or "2 1/3"; null otherwise. */
+function labelNumber(label) {
+    const s = String(label).replace(/,/g, '').trim();
+    let m;
+    if ((m = s.match(/^(\d+)\s+(\d+)\/(\d+)$/))) return +m[1] + m[2] / m[3];
+    if ((m = s.match(/^(\d+)\/(\d+)$/))) return m[1] / m[2];
+    if (/^\d+(?:\.\d+)?$/.test(s)) return +s;
+    return null;
+}
+
+const hasFloatNoise = n => typeof n === 'number' && Number.isFinite(n) && n !== Number(n.toFixed(6));
+
+function checkAnswerIntegrity(question, context) {
+    const failures = [];
+    const { type, answer } = question;
+
+    if (type === 'input' && typeof question.checkAnswer !== 'function') {
+        // The input box submits parseFloat(value) and compares with ===
+        if (typeof answer !== 'number' || !Number.isFinite(answer)) {
+            failures.push(`${context}: input answer ${JSON.stringify(answer)} can never be typed (must be a finite number)`);
+        } else if (hasFloatNoise(answer)) {
+            failures.push(`${context}: input answer ${answer} has floating-point noise, so the typed answer won't match`);
+        } else if (answer < 0) {
+            failures.push(`${context}: input answer ${answer} is negative`);
+        }
+    }
+    if (typeof question.checkAnswer === 'function' && !question.checkAnswer(answer)) {
+        failures.push(`${context}: checkAnswer rejects the question's own answer ${JSON.stringify(answer)}`);
+    }
+    if (type === 'true-false' && typeof answer !== 'boolean') {
+        failures.push(`${context}: true-false answer must be a boolean, got ${JSON.stringify(answer)}`);
+    }
+    if (type === 'grid-click' && !(question.targetCount >= 0 && question.targetCount <= question.gridRows * question.gridCols)) {
+        failures.push(`${context}: grid target ${question.targetCount} doesn't fit a ${question.gridRows}×${question.gridCols} grid`);
+    }
+    if (type === 'fraction-click' && !(question.targetNumerator >= 0 && question.targetNumerator <= question.parts)) {
+        failures.push(`${context}: fraction target ${question.targetNumerator} doesn't fit ${question.parts} parts`);
+    }
+
+    if (type === 'multiple-choice' && Array.isArray(question.options)) {
+        const labels = question.options.map(o => (o && typeof o === 'object' && hasOwn(o, 'value')) ? String(o.label ?? o.value) : String(o));
+        const values = question.options.map(getOptionValue);
+        if (new Set(labels).size !== labels.length) {
+            failures.push(`${context}: two options look identical: ${JSON.stringify(labels)}`);
+        }
+        values.forEach(v => {
+            if (hasFloatNoise(v)) failures.push(`${context}: option ${v} has floating-point noise`);
+        });
+        const answerIndex = values.findIndex(v => sameValue(v, answer));
+        const answerValue = answerIndex >= 0 ? labelNumber(labels[answerIndex]) : null;
+        if (answerValue !== null) {
+            labels.forEach((label, i) => {
+                const v = labelNumber(label);
+                if (i !== answerIndex && v !== null && Math.abs(v - answerValue) < 1e-9) {
+                    failures.push(`${context}: option "${label}" equals the answer "${labels[answerIndex]}", so two choices are right`);
+                }
+            });
+        }
+        if (typeof question.checkAnswer === 'function') {
+            values.forEach((v, i) => {
+                if (i !== answerIndex && question.checkAnswer(v)) {
+                    failures.push(`${context}: checkAnswer also accepts option "${labels[i]}"`);
+                }
+            });
+        }
+    }
+
+    const textFields = { questionText: question.questionText, subText: question.subText, visual: question.visual, workedExample: question.workedExample };
+    hintFields.forEach(f => { textFields[f] = question[f]; });
+    if (isPlainObject(question.misconceptionHints)) {
+        Object.entries(question.misconceptionHints).forEach(([k, v]) => { textFields[`misconceptionHints.${k}`] = v; });
+    }
+    Object.entries(textFields).forEach(([field, value]) => {
+        if (!value) return;
+        findFalseStatements(toPlainText(value)).forEach(p => {
+            failures.push(`${context}: ${field} states something false: ${p}`);
+        });
+    });
+
+    return failures;
+}
+
 function checkQuestion(question, context) {
     const failures = [];
 
@@ -287,6 +440,8 @@ function checkQuestion(question, context) {
             failures.push(`${context}: duplicate option values ${JSON.stringify(values)}`);
         }
     }
+
+    failures.push(...checkAnswerIntegrity(question, context));
 
     return failures;
 }
@@ -355,21 +510,23 @@ function checkGenerators() {
                         context.__difficulty = difficulty;
                         context.__modality = modality;
 
-                        let question;
                         const label = `${relative(file)} ${unitName}[${exerciseIndex}] diff=${difficulty} modality=${modality}`;
-                        try {
-                            question = vm.runInContext(
-                                '__exercises[__exerciseIndex].generate(__difficulty, __modality)',
-                                context,
-                                { timeout: 200 }
-                            );
-                        } catch (error) {
-                            failures.push(`${label}: generate failed: ${error.message}`);
-                            continue;
-                        }
+                        for (let sample = 0; sample < SAMPLES_PER_COMBO; sample++) {
+                            let question;
+                            try {
+                                question = vm.runInContext(
+                                    '__exercises[__exerciseIndex].generate(__difficulty, __modality)',
+                                    context,
+                                    { timeout: 200 }
+                                );
+                            } catch (error) {
+                                failures.push(`${label}: generate failed: ${error.message}`);
+                                break;
+                            }
 
-                        generatedCount++;
-                        failures.push(...checkQuestion(question, label));
+                            generatedCount++;
+                            failures.push(...checkQuestion(question, label));
+                        }
                     }
                 }
             }
@@ -383,7 +540,8 @@ function main() {
     const files = jsDirs.flatMap(listJsFiles).sort();
     const syntaxFailures = checkSyntax(files);
     const { failures: generatorFailures, generatedCount } = checkGenerators();
-    const failures = [...syntaxFailures, ...generatorFailures];
+    // Repeated samples hit the same bug many times; report each message once.
+    const failures = [...new Set([...syntaxFailures, ...generatorFailures])];
 
     if (failures.length > 0) {
         console.error(`Found ${failures.length} check failure${failures.length === 1 ? '' : 's'}:`);
