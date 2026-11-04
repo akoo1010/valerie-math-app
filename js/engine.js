@@ -14,12 +14,19 @@ const Engine = (() => {
     let wrongAttempts = 0;
     let answered = false;
     let awaitingFeedback = false;
+    /**
+     * When set (boss battles), answers go here instead of the normal
+     * hint/retry flow: one attempt per question, no feedback bar from the engine.
+     * @type {((isCorrect: boolean, userAnswer: AnswerValue, question: ExerciseQuestion) => void)|null}
+     */
+    let answerInterceptor = null;
     /** @type {EngineNavigation} */
     let navigation = {
         showScreen() {},
         getAllUnits() { return []; },
         showMap() {},
-        repeatLastPractice() {}
+        repeatLastPractice() {},
+        resultsExtras() { return ''; }
     };
 
     // --- Utility functions available to unit files ---
@@ -166,10 +173,12 @@ const Engine = (() => {
         const div = document.createElement('div');
         div.className = 'exercise-answers stagger-in';
         const options = question.options || Utils.multipleChoice(question.answer);
-        options.forEach(opt => {
+        options.forEach((opt, i) => {
             const btn = document.createElement('button');
             btn.className = 'btn-answer';
             btn.textContent = getOptionLabel(opt);
+            btn.dataset.label = getOptionLabel(opt);
+            if (i < 9) addKeyHint(btn, String(i + 1));
             const value = getOptionValue(opt);
             btn.addEventListener('click', () => {
                 AudioManager.click();
@@ -182,6 +191,19 @@ const Engine = (() => {
             div.appendChild(btn);
         });
         body.appendChild(div);
+    }
+
+    /**
+     * Small keyboard badge on an answer button (hidden on touch screens by CSS).
+     * @param {HTMLElement} btn
+     * @param {string} key
+     */
+    function addKeyHint(btn, key) {
+        const hint = document.createElement('kbd');
+        hint.className = 'key-hint';
+        hint.textContent = key;
+        hint.setAttribute('aria-hidden', 'true');
+        btn.appendChild(hint);
     }
 
     /**
@@ -283,6 +305,8 @@ const Engine = (() => {
             const btn = document.createElement('button');
             btn.className = 'btn-answer';
             btn.textContent = label;
+            btn.dataset.label = label;
+            addKeyHint(btn, i === 0 ? 'T' : 'F');
             btn.style.minWidth = '140px';
             btn.style.fontSize = '1.2rem';
             btn.addEventListener('click', () => {
@@ -387,6 +411,12 @@ const Engine = (() => {
         const isCorrect = (question.checkAnswer)
             ? question.checkAnswer(userAnswer)
             : userAnswer === question.answer;
+
+        if (answerInterceptor) {
+            answered = true;
+            answerInterceptor(isCorrect, userAnswer, question);
+            return isCorrect;
+        }
 
         if (isCorrect) {
             answered = true;
@@ -539,6 +569,30 @@ const Engine = (() => {
             const btn = fb.querySelector('.feedback-btn');
             if (btn) { e.preventDefault(); btn.click(); }
         });
+
+        // Number keys pick a multiple-choice answer (1-9), T/F answer true-false —
+        // so a laptop player never has to reach for the mouse.
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+            const screen = document.getElementById('screen-exercise');
+            if (!screen || !screen.classList.contains('active')) return;
+            if (document.getElementById('story-overlay') || document.getElementById('break-overlay') || screen.querySelector('.boss-intro')) return;
+            const fb = document.getElementById('exercise-feedback');
+            if (fb && fb.classList.contains('show')) return;
+            const target = /** @type {HTMLElement} */ (e.target);
+            if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA')) return;
+            const buttons = [...document.querySelectorAll('#exercise-body .btn-answer')];
+            if (buttons.length === 0) return;
+            const isTrueFalse = buttons.length === 2 && buttons[0].dataset.label === 'True ✅';
+            let index = -1;
+            if (/^[1-9]$/.test(e.key)) index = Number(e.key) - 1;
+            else if (isTrueFalse && (e.key === 't' || e.key === 'T')) index = 0;
+            else if (isTrueFalse && (e.key === 'f' || e.key === 'F')) index = 1;
+            const btn = buttons[index];
+            if (!btn || btn.classList.contains('disabled')) return;
+            e.preventDefault();
+            btn.click();
+        });
     }
 
     /** @param {SessionMessage} msg */
@@ -627,6 +681,7 @@ const Engine = (() => {
          * @param {ExerciseDefinition[]} exercises
          */
         startUnit(unit, exercises) {
+            answerInterceptor = null;
             currentUnit = unit;
             currentExercises = exercises;
             currentExIndex = 0;
@@ -775,7 +830,8 @@ const Engine = (() => {
                     ${currentUnit.id === 'practice'
                         ? `<button class="btn btn-primary" onclick="Engine.repeatPractice()">🔄 Practice Again</button>
                            <button class="btn btn-success" onclick="Engine.goToMap()">🗺️ Back to Map</button>`
-                        : `<button class="btn btn-primary" onclick="Engine.startUnit(Engine.getCurrentUnit(), Engine.getCurrentUnit().getExercises())">🔄 Try Again</button>
+                        : `${navigation.resultsExtras(currentUnit)}
+                           <button class="btn btn-primary" onclick="Engine.startUnit(Engine.getCurrentUnit(), Engine.getCurrentUnit().getExercises())">🔄 Try Again</button>
                            <button class="btn btn-success" onclick="Engine.goToMap()">🗺️ Back to Map</button>`
                     }
                 </div>
@@ -786,6 +842,49 @@ const Engine = (() => {
 
         /** @returns {MathUnit|null} */
         getCurrentUnit() { return currentUnit; },
+
+        // --- Hooks for boss battles (js/boss.js) ---
+
+        /**
+         * Route answers to `fn` instead of the normal hint/retry flow (null restores it).
+         * @param {((isCorrect: boolean, userAnswer: AnswerValue, question: ExerciseQuestion) => void)|null} fn
+         */
+        setAnswerInterceptor(fn) {
+            answerInterceptor = fn;
+        },
+
+        /**
+         * Render a question into the exercise screen without touching unit progress.
+         * @param {ExerciseQuestion} question
+         */
+        showQuestion(question) {
+            hideFeedback();
+            renderQuestion(question);
+        },
+
+        /** Ignore further answers to the current question (e.g. the timer ran out). */
+        lockAnswers() {
+            answered = true;
+            awaitingFeedback = true;
+            document.querySelectorAll('#exercise-body .btn-answer').forEach(b => b.classList.add('disabled'));
+            document.querySelectorAll('#exercise-body input, #exercise-body button.btn-primary').forEach(el => { el.disabled = true; });
+        },
+
+        /**
+         * Human-readable correct answer (option label, "True"/"False", or the number with its unit).
+         * @param {ExerciseQuestion} question
+         */
+        describeAnswer(question) {
+            if (question.type === 'multiple-choice' && Array.isArray(question.options)) {
+                const opt = question.options.find(o => Object.is(getOptionValue(o), question.answer));
+                if (opt !== undefined) return getOptionLabel(opt);
+            }
+            if (question.type === 'true-false') return question.answer ? 'True' : 'False';
+            if (question.type === 'grid-click') return `${question.targetCount} tiles`;
+            if (question.type === 'fraction-click') return `${question.targetNumerator} of ${question.parts} parts`;
+            const n = typeof question.answer === 'number' ? question.answer.toLocaleString() : String(question.answer);
+            return `${question.inputPrefix || ''}${n}${question.inputSuffix ? ' ' + question.inputSuffix : ''}`;
+        },
 
         /**
          * Start the practice zone with generated exercises.

@@ -81,6 +81,7 @@
  * @property {() => MathUnit[]} getAllUnits
  * @property {() => void} showMap
  * @property {() => void} repeatLastPractice
+ * @property {(unit: MathUnit) => string} resultsExtras extra results-screen buttons (HTML) for a finished unit round
  */
 
 /**
@@ -149,6 +150,26 @@
  * @property {number} updatedAt ms timestamp of the last save; resolves cross-device / offline conflicts
  * @property {DailyProgress} daily
  * @property {SessionSnapshot} session
+ * @property {Object.<string, BossProgress>} bosses boss battle record per unit id
+ * @property {string[]} storySeen story scenes already shown (e.g. 'prologue-3rd')
+ */
+
+/**
+ * @typedef {Object} BossProgress
+ * @property {number} wins
+ * @property {number} attempts
+ * @property {number|null} bestMs fastest winning battle, in ms of answering time
+ * @property {number} bestHearts most hearts left in a win (3 = flawless)
+ */
+
+/**
+ * @typedef {Object} WorldStory
+ * @property {string} title
+ * @property {{name: string, emoji: string}} guide
+ * @property {{name: string, emoji: string}} villain
+ * @property {{name: string, plural: string, emoji: string}} item
+ * @property {string[]} prologue
+ * @property {string[]} finale
  */
 
 /**

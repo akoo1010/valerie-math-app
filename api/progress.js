@@ -150,6 +150,21 @@ function normalizeDaily(value) {
     };
 }
 
+function normalizeBosses(value) {
+    const bosses = {};
+    if (!isPlainObject(value)) return bosses;
+    Object.entries(value).forEach(([unitId, boss]) => {
+        if (unitId.length === 0 || !isPlainObject(boss)) return;
+        bosses[unitId] = {
+            wins: toNonNegativeInteger(boss.wins),
+            attempts: toNonNegativeInteger(boss.attempts),
+            bestMs: typeof boss.bestMs === 'number' && Number.isFinite(boss.bestMs) && boss.bestMs > 0 ? Math.round(boss.bestMs) : null,
+            bestHearts: clampInteger(boss.bestHearts, 0, 3)
+        };
+    });
+    return bosses;
+}
+
 function normalizeSession(value) {
     const defaultSession = {
         currentStreak: 0,
@@ -217,7 +232,11 @@ function normalizeProgressPayload(value) {
         unlockedUnits: [...new Set([...DEFAULT_UNLOCKED, ...unlockedUnits])],
         updatedAt: toNonNegativeInteger(value.updatedAt, 0),
         daily: normalizeDaily(value.daily),
-        session: normalizeSession(value.session)
+        session: normalizeSession(value.session),
+        bosses: normalizeBosses(value.bosses),
+        storySeen: Array.isArray(value.storySeen)
+            ? [...new Set(value.storySeen.filter(key => typeof key === 'string' && key.length > 0 && key.length < 64))].slice(0, 100)
+            : []
     };
 }
 
