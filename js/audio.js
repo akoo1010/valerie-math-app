@@ -21,7 +21,12 @@ const AudioManager = (() => {
         fanfare: 'confirmation_004.ogg',
         star: 'confirmation_003.ogg',
         pop: 'pluck_001.ogg',
-        whoosh: 'tick_001.ogg'
+        whoosh: 'tick_001.ogg',
+        // Boss battles
+        hit: 'drop_002.ogg',
+        hurt: 'glitch_002.ogg',
+        tick: 'tick_002.ogg',
+        bossAppear: 'maximize_008.ogg'
     };
 
     function getCtx() {
@@ -195,6 +200,41 @@ const AudioManager = (() => {
         whoosh() {
             if (playSample('whoosh', 0.12)) return;
             playTone(540, 0.04, 'sine', 0.04);
+        },
+
+        // Fact Dash: a correct answer inside the 3-second ⚡ window
+        ding() {
+            playTone(1318, 0.07, 'sine', 0.12, 0);
+            playTone(1760, 0.1, 'sine', 0.1, 0.05);
+        },
+
+        // Boss battle: she lands a hit (a crit gets a brighter double hit)
+        hit(critical = false) {
+            playSample('hit', 0.45, critical ? 1.25 : 1);
+            playTone(critical ? 880 : 660, 0.12, 'square', 0.12, 0);
+            playTone(critical ? 1320 : 990, 0.16, 'square', 0.12, 0.08);
+            if (critical) playTone(1760, 0.2, 'sine', 0.15, 0.18);
+        },
+
+        // Boss battle: the boss hits back (wrong answer or time ran out)
+        hurt() {
+            if (playSample('hurt', 0.35)) return;
+            playTone(220, 0.18, 'sawtooth', 0.12, 0);
+            playTone(160, 0.25, 'sawtooth', 0.1, 0.12);
+        },
+
+        // Boss battle: last few seconds on the timer
+        tick() {
+            if (playSample('tick', 0.18)) return;
+            playTone(1200, 0.03, 'sine', 0.06);
+        },
+
+        // Boss battle: the boss enters
+        bossAppear() {
+            playSample('bossAppear', 0.4);
+            playTone(196, 0.25, 'triangle', 0.18, 0);
+            playTone(233, 0.25, 'triangle', 0.18, 0.2);
+            playTone(294, 0.4, 'triangle', 0.2, 0.4);
         }
     };
 })();

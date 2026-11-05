@@ -80,7 +80,7 @@ const Time = {
                     return {
                         type: 'multiple-choice',
                         questionText: `What time does this clock show?`,
-                        subText: '🏊 Time for a swim meet event!',
+                        subText: pick(['🏊 Time for a swim meet event!', '🐬 The dolphin show is starting!', '🏖️ Time to head to the beach!', '🍦 Snack time at the pool!']),
                         visual: `<div class="clock-container" style="width:200px;height:200px">${clockSVG(h, m)}</div>`,
                         answer,
                         options: Engine.Utils.shuffle(options).map(o => ({label: o, value: o})),
@@ -102,7 +102,7 @@ const Time = {
                     return {
                         type: 'input',
                         // Don't print the time too — "3:15" would hand over the 15 she's meant to read off the clock
-                        questionText: `The swim race starts at the time on this clock.<br>How many minutes past ${h > 12 ? h - 12 : h} o'clock is that?`,
+                        questionText: `${pick(['The swim race starts', 'Diving lessons begin', 'The boat tour leaves', 'The pool opens'])} at the time on this clock.<br>How many minutes past ${h > 12 ? h - 12 : h} o'clock is that?`,
                         answer: m,
                         visual: `<div class="clock-container" style="width:180px;height:180px">${clockSVG(h, m, 180)}</div>`,
                         hint1: `Look at where the minute hand is pointing`,
@@ -122,9 +122,17 @@ const Time = {
                     const endTotalM = startH * 60 + startM + duration;
                     const endH = Math.floor(endTotalM / 60);
                     const endM = endTotalM % 60;
+                    // Activities that really take 10-90 minutes (a 50m race takes under a minute)
+                    const activity = pick([
+                        { what: 'Swim practice', q: 'How many minutes was practice?' },
+                        { what: "Valerie's swim lesson", q: 'How many minutes long was the lesson?' },
+                        { what: 'The water polo game', q: 'How many minutes did the game last?' },
+                        { what: 'The relay team’s training', q: 'How many minutes did training last?' },
+                        { what: 'The aquarium visit', q: 'How many minutes was the visit?' }
+                    ]);
                     return {
                         type: 'input',
-                        questionText: `The 50m freestyle started at ${formatTime(startH, startM)} and ended at ${formatTime(endH, endM)}.<br>How many minutes was the race?`,
+                        questionText: `${activity.what} started at ${formatTime(startH, startM)} and ended at ${formatTime(endH, endM)}.<br>${activity.q}`,
                         inputSuffix: 'minutes',
                         answer: duration,
                         visual: `<div style="display:flex;gap:30px;align-items:center;">
@@ -142,7 +150,7 @@ const Time = {
                         </div>`,
                         hint1: `Count from the start time to the end time`,
                         hint2: `From ${formatTime(startH, startM)} to ${formatTime(endH, endM)}...`,
-                        hint3: `The race lasted ${duration} minutes`
+                        hint3: `It lasted ${duration} minutes`
                     };
                 }
             },
@@ -156,7 +164,7 @@ const Time = {
                     const endTotalM = startH * 60 + startM + duration;
                     const endH = Math.floor(endTotalM / 60);
                     const endM = endTotalM % 60;
-                    const events = ['Warm-up', 'Freestyle', 'Backstroke', 'Butterfly', 'Cool-down'];
+                    const events = ['Warm-up', 'Swim lesson', 'Diving practice', 'Relay practice', 'Cool-down', 'Snack break', 'Kickboard drills'];
                     const event = pick(events);
                     return {
                         type: 'multiple-choice',
@@ -192,6 +200,9 @@ const Time = {
                         { name: 'Swim lesson after breakfast', h: R(8, 10), ampm: 'AM' },
                         { name: 'Swim meet after lunch', h: R(1, 4), ampm: 'PM' },
                         { name: 'Pool party after dinner', h: R(6, 8), ampm: 'PM' },
+                        { name: 'Breakfast before swim camp', h: R(7, 8), ampm: 'AM' },
+                        { name: 'Ice cream after school', h: R(3, 4), ampm: 'PM' },
+                        { name: 'Bedtime after a long beach day', h: R(8, 9), ampm: 'PM' },
                     ];
                     const e = pick(events);
                     return {
@@ -214,13 +225,19 @@ const Time = {
                     const laps = R(3, 8);
                     const minsPerLap = R(2, 5);
                     const total = laps * minsPerLap;
+                    const tw = pick([
+                        `Valerie swims ${laps} sets. Each set takes ${minsPerLap} minutes.<br>How many minutes total?`,
+                        `Coach runs ${laps} drills. Each drill takes ${minsPerLap} minutes.<br>How many minutes is that?`,
+                        `Valerie does ${laps} rounds of kicking practice, ${minsPerLap} minutes each.<br>How many minutes does she practice?`,
+                        `${laps} swimmers each get a ${minsPerLap}-minute turn on the diving board.<br>How many minutes until everyone has had a turn?`
+                    ]);
                     return {
                         type: 'input',
-                        questionText: `Valerie swims ${laps} laps. Each lap takes ${minsPerLap} minutes.<br>How many minutes total?`,
+                        questionText: tw,
                         inputSuffix: 'min',
                         answer: total,
                         visual: `<div style="font-size:2rem">🏊⏱️</div>`,
-                        hint1: `Multiply the number of laps by time per lap`,
+                        hint1: `Multiply how many times it happens by the minutes each one takes`,
                         hint2: `${laps} × ${minsPerLap} = ?`,
                         hint3: `${laps} × ${minsPerLap} = ${total} minutes`
                     };
@@ -241,7 +258,11 @@ const Time = {
                     const answer = delta;
                     return {
                         type: 'input',
-                        questionText: `It's ${formatTime(now, nowM)} now. The swim race starts at ${formatTime(eventH, eventM)}.<br>How many minutes until the race?`,
+                        questionText: pick([
+                            `It's ${formatTime(now, nowM)} now. The swim race starts at ${formatTime(eventH, eventM)}.<br>How many minutes until the race?`,
+                            `It's ${formatTime(now, nowM)} now. The dolphin show starts at ${formatTime(eventH, eventM)}.<br>How many minutes until the show?`,
+                            `It's ${formatTime(now, nowM)} now. The pool opens at ${formatTime(eventH, eventM)}.<br>How many minutes do we have to wait?`
+                        ]),
                         inputSuffix: 'minutes',
                         answer,
                         visual: `<div style="font-size:3rem;animation:pulse 1.5s infinite;">⏰</div>`,

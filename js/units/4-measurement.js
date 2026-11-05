@@ -31,7 +31,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `${conv.emoji} A monster is ${amount} ${fromUnit} tall!<br>How many ${conv.to} is that?`,
+                        questionText: `${conv.emoji} ${pick([`A monster is ${amount} ${fromUnit} tall!`, `A troll's bridge is ${amount} ${fromUnit} long.`, `The castle wall is ${amount} ${fromUnit} high.`])}<br>How many ${conv.to} is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-red);">
                             🐲 ${amount} ${fromUnit} = ? ${conv.to}
                         </div>`,
@@ -84,7 +84,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `⚖️ A monster egg weighs ${pounds} ${pounds === 1 ? 'pound' : 'pounds'}.<br>How many ounces is that?`,
+                        questionText: `⚖️ ${pick(['A monster egg', 'A bag of dragon food', 'A giant pumpkin pet'])} weighs ${pounds} ${pounds === 1 ? 'pound' : 'pounds'}.<br>How many ounces is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-blue);">
                             🥚 ${pounds} lb = ? oz
                         </div>`,
@@ -143,7 +143,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🧪 A potion cauldron holds ${amount} ${fromUnit}.<br>How many ${conv.to} is that?`,
+                        questionText: `🧪 ${pick(['A potion cauldron holds', 'A troll\'s soup pot holds', 'A slime bucket holds'])} ${amount} ${fromUnit}.<br>How many ${conv.to} is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-purple);">
                             🧪 ${amount} ${fromUnit} = ? ${conv.to}
                         </div>`,
@@ -202,7 +202,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🐾 A monster ran ${amount} ${fromUnit}.<br>How many ${conv.to} is that?`,
+                        questionText: `🐾 ${conv.to === 'millimeters' ? pick([`A monster's claw is ${amount} ${fromUnit} long.`, `A baby dragon's tooth is ${amount} ${fromUnit} long.`]) : conv.to === 'centimeters' ? pick([`A monster jumped ${amount} ${fromUnit}.`, `A sea serpent is ${amount} ${fromUnit} long.`]) : pick([`A monster ran ${amount} ${fromUnit}.`, `The monster parade route is ${amount} ${fromUnit} long.`])}<br>How many ${conv.to} is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-green);">
                             🐾 ${amount} ${fromUnit} = ? ${conv.to}
                         </div>`,
@@ -256,7 +256,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🦖 A dinosaur-monster weighs ${kg} ${kg === 1 ? 'kilogram' : 'kilograms'}.<br>How many grams is that?`,
+                        questionText: `🦖 ${pick(['A baby dino-monster weighs', 'A bag of monster kibble weighs', 'A treasure chest weighs'])} ${kg} ${kg === 1 ? 'kilogram' : 'kilograms'}.<br>How many grams is that?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-yellow);">
                             🦖 ${kg} kg = ? g
                         </div>`,
@@ -347,7 +347,7 @@ const Measurement4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `⏰ A monster training session starts at ${startStr} and lasts ${elapsedHours > 0 ? elapsedHours + ' hour' + (elapsedHours > 1 ? 's' : '') + ' and ' : ''}${elapsedMins} minutes.<br>What time does it end?`,
+                        questionText: `⏰ ${pick(['A monster training session', 'The haunted house tour', 'The dragon-riding lesson', 'The monster movie'])} starts at ${startStr} and lasts ${elapsedHours > 0 ? elapsedHours + ' hour' + (elapsedHours > 1 ? 's' : '') + ' and ' : ''}${elapsedMins} minutes.<br>What time does it end?`,
                         visual: `<div style="text-align:center;font-size:1.5rem;font-weight:700;color:var(--monster-red);">⏰ 🐲 Start: ${startStr}</div>`,
                         answer,
                         options,

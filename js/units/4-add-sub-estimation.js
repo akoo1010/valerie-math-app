@@ -65,7 +65,12 @@ const AddSubEstimation4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 The DJ played ${Engine.Utils.fmt(a)} beats in the first set and ${Engine.Utils.fmt(b)} beats in the second set.<br>How many beats total?`,
+                        questionText: pick([
+                            `🎵 The DJ played ${Engine.Utils.fmt(a)} beats in the first set and ${Engine.Utils.fmt(b)} beats in the second set.<br>How many beats total?`,
+                            `💃 The dance video got ${Engine.Utils.fmt(a)} views on Saturday and ${Engine.Utils.fmt(b)} views on Sunday.<br>How many views in all?`,
+                            `🪩 The festival sold ${Engine.Utils.fmt(a)} glow sticks before noon and ${Engine.Utils.fmt(b)} after noon.<br>How many glow sticks were sold?`,
+                            `🎤 ${Engine.Utils.fmt(a)} fans sat downstairs and ${Engine.Utils.fmt(b)} fans sat upstairs at the concert.<br>How many fans came?`
+                        ]),
                         visual: `<div style="font-family:var(--font-display); font-size:1.6rem; text-align:right; line-height:1.8; color:var(--dance-pink);">
                             <div>${Engine.Utils.fmt(a)}</div>
                             <div style="border-bottom:2px solid var(--dance-purple); padding-bottom:4px;">+ ${Engine.Utils.fmt(b)}</div>
@@ -119,7 +124,12 @@ const AddSubEstimation4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 A dance competition had ${Engine.Utils.fmt(a)} votes cast. ${Engine.Utils.fmt(b)} votes went to Team Groove.<br>How many votes did the other teams get?`,
+                        questionText: pick([
+                            `🕺 A dance competition had ${Engine.Utils.fmt(a)} votes cast. ${Engine.Utils.fmt(b)} votes went to Team Groove.<br>How many votes did the other teams get?`,
+                            `🎟️ The arena has ${Engine.Utils.fmt(a)} seats. ${Engine.Utils.fmt(b)} tickets are already sold.<br>How many seats are still open?`,
+                            `👟 The shoe shop had ${Engine.Utils.fmt(a)} dance sneakers. It sold ${Engine.Utils.fmt(b)} of them.<br>How many sneakers are left?`,
+                            `🎶 A song has ${Engine.Utils.fmt(a)} notes. The band has played ${Engine.Utils.fmt(b)} notes so far.<br>How many notes are left to play?`
+                        ]),
                         visual: `<div style="font-family:var(--font-display); font-size:1.6rem; text-align:right; line-height:1.8; color:var(--dance-gold);">
                             <div>${Engine.Utils.fmt(a)}</div>
                             <div style="border-bottom:2px solid var(--dance-pink); padding-bottom:4px;">− ${Engine.Utils.fmt(b)}</div>
@@ -162,7 +172,7 @@ const AddSubEstimation4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎤 Estimate the total audience! Round each number to the nearest ${Engine.Utils.fmt(roundTo)}, then add.<br>${Engine.Utils.fmt(a)} + ${Engine.Utils.fmt(b)} ≈ ?`,
+                        questionText: `${pick(['🎤 Estimate the total audience!', '🪩 About how many dancers came to both shows?', '🎟️ Estimate the tickets sold over two nights!'])} Round each number to the nearest ${Engine.Utils.fmt(roundTo)}, then add.<br>${Engine.Utils.fmt(a)} + ${Engine.Utils.fmt(b)} ≈ ?`,
                         // Rounded values only in visual modality — elsewhere the rounding is the skill being practiced
                         visual: `<div style="display:flex;gap:16px;justify-content:center;align-items:center;font-size:1.3rem;color:var(--dance-purple);">
                             <div style="text-align:center;"><span style="font-weight:700;">${Engine.Utils.fmt(a)}</span>${modality === 'visual' ? `<br><span style="font-size:0.8rem;">≈ ${Engine.Utils.fmt(estA)}</span>` : ''}</div>
@@ -208,7 +218,7 @@ const AddSubEstimation4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `💃 Estimate the difference! Round each number to the nearest ${Engine.Utils.fmt(roundTo)}, then subtract.<br>${Engine.Utils.fmt(a)} − ${Engine.Utils.fmt(b)} ≈ ?`,
+                        questionText: `${pick(['💃 Estimate the difference!', '🎵 About how many more streams did the hit song get?', '🕺 Estimate how many more people came on Friday!'])} Round each number to the nearest ${Engine.Utils.fmt(roundTo)}, then subtract.<br>${Engine.Utils.fmt(a)} − ${Engine.Utils.fmt(b)} ≈ ?`,
                         // Rounded values only in visual modality — elsewhere the rounding is the skill being practiced
                         visual: `<div style="display:flex;gap:16px;justify-content:center;align-items:center;font-size:1.3rem;color:var(--dance-gold);">
                             <div style="text-align:center;"><span style="font-weight:700;">${Engine.Utils.fmt(a)}</span>${modality === 'visual' ? `<br><span style="font-size:0.8rem;">≈ ${Engine.Utils.fmt(estA)}</span>` : ''}</div>
@@ -263,7 +273,9 @@ const AddSubEstimation4 = {
                         { text: (a, b) => `🎵 A playlist had ${Engine.Utils.fmt(a)} songs. The DJ removed ${Engine.Utils.fmt(b)} slow songs. How many are left?`,
                           cue: `"Removed" and "left" mean take away — that means subtract!` },
                         { text: (a, b) => `🪩 The disco ball lit up ${Engine.Utils.fmt(a)} times. ${Engine.Utils.fmt(b)} were during warm-up. How many were during the show?`,
-                          cue: `You know the total and the warm-up part — take the warm-up part away to find the show part. That means subtract!` }
+                          cue: `You know the total and the warm-up part — take the warm-up part away to find the show part. That means subtract!` },
+                        { text: (a, b) => `👗 The costume shop had ${Engine.Utils.fmt(a)} sequins. Designers sewed ${Engine.Utils.fmt(b)} onto dresses. How many sequins are left?`,
+                          cue: `Some sequins were used up — take them away. That means subtract!` }
                     ];
                     const scenario = pick(scenarios);
                     const a = diff >= 2 ? R(10000, 50000) : R(1000, 9999);
@@ -319,9 +331,7 @@ const AddSubEstimation4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: isAdd
-                            ? `🎶 Find the missing beat!<br>${Engine.Utils.fmt(a)} + ? = ${Engine.Utils.fmt(c)}`
-                            : `🎶 Find the missing beat!<br>${Engine.Utils.fmt(a)} − ? = ${Engine.Utils.fmt(c)}`,
+                        questionText: `${pick(['🎶 Find the missing beat!', '🔍 Which number is hiding?', '🎧 The DJ dropped a number — find it!'])}<br>${Engine.Utils.fmt(a)} ${isAdd ? '+' : '−'} ? = ${Engine.Utils.fmt(c)}`,
                         visual: `<div style="font-size:2rem; color:var(--dance-cyan);">
                             <span>${Engine.Utils.fmt(a)}</span>
                             <span style="color:var(--dance-pink);"> ${isAdd ? '+' : '−'} </span>

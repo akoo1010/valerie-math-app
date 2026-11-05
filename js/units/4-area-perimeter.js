@@ -25,7 +25,7 @@ const AreaPerimeter4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🪩 The dance floor is ${w} meters wide and ${h} meters long.<br>What is the area?`,
+                        questionText: `${pick([`🪩 The dance floor is ${w} meters wide and ${h} meters long.`, `🎪 A festival tent floor is ${w} meters wide and ${h} meters long.`, `🖼️ A giant poster is ${w} meters wide and ${h} meters long.`])}<br>What is the area?`,
                         visual: `<div style="text-align:center;">
                             <div style="display:inline-flex;width:${Math.round(w * scale)}px;height:${Math.round(h * scale)}px;background:rgba(236,72,153,0.15);border:3px solid var(--dance-pink);border-radius:8px;align-items:center;justify-content:center;position:relative;">
                                 <span style="font-weight:700;color:var(--dance-pink);">🪩</span>
@@ -77,7 +77,7 @@ const AreaPerimeter4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `💃 The dance stage is ${w} feet wide and ${h} feet long.<br>What is the perimeter?`,
+                        questionText: `${pick([`💃 The dance stage is ${w} feet wide and ${h} feet long.`, `✨ LED lights go around a ${w}-foot by ${h}-foot stage.`, `🎀 Ribbon trims a ${w}-foot by ${h}-foot banner.`])}<br>What is the perimeter?`,
                         visual: `<div style="text-align:center;">
                             <div style="display:inline-block;border:3px dashed var(--dance-cyan);border-radius:8px;padding:20px 30px;">
                                 <div style="font-size:0.9rem;color:var(--dance-gold);font-weight:700;">${w} ft</div>
@@ -129,7 +129,7 @@ const AreaPerimeter4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 A dance floor has area = ${area} sq ft. One side is ${known} ft.<br>How long is the other side?`,
+                        questionText: `${pick(['🎵 A dance floor', '🧺 A picnic blanket', '🎪 A stage rug'])} has area = ${area} sq ft. One side is ${known} ft.<br>How long is the other side?`,
                         visual: `<div style="text-align:center;font-size:1.4rem;font-weight:700;">
                             <span style="color:var(--dance-pink);">Area = ${area} sq ft</span><br>
                             <span style="color:var(--dance-cyan);">${known} ft × ? = ${area}</span>
@@ -180,7 +180,7 @@ const AreaPerimeter4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 A stage has perimeter = ${perim} ft. One side is ${known} ft.<br>What is the other side length?`,
+                        questionText: `${pick(['🕺 A stage', '🌻 A rectangular garden', '🏀 A rectangular court'])} has perimeter = ${perim} ft. One side is ${known} ft.<br>What is the other side length?`,
                         visual: `<div style="text-align:center;font-size:1.4rem;font-weight:700;">
                             <span style="color:var(--dance-gold);">Perimeter = ${perim} ft</span><br>
                             <span style="color:var(--dance-purple);">2 × (${known} + ?) = ${perim}</span>
@@ -234,7 +234,7 @@ const AreaPerimeter4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🪩 A dance floor is L-shaped! Find the total area.<br>Top part: ${w1} × ${h1}. Bottom part: ${w2} × ${h2}.`,
+                        questionText: `${pick(['🪩 A dance floor is L-shaped!', '🏠 A rec room is L-shaped!', '🛝 A playground is L-shaped!'])} Find the total area.<br>Top part: ${w1} × ${h1}. Bottom part: ${w2} × ${h2}.`,
                         visual: `<div style="text-align:center;">
                             <div style="display:inline-block;text-align:left;">
                                 <div style="width:${w1 * 20}px;height:${h1 * 15}px;background:rgba(236,72,153,0.2);border:2px solid var(--dance-pink);border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--dance-pink);">${w1}×${h1}</div>
@@ -286,7 +286,7 @@ const AreaPerimeter4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎤 Find the perimeter! Add ALL the sides:<br>${sides.join(' + ')} = ?`,
+                        questionText: `${pick(['🎤 Find the perimeter!', '🚧 How much fence goes around this oddly shaped yard?', '✨ How many feet of light strip go around this stage?'])} Add ALL the sides:<br>${sides.join(' + ')} = ?`,
                         visual: `<div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
                             ${sides.map((s, i) => `<div style="padding:8px 14px;background:rgba(${i % 2 === 0 ? '236,72,153' : '34,211,238'},0.15);border:2px solid var(--dance-${i % 2 === 0 ? 'pink' : 'cyan'});border-radius:8px;font-weight:700;color:var(--dance-${i % 2 === 0 ? 'pink' : 'cyan'});">${s}</div>`).join('<span style="align-self:center;color:var(--dance-gold);">+</span>')}
                         </div>`,

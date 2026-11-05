@@ -29,7 +29,12 @@ const Multiply1Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `⚔️ A monster attacks ${b} times with ${a} power each!<br>What is ${a} × ${b}?`,
+                        questionText: `${pick([
+                            `⚔️ A monster attacks ${b} times with ${a} power each!`,
+                            `🐾 ${b} baby monsters each eat ${a} berries.`,
+                            `🛡️ A knight blocks ${b} attacks worth ${a} points each.`,
+                            `💎 A treasure map shows ${b} caves with ${a} gems in each.`
+                        ])}<br>What is ${a} × ${b}?`,
                         visual: `<div style="font-family:var(--font-display);font-size:1.6rem;text-align:right;line-height:1.8;color:var(--monster-red);">
                             <div>${a}</div>
                             <div style="border-bottom:2px solid var(--monster-purple);padding-bottom:4px;">× ${b}</div>
@@ -97,7 +102,12 @@ const Multiply1Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🐲 The dragon has ${a} HP and the spell multiplies it by ${b}!<br>What is ${a} × ${b}?`,
+                        questionText: `${pick([
+                            `🐲 The dragon has ${a} HP and the spell multiplies it by ${b}!`,
+                            `🏰 Each castle tower has ${a} windows. The castle has ${b} towers.`,
+                            `🧪 One potion needs ${a} drops of slime. The wizard makes ${b} potions.`,
+                            `👹 ${b} trolls each guard ${a} gold coins.`
+                        ])}<br>What is ${a} × ${b}?`,
                         visual: `<div style="font-family:var(--font-display);font-size:1.6rem;text-align:right;line-height:1.8;color:var(--monster-blue);">
                             <div>${Engine.Utils.fmt(a)}</div>
                             <div style="border-bottom:2px solid var(--monster-yellow);padding-bottom:4px;">× ${b}</div>
@@ -158,7 +168,12 @@ const Multiply1Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🦖 A monster army of ${b} squads, each with ${Engine.Utils.fmt(a)} soldiers!<br>What is ${Engine.Utils.fmt(a)} × ${b}?`,
+                        questionText: `${pick([
+                            `🦖 A monster army of ${b} squads, each with ${Engine.Utils.fmt(a)} soldiers!`,
+                            `🐉 A dragon hoard has ${b} piles of ${Engine.Utils.fmt(a)} coins each.`,
+                            `🗺️ The monster train has ${b} cars, each carrying ${Engine.Utils.fmt(a)} pounds of rocks.`,
+                            `⭐ ${b} monster trainers each earned ${Engine.Utils.fmt(a)} points.`
+                        ])}<br>What is ${Engine.Utils.fmt(a)} × ${b}?`,
                         visual: `<div style="font-family:var(--font-display);font-size:1.6rem;text-align:right;line-height:1.8;color:var(--monster-purple);">
                             <div>${Engine.Utils.fmt(a)}</div>
                             <div style="border-bottom:2px solid var(--monster-green);padding-bottom:4px;">× ${b}</div>
@@ -217,7 +232,10 @@ const Multiply1Digit4 = {
                     const scenarios = [
                         `🐾 Each monster nest holds ${a} eggs. There are ${b} nests. How many eggs total?`,
                         `⚡ A power crystal gives ${a} energy. A trainer collects ${b} crystals. Total energy?`,
-                        `🔥 Each dragon breathes ${a} fireballs per day. How many fireballs do ${b} dragons breathe?`
+                        `🔥 Each dragon breathes ${a} fireballs per day. How many fireballs do ${b} dragons breathe?`,
+                        `🧌 A troll bridge collects ${a} coins a day. How many coins does it collect in ${b} days?`,
+                        `🦕 A dino-monster walks ${a} steps every minute. How many steps in ${b} minutes?`,
+                        `🎒 Each monster backpack holds ${a} snacks. How many snacks fit in ${b} backpacks?`
                     ];
 
                     const result = {
@@ -275,7 +293,7 @@ const Multiply1Digit4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🗡️ Estimate! Round ${a} to the nearest ${roundTo}, then multiply by ${b}.`,
+                        questionText: `${pick(['🗡️ Estimate!', '🐲 Quick guess for the dragon!', '⚡ Speed estimate!'])} Round ${a} to the nearest ${roundTo}, then multiply by ${b}.`,
                         // Don't show the rounded value here — rounding is the skill (visual modality replaces this with a scaffold)
                         visual: `<div style="text-align:center;color:var(--monster-yellow);font-size:1.4rem;font-weight:700;">
                             <div>${a} × ${b} ≈ ?</div>

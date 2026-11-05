@@ -35,7 +35,11 @@ const Patterns = {
                     const answer = seq[hideIdx];
                     return {
                         type: 'input',
-                        questionText: `Find the pattern! What's the missing number?`,
+                        questionText: pick([
+                            `Find the pattern! What's the missing number?`,
+                            `These blocks follow a rule. Which number belongs in the ? block?`,
+                            `A secret code is hidden in the level. Crack it — what number is missing?`
+                        ]),
                         visual: `<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
                             ${seq.map((n, i) => `<div class="gd-block ${i === hideIdx ? 'portal' : 'jump'}" style="width:50px;height:50px;font-size:${i === hideIdx ? '1.2rem' : '0.95rem'};">${i === hideIdx ? '?' : n}</div>`).join('')}
                         </div>`,
@@ -54,7 +58,11 @@ const Patterns = {
                     const isEven = num % 2 === 0;
                     return {
                         type: 'multiple-choice',
-                        questionText: `Is ${num} even or odd?<br>Jump to the right pad!`,
+                        questionText: pick([
+                            `Is ${num} even or odd?<br>Jump to the right pad!`,
+                            `${num} players want to pair up for a two-player level. Is ${num} even or odd?`,
+                            `Your cube collected ${num} orbs. Is ${num} even or odd?`
+                        ]),
                         visual: `<div style="font-size:3rem;font-weight:800;color:var(--gd-yellow);animation:bounce 1s ease-in-out infinite;">${num}</div>`,
                         answer: isEven ? 'Even' : 'Odd',
                         options: [{label: '🟢 Even', value: 'Even'}, {label: '🔴 Odd', value: 'Odd'}],
@@ -99,7 +107,11 @@ const Patterns = {
                     const answer = start + add * 5;
                     return {
                         type: 'input',
-                        questionText: `What comes next in the pattern?`,
+                        questionText: pick([
+                            `What comes next in the pattern?`,
+                            `Your score goes up by the same amount every jump. What's the next score?`,
+                            `The level's coins follow a pattern. What number is on the next coin?`
+                        ]),
                         visual: `<div style="display:flex;gap:8px;align-items:center;justify-content:center;">
                             ${seq.map(n => `<div class="gd-block coin" style="width:50px;height:50px;">${n}</div>`).join('')}
                             <div class="gd-block portal" style="width:50px;height:50px;">?</div>
@@ -120,9 +132,14 @@ const Patterns = {
                         { seq: ['⬛','⬛','⬜','⬛','⬛','⬜'], next: '⬛', desc: 'black, black, white' },
                         { seq: ['🔺','🟢','🔺','🟢','🔺','🟢'], next: '🔺', desc: 'triangle, circle' },
                         { seq: ['⭐','⭐','❤️','⭐','⭐','❤️'], next: '⭐', desc: 'star, star, heart' },
+                        { seq: ['🟡','🟣','🟠','🟡','🟣','🟠'], next: '🟡', desc: 'yellow, purple, orange' },
+                        { seq: ['🔷','🔷','🔶','🔶','🔷','🔷'], next: '🔶', desc: 'blue, blue, orange, orange' },
+                        { seq: ['⬛','🔺','🔺','⬛','🔺','🔺'], next: '⬛', desc: 'square, triangle, triangle' },
+                        { seq: ['🌙','⭐','⭐','🌙','⭐','⭐'], next: '🌙', desc: 'moon, star, star' },
+                        { seq: ['🟥','🟦','🟩','🟥','🟦','🟩'], next: '🟥', desc: 'red, blue, green' },
                     ];
                     const p = pick(patterns);
-                    const allChoices = ['🔴','🔵','⬛','⬜','🔺','🟢','⭐','❤️'];
+                    const allChoices = ['🔴','🔵','⬛','⬜','🔺','🟢','⭐','❤️','🟡','🟣','🟠','🔷','🔶','🌙','🟥','🟦','🟩'];
                     // Distractors lead with the pattern's other symbol(s) — otherwise the answer
                     // would be the only option that appears in the pattern at all
                     const inPattern = [...new Set(p.seq)].filter(x => x !== p.next);
@@ -130,7 +147,11 @@ const Patterns = {
                     const options = Engine.Utils.shuffle([p.next, ...[...inPattern, ...others].slice(0, 3)]);
                     return {
                         type: 'multiple-choice',
-                        questionText: `What comes next in the shape pattern?`,
+                        questionText: pick([
+                            `What comes next in the shape pattern?`,
+                            `The level's color pads repeat. Which pad comes next?`,
+                            `Finish the pattern on the icon bar!`
+                        ]),
                         visual: `<div style="display:flex;gap:8px;font-size:2rem;align-items:center;">
                             ${p.seq.map(s => `<span>${s}</span>`).join('')}
                             <span style="font-size:2.5rem">❓</span>
@@ -167,7 +188,11 @@ const Patterns = {
                     const answer = applyRule(testInput);
                     return {
                         type: 'input',
-                        questionText: `The machine follows a rule. What does it output for ${testInput}?`,
+                        questionText: pick([
+                            `The machine follows a rule. What does it output for ${testInput}?`,
+                            `This portal changes every number the same way. What comes out when ${testInput} goes in?`,
+                            `Robo-Cube has a secret rule. If you feed it ${testInput}, what does it give back?`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:1.5rem;margin-bottom:8px;">🤖 Mystery Machine</div>
                             <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center;font-weight:700;">

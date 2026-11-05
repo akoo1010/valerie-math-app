@@ -22,7 +22,11 @@ const Perimeter = {
                     const answer = 2 * (l + w);
                     return {
                         type: 'input',
-                        questionText: `The GD level platform is ${l} units long and ${w} units wide.<br>What is the perimeter?`,
+                        questionText: pick([
+                            `The level platform is ${l} units long and ${w} units wide.<br>What is the perimeter?`,
+                            `A neon border goes all the way around a ${l} by ${w} game screen.<br>How long is the border?`,
+                            `Your cube races once around the edge of a ${l} by ${w} block.<br>How far does it travel?`
+                        ]),
                         inputSuffix: 'units',
                         visual: `<div style="border: 3px solid var(--gd-cyan); padding: 24px 40px; border-radius: 4px; position: relative; background: rgba(0,240,255,0.05);">
                             <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gd-dark);padding:0 8px;font-weight:700;color:var(--gd-cyan);">${l}</div>
@@ -84,9 +88,7 @@ const Perimeter = {
                     const answer = hideWidth ? w : l;
                     return {
                         type: 'input',
-                        questionText: hideWidth
-                            ? `A platform has perimeter ${perim} and length ${l}.<br>What is the width?`
-                            : `A platform has perimeter ${perim} and width ${w}.<br>What is the length?`,
+                        questionText: `${pick(['A platform', 'A rectangular portal', 'A neon frame'])} has perimeter ${perim} and ${hideWidth ? `length ${l}` : `width ${w}`}.<br>What is the ${hideWidth ? 'width' : 'length'}?`,
                         inputSuffix: 'units',
                         visual: `<div style="border: 3px solid var(--gd-pink); padding: 20px 35px; border-radius: 4px; position: relative;">
                             <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--gd-dark);padding:0 8px;font-weight:700;color:var(--gd-cyan);"> ${hideWidth ? l : '?'}</div>
@@ -123,7 +125,7 @@ const Perimeter = {
                     }
                     return {
                         type: 'multiple-choice',
-                        questionText: `A rectangle is ${l} × ${w}.<br>What is its ${askPerim ? 'PERIMETER' : 'AREA'}?`,
+                        questionText: `${pick(['A rectangle', 'A game screen', 'A rectangular level map'])} is ${l} × ${w}.<br>What is its ${askPerim ? 'PERIMETER' : 'AREA'}?`,
                         subText: askPerim ? '(distance around)' : '(space inside)',
                         answer: correct,
                         options: Engine.Utils.shuffle([...opts]),
@@ -141,7 +143,11 @@ const Perimeter = {
                     const answer = sides.reduce((a, b) => a + b, 0);
                     return {
                         type: 'input',
-                        questionText: `Add all the sides to find the perimeter!`,
+                        questionText: pick([
+                            `Add all the sides to find the perimeter!`,
+                            `Your cube slides along every edge of this odd-shaped platform. How far does it go?`,
+                            `How much neon tape goes all the way around this shape?`
+                        ]),
                         visual: `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
                             ${sides.map((s, i) => `<div class="gd-block jump" style="width:auto;padding:4px 10px;">Side ${i+1}: ${s}</div>`).join('')}
                         </div>`,
@@ -162,7 +168,11 @@ const Perimeter = {
                     // Given perimeter, what's one possible length?
                     return {
                         type: 'input',
-                        questionText: `Design a rectangle with perimeter ${perim}.<br>If the width is ${w}, what is the length?`,
+                        questionText: pick([
+                            `Design a rectangle with perimeter ${perim}.<br>If the width is ${w}, what is the length?`,
+                            `You have ${perim} units of fence for a rectangle pen. If the pen is ${w} wide, how long is it?`,
+                            `Build a level box using exactly ${perim} edge blocks. It's ${w} blocks wide. How long is it?`
+                        ]),
                         inputSuffix: 'units',
                         answer: l,
                         visual: `<div style="text-align:center;font-size:1.2rem;font-weight:700;color:var(--gd-green);">
@@ -183,9 +193,11 @@ const Perimeter = {
                     const w = R(3, 10);
                     const perim = 2 * (l + w);
                     const scenarios = [
-                        { text: `A GD level border is ${l} units long and ${w} units tall. How many units of fence are needed around it?`, unit: 'units' },
+                        { text: `A level border is ${l} units long and ${w} units tall. How many units of fence are needed around it?`, unit: 'units' },
                         { text: `Valerie is building a frame around her pixel art. It's ${l} cm × ${w} cm. What length of trim does she need?`, unit: 'cm' },
-                        { text: `The GD practice zone is a rectangle: ${l} meters by ${w} meters. What's the perimeter?`, unit: 'meters' },
+                        { text: `The practice zone is a rectangle: ${l} meters by ${w} meters. What's the perimeter?`, unit: 'meters' },
+                        { text: `A poster for the gaming club is ${l} inches by ${w} inches. How much ribbon goes around its edge?`, unit: 'inches' },
+                        { text: `The arcade's dance mat is ${l} feet long and ${w} feet wide. How many feet of light strip go around it?`, unit: 'feet' },
                     ];
                     const s = pick(scenarios);
                     return {

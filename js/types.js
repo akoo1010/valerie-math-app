@@ -81,6 +81,7 @@
  * @property {() => MathUnit[]} getAllUnits
  * @property {() => void} showMap
  * @property {() => void} repeatLastPractice
+ * @property {(unit: MathUnit) => string} resultsExtras extra results-screen buttons (HTML) for a finished unit round
  */
 
 /**
@@ -149,6 +150,52 @@
  * @property {number} updatedAt ms timestamp of the last save; resolves cross-device / offline conflicts
  * @property {DailyProgress} daily
  * @property {SessionSnapshot} session
+ * @property {Object.<string, BossProgress>} bosses boss battle record per unit id
+ * @property {string[]} storySeen story scenes already shown (e.g. 'prologue-3rd')
+ * @property {FactsState} facts Fact Dash progress
+ */
+
+/**
+ * One single-digit fact. Subtraction facts are the inverse of an addition
+ * family: key '-:8:7' is 15 − 7 = 8.
+ *
+ * @typedef {Object} Fact
+ * @property {string} key 'x:7:8', '+:6:7', '-:8:7'
+ * @property {'+'|'-'|'x'} op
+ * @property {number} a
+ * @property {number} b
+ * @property {number} left the first number shown
+ * @property {number} right the second number shown
+ * @property {number} answer
+ * @property {string} text e.g. '7 × 8'
+ * @property {string} tip strategy shown after a miss
+ */
+
+/**
+ * @typedef {Object} FactsState
+ * @property {Object.<string, number[]>} stats per fact: [fastHits, fastDays, lastFastDay, lastSeenDay, attempts, correct, lastMs]
+ * @property {{date: string|null, ms: number, rounds: Object.<string, number>, celebrated: boolean}} daily
+ * @property {string[]} goalDays dates the 10-minute goal was reached
+ * @property {Object.<string, number>} sprintBest best 60-second sprint score per mode
+ * @property {{wins: number, attempts: number, bestMs: number|null}} boss fact boss record
+ */
+
+/**
+ * @typedef {Object} BossProgress
+ * @property {number} wins
+ * @property {number} attempts
+ * @property {number|null} bestMs fastest winning battle, in ms of answering time
+ * @property {number} bestHearts most hearts left in a win (3 = flawless)
+ */
+
+/**
+ * @typedef {Object} WorldStory
+ * @property {string} title
+ * @property {{name: string, emoji: string}} guide
+ * @property {{name: string, emoji: string}} villain
+ * @property {{name: string, plural: string, emoji: string}} item
+ * @property {string[]} prologue
+ * @property {string[]} finale
  */
 
 /**

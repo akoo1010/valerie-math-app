@@ -49,7 +49,8 @@ const App = (() => {
             showScreen,
             getAllUnits: () => ALL_UNITS,
             showMap: () => App.showMap(),
-            repeatLastPractice: () => App.repeatLastPractice()
+            repeatLastPractice: () => App.repeatLastPractice(),
+            resultsExtras: bossCallToAction
         });
 
         // Bring the splash to life immediately — before any network wait — so a
@@ -89,7 +90,18 @@ const App = (() => {
         }
     }
 
+    // Map header: today's Fact Dash minutes
+    function updateFactBadge() {
+        const el = document.getElementById('fact-badge');
+        if (!el || typeof Facts === 'undefined') return;
+        const done = Facts.goalReachedToday();
+        el.textContent = done ? '⚡ Facts ✓' : `⚡ ${Facts.minutesToday()}/10 min`;
+        el.classList.toggle('done', done);
+        el.title = done ? "Today's 10 minutes of facts are done!" : "Fact Dash: today's 10 minutes of single-digit facts";
+    }
+
     function updateDaily() {
+        updateFactBadge();
         const el = document.getElementById('daily-badge');
         if (!el) return;
         const d = Adaptive.getDaily();
@@ -112,7 +124,21 @@ const App = (() => {
         el.className = `backup-status backup-status-${kind}`;
     }
 
+    /**
+     * After a unit round: invite her to fight the unit's boss if it's awake and unbeaten.
+     * @param {MathUnit} unit
+     */
+    function bossCallToAction(unit) {
+        const boss = Story.boss(unit.id);
+        if (!boss || !Adaptive.isBossUnlocked(unit.id) || Adaptive.getBoss(unit.id).wins > 0) return '';
+        return `<button class="btn btn-boss" onclick="Boss.start('${unit.id}')">⚔️ Fight ${boss.emoji} ${escHtml(boss.name)}!</button>`;
+    }
+
     function showScreen(id) {
+        // Leaving the exercise screen ends any boss battle (and its timer)
+        if (id !== 'screen-exercise' && typeof Boss !== 'undefined') Boss.stop();
+        // Leaving Fact Dash's play screen ends the round (time so far is kept)
+        if (id !== 'screen-facts-play' && typeof FactDash !== 'undefined') FactDash.stop();
         AudioManager.whoosh();
         document.querySelectorAll('.screen').forEach(s => {
             s.classList.remove('active');
@@ -140,15 +166,35 @@ const App = (() => {
         // Update map header
         const titleEl = document.getElementById('map-title');
         const welcomeEl = document.getElementById('map-welcome');
+        const world = Story.world(currentGrade);
         if (currentGrade === '4th') {
             titleEl.textContent = '🐾 Monster & Dance World';
-            welcomeEl.textContent = '4th Grade Math — Catch creatures & hit the dance floor!';
+            welcomeEl.textContent = `4th Grade Math — ${world.title}`;
         } else {
             titleEl.textContent = '🗺️ Adventure Map';
-            welcomeEl.textContent = 'Hi Valerie! Choose a world to explore!';
+            welcomeEl.textContent = `3rd Grade Math — ${world.title}`;
         }
 
         Adaptive.checkUnlocks(ALL_UNITS);
+
+        // Story progress: collectibles won from bosses, and what the guide suggests next
+        const collected = Adaptive.countBossWins(units.map(u => u.id));
+        const collectEl = document.getElementById('collect-badge');
+        if (collectEl) {
+            collectEl.textContent = `${world.item.emoji} ${collected}/${units.length}`;
+            collectEl.title = `${world.item.plural} recovered — open the story`;
+        }
+        const guideEl = document.getElementById('guide-bubble');
+        if (guideEl) {
+            // Until today's 10 minutes of facts are done, the guide sends her to Fact Dash first
+            const factsFirst = typeof Facts !== 'undefined' && !Facts.goalReachedToday();
+            guideEl.innerHTML = `
+                <span class="guide-emoji" aria-hidden="true">${world.guide.emoji}</span>
+                <span class="guide-text"><b>${escHtml(world.guide.name)}:</b> ${Story.guideLine(currentGrade, units)}</span>
+                <span class="guide-more">${factsFirst ? "⚡ Let's go" : '📖 Story'}</span>`;
+            guideEl.onclick = factsFirst ? () => { AudioManager.click(); FactDash.open('map'); } : () => App.showStoryLog();
+            guideEl.setAttribute('aria-label', factsFirst ? 'Your guide — open Fact Dash' : 'Your guide — open the story');
+        }
 
         units.forEach(unit => {
             const unlocked = Adaptive.isUnitUnlocked(unit.id);
@@ -169,6 +215,7 @@ const App = (() => {
                     <span class="unit-progress-text">${progress.percent}%</span>
                 </div>
                 <div class="unit-card-stars">⭐ ${progress.stars} / ${progress.maxStars}</div>
+                ${unlocked ? bossChip(unit) : ''}
                 ${!unlocked ? '<div class="unit-card-lock">🔒</div>' : ''}
             `;
 
@@ -181,6 +228,20 @@ const App = (() => {
 
             grid.appendChild(card);
         });
+    }
+
+    /** @param {MathUnit} unit */
+    function bossChip(unit) {
+        const boss = Story.boss(unit.id);
+        if (!boss) return '';
+        const record = Adaptive.getBoss(unit.id);
+        if (record.wins > 0) {
+            return `<div class="unit-card-boss beaten">👑 ${boss.emoji} Beaten${record.bestMs ? ` · ⏱️ ${Boss.formatMs(record.bestMs)}` : ''}${record.bestHearts === 3 ? ' · ✨' : ''}</div>`;
+        }
+        if (Adaptive.isBossUnlocked(unit.id)) {
+            return `<div class="unit-card-boss ready">⚔️ ${boss.emoji} Boss ready!</div>`;
+        }
+        return `<div class="unit-card-boss sleeping">💤 ${boss.emoji} Play a round to wake the boss</div>`;
     }
 
     /**
@@ -227,9 +288,35 @@ const App = (() => {
                 <span class="btn-icon">${progress.percent > 0 ? '🔄' : '🚀'}</span>
                 ${progress.percent > 0 ? 'Continue' : 'Start'}
             </button>
+            ${bossPanel(unit)}
         `;
 
         showScreen('screen-unit-intro');
+    }
+
+    /** @param {MathUnit} unit */
+    function bossPanel(unit) {
+        const boss = Story.boss(unit.id);
+        if (!boss) return '';
+        const record = Adaptive.getBoss(unit.id);
+        const awake = Adaptive.isBossUnlocked(unit.id);
+        const world = Story.world(Story.gradeOf(unit.id));
+        const status = record.wins > 0
+            ? `👑 Beaten ${record.wins}× · best time ${record.bestMs ? Boss.formatMs(record.bestMs) : '—'}${record.bestHearts === 3 ? ' · ✨ flawless' : ''}`
+            : awake
+                ? `Guarding a ${world.item.emoji} ${escHtml(world.item.name)}! Win it back.`
+                : `💤 Asleep — finish 1 round to wake it up.`;
+        return `
+            <div class="boss-panel ${record.wins > 0 ? 'beaten' : awake ? 'ready' : 'sleeping'}">
+                <div class="boss-panel-emoji" aria-hidden="true">${boss.emoji}</div>
+                <div class="boss-panel-info">
+                    <div class="boss-panel-name">${escHtml(boss.name)}</div>
+                    <div class="boss-panel-status">${status}</div>
+                </div>
+                ${awake
+                    ? `<button class="btn btn-boss" onclick="Boss.start('${unit.id}')">⚔️ ${record.wins > 0 ? 'Rematch' : 'Boss Battle'}</button>`
+                    : `<span class="boss-panel-lock">🔒</span>`}
+            </div>`;
     }
 
     // --- Grown-Ups view helpers ---
@@ -359,6 +446,37 @@ const App = (() => {
         }
         html += `</section>`;
 
+        const bossLine = (grade) => {
+            const ids = getUnitsForGrade(grade).map(u => u.id);
+            const beaten = Adaptive.countBossWins(ids);
+            const attempts = ids.reduce((n, id) => n + Adaptive.getBoss(id).attempts, 0);
+            return `<span class="gr-chip">${Story.world(grade).item.emoji} ${grade} grade bosses <b>${beaten}/${ids.length}</b> · ${attempts} battle${attempts === 1 ? '' : 's'}</span>`;
+        };
+        // Fact fluency: per-operation mastery, today's minutes, the facts she misses most
+        const iso = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const factsState = Adaptive.getFactsState();
+        const lastWeek = Array.from({ length: 7 }, (_, i) => { const d = new Date(); d.setDate(d.getDate() - i); return iso(d); });
+        const goalDaysThisWeek = lastWeek.filter(day => factsState.goalDays.includes(day)).length;
+        const tricky = Facts.trickiest(8);
+        const factLine = op => {
+            const c = Facts.counts(op);
+            return `<span class="gr-chip">${Facts.SYMBOL[op]} ${Facts.OP_NAME[op]} <b>${c.mastered}/${c.total}</b> mastered · ${c.learning} learning</span>`;
+        };
+        html += `<section class="gr-section"><h3 class="gr-section-title">⚡ Fact fluency (Fact Dash)</h3>
+            <p class="gr-solid-count">Today: <b>${Facts.goalReachedToday() ? `✅ ${Facts.minutesToday()} minutes (goal: 10)` : `${Facts.minutesToday()} of 10 minutes`}</b> · 10-minute goal met on <b>${goalDaysThisWeek} of the last 7 days</b>${Facts.streak() > 1 ? ` · 🔥 ${Facts.streak()}-day streak` : ''}.
+            A fact counts as mastered after 3 correct answers in under 3 seconds on at least 2 different days.</p>
+            <div class="gr-chips">${Facts.OPS.map(factLine).join('')}</div>
+            ${tricky.length ? `<div class="gr-misc" style="margin-top:10px">🎯 Trickiest right now: ${tricky.map(f => {
+                const s = Facts.stats()[f.key];
+                const misses = s[4] - s[5];
+                return `<b>${escHtml(f.text)} = ${f.answer}</b>${misses > 0 ? ` (missed ${misses}×)` : ''}`;
+            }).join(', ')}</div>` : ''}
+        </section>`;
+
+        html += `<section class="gr-section"><h3 class="gr-section-title">⚔️ Boss battles</h3>
+            <p class="gr-solid-count">Timed challenges that mix every skill in a unit. Answers count toward skill mastery like normal practice.</p>
+            <div class="gr-chips">${bossLine('3rd')}${bossLine('4th')}</div></section>`;
+
         const report = document.getElementById('grownups-report');
         if (report) report.innerHTML = html;
     }
@@ -372,7 +490,21 @@ const App = (() => {
 
         showWorldSelect() {
             AudioManager.click();
+            const desc = document.getElementById('facts-world-desc');
+            if (desc && typeof Facts !== 'undefined') {
+                desc.textContent = Facts.goalReachedToday()
+                    ? "✅ Today's facts are done!"
+                    : `Daily + − × facts · ${Facts.minutesToday()} of 10 min today`;
+            }
             showScreen('screen-world-select');
+        },
+
+        /** @returns {'3rd'|'4th'} the world she last opened */
+        getCurrentGrade() { return currentGrade; },
+
+        showFacts() {
+            AudioManager.click();
+            FactDash.open('map');
         },
 
         showMap(grade) {
@@ -382,6 +514,16 @@ const App = (() => {
             updateDaily();
             updateMuteIcon();
             showScreen('screen-map');
+            // First visit to a world: meet the guide and hear the story
+            Story.maybeShowPrologue(currentGrade);
+        },
+
+        /** @param {'3rd'|'4th'} grade */
+        getUnitsForGrade,
+
+        showStoryLog() {
+            AudioManager.click();
+            Story.showLog(currentGrade, getUnitsForGrade(currentGrade));
         },
 
         toggleMute() {
@@ -416,8 +558,8 @@ const App = (() => {
 
             const multTablesHTML = `
                 <div class="practice-section">
-                    <h3 class="practice-section-title">✖️ Multiplication Tables</h3>
-                    <p class="practice-section-desc">Practice your times tables! Pick a number or try a mix.</p>
+                    <h3 class="practice-section-title">✖️ Times Tables Free Play</h3>
+                    <p class="practice-section-desc">Any table from ×1 to ×12. (Fact Dash above tracks every fact and picks the ones you need most.)</p>
                     <div class="mult-tables-grid">
                         <button class="mult-table-btn mult-table-mixed" onclick="App.startMultiplicationPractice('mixed')">
                             🎲 Mixed (1–12)
@@ -449,7 +591,15 @@ const App = (() => {
                     </div>
                 `;
 
-            body.innerHTML = multTablesHTML + weaknessHTML;
+            const factDashHTML = `
+                <div class="practice-section practice-facts">
+                    <h3 class="practice-section-title">⚡ Fact Dash</h3>
+                    <p class="practice-section-desc">Single-digit + − × facts with fact maps, sprints and the fact boss. Today: ${Facts.goalReachedToday() ? '✅ done!' : `${Facts.minutesToday()} of 10 minutes`}</p>
+                    <button class="btn btn-start" onclick="FactDash.open('practice')"><span class="btn-icon">⚡</span> Open Fact Dash</button>
+                </div>
+            `;
+
+            body.innerHTML = factDashHTML + weaknessHTML + multTablesHTML;
             showScreen('screen-practice');
         },
 

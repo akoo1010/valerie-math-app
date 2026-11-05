@@ -13,6 +13,32 @@ const PlaneFigures4 = {
         const shuffle = Engine.Utils.shuffle;
         // "an equilateral triangle", "a square"
         const article = (word) => /^[aeiou]/i.test(word) ? 'an' : 'a';
+        const R = Engine.Utils.rand;
+        // Random valid triangles of a given type, so the same three triangles don't repeat forever
+        const randTriangleSides = (name) => {
+            if (name === 'equilateral') { const s = R(3, 12); return [s, s, s]; }
+            if (name === 'isosceles') {
+                const a = R(4, 12);
+                let b;
+                do { b = R(2, 2 * a - 1); } while (b === a);
+                return shuffle([a, a, b]);
+            }
+            let s;
+            do { s = [R(3, 15), R(3, 15), R(3, 15)].sort((x, y) => x - y); }
+            while (s[0] === s[1] || s[1] === s[2] || s[0] + s[1] <= s[2]);
+            return shuffle(s);
+        };
+        const randTriangleAngles = (name) => {
+            if (name === 'right') { const x = R(4, 14) * 5; return shuffle([90, x, 90 - x]); }
+            if (name === 'obtuse') {
+                const big = R(19, 30) * 5;
+                const x = R(2, (180 - big) / 5 - 2) * 5;
+                return shuffle([big, x, 180 - big - x]);
+            }
+            let a;
+            do { a = [R(7, 17) * 5, R(7, 17) * 5]; a.push(180 - a[0] - a[1]); } while (a[2] >= 90);
+            return a;
+        };
         const Article = (word) => /^[aeiou]/i.test(word) ? 'An' : 'A';
         // Drawn triangles so each type looks like its name (a single △ glyph looked equilateral for all three)
         const triSvg = (points) => `<svg viewBox="0 0 100 90" width="90" height="81" style="vertical-align:middle;"><polygon points="${points}" fill="rgba(168,85,247,0.15)" stroke="var(--dance-purple)" stroke-width="4" stroke-linejoin="round"/></svg>`;
@@ -98,16 +124,17 @@ const PlaneFigures4 = {
                 skillId: '4pf-triangle-sides',
                 generate(diff, modality) {
                     const types = [
-                        {name: 'equilateral', desc: 'all 3 sides equal', sides: [5, 5, 5]},
-                        {name: 'isosceles', desc: '2 sides equal', sides: [5, 5, 3]},
-                        {name: 'scalene', desc: 'no sides equal', sides: [3, 4, 5]}
+                        {name: 'equilateral', desc: 'all 3 sides equal'},
+                        {name: 'isosceles', desc: '2 sides equal'},
+                        {name: 'scalene', desc: 'no sides equal'}
                     ];
-                    const type = pick(types);
+                    const type = { ...pick(types) };
+                    type.sides = randTriangleSides(type.name);
                     const answer = type.name;
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `💃 A triangle has sides of ${type.sides[0]}, ${type.sides[1]}, and ${type.sides[2]} units.<br>What type of triangle is it?`,
+                        questionText: `${pick(['💃 A triangle has sides of', '🎪 A stage banner is a triangle with sides of', '🍕 A pizza slice has sides of'])} ${type.sides[0]}, ${type.sides[1]}, and ${type.sides[2]} ${pick(['units', 'inches', 'cm'])}.<br>What type of triangle is it?`,
                         visual: `<div style="text-align:center;">
                             <div>${TRIANGLE_SVG[type.name]}</div>
                             <div style="display:flex;gap:12px;justify-content:center;margin-top:8px;">
@@ -156,16 +183,17 @@ const PlaneFigures4 = {
                 skillId: '4pf-triangle-angles',
                 generate(diff, modality) {
                     const types = [
-                        {name: 'acute', desc: 'all angles < 90°', angles: [60, 60, 60]},
-                        {name: 'right', desc: 'one angle = 90°', angles: [90, 45, 45]},
-                        {name: 'obtuse', desc: 'one angle > 90°', angles: [120, 30, 30]}
+                        {name: 'acute', desc: 'all angles < 90°'},
+                        {name: 'right', desc: 'one angle = 90°'},
+                        {name: 'obtuse', desc: 'one angle > 90°'}
                     ];
-                    const type = pick(types);
+                    const type = { ...pick(types) };
+                    type.angles = randTriangleAngles(type.name);
                     const answer = type.name;
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎵 A triangle has angles of ${type.angles[0]}°, ${type.angles[1]}°, and ${type.angles[2]}°.<br>What type of triangle?`,
+                        questionText: `${pick(['🎵 A triangle has angles of', '🕺 A dancer\'s arms and the floor make a triangle with angles of', '⛺ A tent door is a triangle with angles of'])} ${type.angles[0]}°, ${type.angles[1]}°, and ${type.angles[2]}°.<br>What type of triangle?`,
                         visual: `<div style="display:flex;gap:10px;justify-content:center;">
                             ${type.angles.map((a, i) => `<div style="padding:8px 14px;background:rgba(168,85,247,0.15);border:2px solid var(--dance-purple);border-radius:8px;font-weight:700;color:var(--dance-purple);">${a}°</div>`).join('')}
                         </div>`,
@@ -330,7 +358,7 @@ const PlaneFigures4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 Shape quiz! ${selected.q}`,
+                        questionText: `${pick(['🎵 Shape quiz!', '💃 Dance-floor shapes!', '🪩 Quick shape check!'])} ${selected.q}`,
                         visual: `<div style="font-size:3rem;text-align:center;">✨🔷✨</div>`,
                         answer: selected.a,
                         hint1: `Think about the shape — count carefully!`,
@@ -415,8 +443,8 @@ const PlaneFigures4 = {
                         return result;
 
                     } else if (type === 'triangle') {
-                        const types = [{name: 'equilateral', sides: [6, 6, 6]}, {name: 'isosceles', sides: [7, 7, 4]}, {name: 'scalene', sides: [3, 5, 7]}];
-                        const t = pick(types);
+                        const t = { name: pick(['equilateral', 'isosceles', 'scalene']) };
+                        t.sides = randTriangleSides(t.name);
 
                         const result = {
                             type: 'multiple-choice',
@@ -439,7 +467,8 @@ const PlaneFigures4 = {
                         };
 
                         if (modality === 'worked-example') {
-                            const weT = pick(types.filter(x => x.name !== t.name));
+                            const weName = pick(['equilateral', 'isosceles', 'scalene'].filter(n => n !== t.name));
+                            const weT = { name: weName, sides: randTriangleSides(weName) };
                             result.workedExample = `<div style="text-align:center"><p><strong>🔺 BOSS: Triangle Sides</strong></p><p>Step 1: Compare the side numbers.</p><p>Step 2: Count equal sides.</p><p>All 3 equal → Equilateral | 2 equal → Isosceles | None equal → Scalene</p><hr style="margin:8px 0;"><p>Example: ${weT.sides.join(', ')} → <strong>${weT.name}</strong> 💃</p></div>`;
                         } else if (modality === 'visual') {
                             result.visual += `<div class="visual-scaffold" style="margin-top:12px;padding:10px;background:rgba(236,72,153,0.1);border-radius:8px;text-align:center;"><p style="margin:0;font-weight:600;color:var(--dance-pink);">🔺 Boss Tip:</p><p style="margin:4px 0 0;font-size:0.9rem;">Sides: <strong>${t.sides.join(', ')}</strong> — circle the matching numbers! Count your matches to name the triangle. ✨</p></div>`;

@@ -22,7 +22,11 @@ const Area = {
                     const answer = rows * cols;
                     return {
                         type: 'input',
-                        questionText: `Count the tiles to find the area of this pool!`,
+                        questionText: pick([
+                            `Count the tiles to find the area of this pool!`,
+                            `The pool floor is covered in square tiles. What is its area?`,
+                            `Each tile is 1 square unit. How much area does the splash pad cover?`
+                        ]),
                         subText: `Area = ? square units`,
                         visual: `<div class="exercise-grid" style="grid-template-columns: repeat(${cols}, 40px);">
                             ${Array.from({length: answer}, (_, i) =>
@@ -45,7 +49,12 @@ const Area = {
                     const answer = l * w;
                     return {
                         type: 'input',
-                        questionText: `The pool is ${l} meters long and ${w} meters wide.<br>What is the area?`,
+                        questionText: pick([
+                            `The pool is ${l} meters long and ${w} meters wide.<br>What is the area?`,
+                            `The kiddie splash zone is a rectangle ${l} meters long and ${w} meters wide.<br>What is its area?`,
+                            `A pool cover must be ${l} meters long and ${w} meters wide.<br>What is the area of the cover?`,
+                            `The diving area is ${l} meters by ${w} meters.<br>How many square meters is that?`
+                        ]),
                         inputSuffix: 'sq m',
                         visual: `<div style="border: 3px solid var(--ocean-glow); padding: 20px 40px; border-radius: 8px; position: relative; background: rgba(69,183,209,0.1);">
                             <div style="position:absolute;top:-12px;left:50%;transform:translateX(-50%);background:var(--ocean-dark);padding:0 8px;font-weight:700;">${l} m</div>
@@ -72,7 +81,7 @@ const Area = {
                     const answer = area1 + area2;
                     return {
                         type: 'input',
-                        questionText: `This L-shaped pool is made of 2 rectangles.<br>Rectangle 1: ${w1} × ${h1} m&nbsp;&nbsp;|&nbsp;&nbsp;Rectangle 2: ${w2} × ${h2} m<br>What is the total area?`,
+                        questionText: `${pick(['This L-shaped pool is made of 2 rectangles.', 'An L-shaped pool deck is made of 2 rectangles.', 'The lazy river turns a corner, making an L shape from 2 rectangles.'])}<br>Rectangle 1: ${w1} × ${h1} m&nbsp;&nbsp;|&nbsp;&nbsp;Rectangle 2: ${w2} × ${h2} m<br>What is the total area?`,
                         inputSuffix: 'sq m',
                         visual: `<div style="display:flex;gap:2px;">
                             <div style="width:${w1 * 18}px;height:${h1 * 18}px;background:rgba(69,183,209,0.3);border:2px solid var(--ocean-glow);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;">${w1}×${h1}</div>
@@ -94,7 +103,11 @@ const Area = {
                     const area = l * w;
                     return {
                         type: 'input',
-                        questionText: `A pool has an area of ${area} square meters. It is ${l} meters long.<br>How wide is it?`,
+                        questionText: pick([
+                            `A pool has an area of ${area} square meters. It is ${l} meters long.<br>How wide is it?`,
+                            `A rectangular beach mat covers ${area} square meters. It is ${l} meters long.<br>How wide is it?`,
+                            `The new swim lane area is ${area} square meters and ${l} meters long.<br>How many meters wide is it?`
+                        ]),
                         inputSuffix: 'meters',
                         answer: w,
                         hint1: `Area = length × width, so width = area ÷ length`,
@@ -114,7 +127,7 @@ const Area = {
                     const bigger = a1 > a2 ? 'Pool A' : 'Pool B';
                     return {
                         type: 'multiple-choice',
-                        questionText: `Which pool has a bigger area?`,
+                        questionText: pick([`Which pool has a bigger area?`, `Valerie wants the pool with MORE space to swim. Which pool has the bigger area?`, `Which pool needs more tiles to cover its floor?`]),
                         visual: `<div style="display:flex;gap:20px;align-items:flex-end;">
                             <div style="text-align:center">
                                 <div style="font-weight:700;margin-bottom:4px">Pool A</div>
@@ -186,7 +199,11 @@ const Area = {
                     const answer = filled;
                     return {
                         type: 'input',
-                        questionText: `How many tiles are colored in this pool pattern?`,
+                        questionText: pick([
+                            `How many tiles are colored in this pool pattern?`,
+                            `The pool painter colored some tiles blue. How many square units are blue?`,
+                            `What is the area of the blue part of this pool floor?`
+                        ]),
                         visual: `<div class="exercise-grid" style="grid-template-columns: repeat(${cols}, 40px);">
                             ${Array.from({length: total}, (_, i) => {
                                 const isFilled = i < filled;

@@ -60,6 +60,22 @@ const Adaptive = (() => {
 
     const DEFAULT_UNLOCKED = ['mult-intro', 'mult-1digit', 'add-sub', '4-place-value', '4-add-sub-estimation', '4-multiply-1digit'];
 
+    /** @returns {BossProgress} */
+    function createDefaultBoss() {
+        return { wins: 0, attempts: 0, bestMs: null, bestHearts: 0 };
+    }
+
+    /** Fact Dash progress: per-fact stats, today's minutes, personal bests. @returns {FactsState} */
+    function createDefaultFacts() {
+        return {
+            stats: {},           // { 'x:7:8': [fastHits, fastDays, lastFastDay, lastSeenDay, attempts, correct, lastMs] }
+            daily: { date: null, ms: 0, rounds: {}, celebrated: false },
+            goalDays: [],        // dates the 10-minute goal was reached (drives the streak)
+            sprintBest: {},      // { '+': 23, 'x': 18, mix: 20 }
+            boss: { wins: 0, attempts: 0, bestMs: null }
+        };
+    }
+
     /** @returns {ProgressState} */
     function createDefaultState() {
         return {
@@ -70,7 +86,10 @@ const Adaptive = (() => {
             unlockedUnits: [...DEFAULT_UNLOCKED],
             updatedAt: 0, // ms timestamp of the last save; used to resolve device/offline conflicts
             daily: freshDaily(),
-            session: freshSession()
+            session: freshSession(),
+            bosses: {},   // { unitId: BossProgress }
+            storySeen: [], // story scenes already shown, e.g. 'prologue-3rd'
+            facts: createDefaultFacts()
         };
     }
 
@@ -202,6 +221,64 @@ const Adaptive = (() => {
             }));
     }
 
+    /** @returns {BossProgress} */
+    function normalizeBossProgress(value) {
+        if (!isPlainObject(value)) return createDefaultBoss();
+        const bestMs = typeof value.bestMs === 'number' && Number.isFinite(value.bestMs) && value.bestMs > 0
+            ? Math.round(value.bestMs) : null;
+        return {
+            wins: toNonNegativeInteger(value.wins),
+            attempts: toNonNegativeInteger(value.attempts),
+            bestMs,
+            bestHearts: clampInteger(value.bestHearts, 0, 3)
+        };
+    }
+
+    const FACT_KEY = /^[+\-x]:[0-9]:[0-9]$/;
+    const FACT_MODES = ['+', '-', 'x', 'mix'];
+    const isIsoDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+
+    /** @returns {FactsState} */
+    function normalizeFacts(value) {
+        const facts = createDefaultFacts();
+        if (!isPlainObject(value)) return facts;
+        if (isPlainObject(value.stats)) {
+            Object.entries(value.stats).forEach(([key, s]) => {
+                if (FACT_KEY.test(key) && Array.isArray(s) && s.length === 7
+                    && s.every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0)) {
+                    facts.stats[key] = s.map(n => Math.min(Math.trunc(n), 1e9));
+                }
+            });
+        }
+        if (isPlainObject(value.daily)) {
+            facts.daily.date = isIsoDate(value.daily.date) ? value.daily.date : null;
+            facts.daily.ms = toNonNegativeInteger(value.daily.ms);
+            facts.daily.celebrated = value.daily.celebrated === true;
+            if (isPlainObject(value.daily.rounds)) {
+                FACT_MODES.forEach(m => {
+                    const n = toNonNegativeInteger(value.daily.rounds[m]);
+                    if (n > 0) facts.daily.rounds[m] = n;
+                });
+            }
+        }
+        facts.goalDays = Array.isArray(value.goalDays) ? [...new Set(value.goalDays.filter(isIsoDate))].slice(-60) : [];
+        if (isPlainObject(value.sprintBest)) {
+            FACT_MODES.forEach(m => {
+                const n = toNonNegativeInteger(value.sprintBest[m]);
+                if (n > 0) facts.sprintBest[m] = n;
+            });
+        }
+        if (isPlainObject(value.boss)) {
+            facts.boss = {
+                wins: toNonNegativeInteger(value.boss.wins),
+                attempts: toNonNegativeInteger(value.boss.attempts),
+                bestMs: typeof value.boss.bestMs === 'number' && Number.isFinite(value.boss.bestMs) && value.boss.bestMs > 0
+                    ? Math.round(value.boss.bestMs) : null
+            };
+        }
+        return facts;
+    }
+
     function normalizeDaily(value) {
         if (!isPlainObject(value)) return freshDaily();
         const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
@@ -272,6 +349,14 @@ const Adaptive = (() => {
         normalized.updatedAt = toNonNegativeInteger(value.updatedAt, 0);
         normalized.daily = normalizeDaily(value.daily);
         normalized.session = normalizeSession(value.session);
+
+        if (isPlainObject(value.bosses)) {
+            Object.entries(value.bosses).forEach(([unitId, boss]) => {
+                if (unitId.length > 0) normalized.bosses[unitId] = normalizeBossProgress(boss);
+            });
+        }
+        normalized.storySeen = normalizeStringArray(value.storySeen);
+        normalized.facts = normalizeFacts(value.facts);
 
         return normalized;
     }
@@ -473,6 +558,24 @@ const Adaptive = (() => {
         }
     }
 
+    // Start today's Fact Dash minutes fresh when the calendar day changes.
+    function rolloverFacts() {
+        const today = todayStr();
+        if (state.facts.daily.date !== today) {
+            state.facts.daily = { date: today, ms: 0, rounds: {}, celebrated: false };
+        }
+    }
+
+    // Count today as a practiced day (the 7 day-dots on the map).
+    function notePracticeDay() {
+        rolloverDaily();
+        const daily = state.daily;
+        if (!daily.recentDays.includes(daily.date)) {
+            daily.recentDays.push(daily.date);
+            if (daily.recentDays.length > 30) daily.recentDays = daily.recentDays.slice(-30);
+        }
+    }
+
     function recordSessionResult(isCorrect) {
         const session = state.session;
         session.currentStreak = isCorrect ? session.currentStreak + 1 : 0;
@@ -490,6 +593,8 @@ const Adaptive = (() => {
 
     return {
         load,
+        /** True once saved progress has been loaded (cloud or local). */
+        isLoaded() { return _loaded; },
         /** @returns {ProgressState} */
         getState() { return state; },
 
@@ -868,7 +973,10 @@ const Adaptive = (() => {
                 skills: JSON.parse(JSON.stringify(state.skills)),
                 weaknessQueue: JSON.parse(JSON.stringify(state.weaknessQueue)),
                 totalStars: state.totalStars,
-                unlockedUnits: [...state.unlockedUnits]
+                unlockedUnits: [...state.unlockedUnits],
+                bosses: JSON.parse(JSON.stringify(state.bosses)),
+                storySeen: [...state.storySeen],
+                facts: JSON.parse(JSON.stringify(state.facts))
             };
             return {
                 format: 'valerie-math-progress',
@@ -915,6 +1023,88 @@ const Adaptive = (() => {
             }
 
             return { ok: true, synced };
+        },
+
+        // --- Boss battle & story API ---
+
+        /**
+         * Read-only boss record (never materializes an entry).
+         * @param {string} unitId
+         * @returns {BossProgress}
+         */
+        getBoss(unitId) {
+            return state.bosses[unitId] ? { ...state.bosses[unitId] } : createDefaultBoss();
+        },
+
+        /** A unit's boss wakes up once she has finished one round of that unit. */
+        isBossUnlocked(unitId) {
+            const unit = state.units[unitId];
+            return !!unit && unit.completed.length >= 1;
+        },
+
+        /**
+         * @param {string} unitId
+         * @param {{won: boolean, ms: number, hearts: number}} result
+         * @returns {{firstWin: boolean, newRecord: boolean, previousBestMs: number|null}}
+         */
+        recordBossResult(unitId, { won, ms, hearts }) {
+            const boss = state.bosses[unitId] || (state.bosses[unitId] = createDefaultBoss());
+            boss.attempts++;
+            const previousBestMs = boss.bestMs;
+            let firstWin = false, newRecord = false;
+            if (won) {
+                firstWin = boss.wins === 0;
+                boss.wins++;
+                if (boss.bestMs === null || ms < boss.bestMs) {
+                    newRecord = boss.bestMs !== null;
+                    boss.bestMs = Math.round(ms);
+                }
+                boss.bestHearts = Math.max(boss.bestHearts, hearts);
+            }
+            save();
+            return { firstWin, newRecord, previousBestMs };
+        },
+
+        /** @param {string[]} unitIds */
+        countBossWins(unitIds) {
+            return unitIds.filter(id => (state.bosses[id]?.wins || 0) > 0).length;
+        },
+
+        /** @param {string} unitId */
+        unlockUnit(unitId) {
+            if (!state.unlockedUnits.includes(unitId)) {
+                state.unlockedUnits.push(unitId);
+                save();
+                return true;
+            }
+            return false;
+        },
+
+        /** @param {string} key */
+        hasSeenStory(key) {
+            return state.storySeen.includes(key);
+        },
+
+        /** @param {string} key */
+        markStorySeen(key) {
+            if (!state.storySeen.includes(key)) {
+                state.storySeen.push(key);
+                save();
+            }
+        },
+
+        // --- Fact Dash API (js/facts.js reads and updates this) ---
+
+        /** Live Fact Dash state, with today's counters rolled over. @returns {FactsState} */
+        getFactsState() {
+            rolloverFacts();
+            return state.facts;
+        },
+
+        /** Persist Fact Dash changes and count today as a practice day. */
+        commitFacts() {
+            notePracticeDay();
+            save();
         },
 
         // --- Modality API ---

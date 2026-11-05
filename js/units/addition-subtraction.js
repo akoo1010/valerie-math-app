@@ -27,7 +27,12 @@ const AdditionSubtraction = {
                     const colors = ['#ff8fab', '#cdb4db', '#b8f2e6', '#fde68a', '#ff7f7f'];
                     const result = {
                         type: 'input',
-                        questionText: `You have ${a} beads and get ${b} more.<br>How many beads do you have now?`,
+                        questionText: pick([
+                            `You have ${a} beads and get ${b} more.<br>How many beads do you have now?`,
+                            `Valerie strung ${a} beads on Monday and ${b} beads on Tuesday.<br>How many beads did she string?`,
+                            `The bead jar has ${a} pink beads and ${b} purple beads.<br>How many beads are in the jar?`,
+                            `Your friend made a necklace with ${a} beads. You made one with ${b} beads.<br>How many beads did you use together?`
+                        ]),
                         visual: `<div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
                             ${Array.from({length: Math.min(10, Math.floor(a/10))}, (_, i) =>
                                 `<span class="craft-bead" style="background:${colors[i % colors.length]}"></span>`
@@ -50,7 +55,7 @@ const AdditionSubtraction = {
                             return null;
                         },
                         misconceptionHints: {
-                            'subtracted-instead-of-added': `Careful! "Get more" means we add, not subtract. Try ${a} + ${b}.`,
+                            'subtracted-instead-of-added': `Careful! We're putting two groups of beads together, so we add, not subtract. Try ${a} + ${b}.`,
                             'place-value': `Watch your place values! Line up ones, tens, and hundreds carefully.`,
                             'carry-error': `So close! Did you remember to carry the 1 to the next column?`,
                             'off-by-one': `So close! Re-add the ones column carefully.`
@@ -111,8 +116,16 @@ const AdditionSubtraction = {
                     const result = {
                         type: 'input',
                         questionText: isAdd
-                            ? `You have ${a} ${items} and buy ${b} more. How many do you have now?`
-                            : `You have ${a} ${items} and use ${b} for your project. How many are left?`,
+                            ? pick([
+                                `You have ${a} ${items} and buy ${b} more. How many do you have now?`,
+                                `There are ${a} ${items} in the craft box. Your teacher adds ${b} more. How many are in the box now?`,
+                                `You found ${a} ${items} in one drawer and ${b} in another drawer. How many did you find in all?`
+                            ])
+                            : pick([
+                                `You have ${a} ${items} and use ${b} for your project. How many are left?`,
+                                `The art room had ${a} ${items}. The class used ${b} to decorate cards. How many are left?`,
+                                `You had ${a} ${items} and gave ${b} to your friends. How many do you have now?`
+                            ]),
                         visual: `<div style="font-size:2.5rem">${isAdd ? '🛒 ➕ 🎨' : '🎨 ➖ ✂️'}</div>`,
                         answer,
                         hint1: isAdd ? `This is an addition problem! Add the two amounts.` : `This is a subtraction problem! Take away from the total.`,
@@ -195,8 +208,13 @@ const AdditionSubtraction = {
                     const answer = estA + estB;
                     return {
                         type: 'multiple-choice',
-                        questionText: `Estimate! Round each number to the nearest 10, then add.<br>${a} + ${b} ≈ ?`,
-                        subText: '🎨 About how many craft supplies?',
+                        questionText: `${pick([
+                            `The craft fair sold ${a} bracelets and ${b} keychains.`,
+                            `Valerie has ${a} stickers and ${b} gems.`,
+                            `The art club painted ${a} rocks in fall and ${b} rocks in spring.`,
+                            `There are ${a} red crayons and ${b} blue crayons.`
+                        ])}<br>Estimate! Round each number to the nearest 10, then add.<br>${a} + ${b} ≈ ?`,
+                        subText: '🎨 About how many in all?',
                         answer,
                         options: Engine.Utils.roundedMultipleChoice(answer, 10),
                         hint1: `First, round ${a} to the nearest 10: ${estA}`,
@@ -216,9 +234,11 @@ const AdditionSubtraction = {
                     const actualJump = isAdd ? jump : Math.min(jump, start - 1);
                     return {
                         type: 'input',
-                        questionText: isAdd
-                            ? `Start at ${start} on the number line. Jump forward ${actualJump} spaces. Where do you land?`
-                            : `Start at ${start} on the number line. Jump backward ${actualJump} spaces. Where do you land?`,
+                        questionText: pick([
+                            `Start at ${start} on the number line. Jump ${isAdd ? 'forward' : 'backward'} ${actualJump} spaces. Where do you land?`,
+                            `A paint-brush bunny sits on ${start}. It hops ${isAdd ? 'forward' : 'backward'} ${actualJump} spaces. Where does it land?`,
+                            `Your game piece is on square ${start}. You move ${isAdd ? 'forward' : 'back'} ${actualJump} squares. Which square are you on now?`
+                        ]),
                         visual: `<div style="text-align:center;">
                             <div style="font-size:2rem;">${isAdd ? '👉' : '👈'}</div>
                             <div style="font-size:1.2rem;font-weight:700;color:var(--craft-lavender);">
@@ -244,7 +264,7 @@ const AdditionSubtraction = {
                     const answer = isAdd ? a + b : a - b;
                     return {
                         type: 'input',
-                        questionText: `Solve this 3-digit problem!`,
+                        questionText: pick([`Solve this 3-digit problem!`, `🎨 Craft-shop math! Solve:`, `✂️ Snip-snap! Work it out:`, `🖍️ Show your stuff:`]),
                         subText: `${a} ${isAdd ? '+' : '−'} ${b} = ?`,
                         visual: `<div style="font-family:var(--font-display); font-size:2.5rem; color:var(--craft-pink);">
                             ${a} ${isAdd ? '+' : '−'} ${b}

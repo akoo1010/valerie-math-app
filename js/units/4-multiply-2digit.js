@@ -23,7 +23,12 @@ const Multiply2Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🎵 The DJ plays ${a} short jingles, each ${b} seconds long.<br>Total seconds of music?`,
+                        questionText: pick([
+                            `🎵 The DJ plays ${a} short jingles, each ${b} seconds long.<br>Total seconds of music?`,
+                            `💃 ${a} dancers each do ${b} spins in the show.<br>How many spins in all?`,
+                            `🎟️ The theater has ${a} rows with ${b} seats in each row.<br>How many seats is that?`,
+                            `🥁 A drummer plays ${b} beats in each of ${a} songs.<br>How many beats altogether?`
+                        ]),
                         visual: `<div style="text-align:center;font-size:1.6rem;font-weight:700;color:var(--dance-pink);">
                             ${a} × ${b} = ?
                         </div>`,
@@ -68,10 +73,11 @@ const Multiply2Digit4 = {
             {
                 skillId: '4m2-area-model',
                 generate(diff, modality) {
-                    const a = R(11, diff >= 2 ? 50 : 30);
-                    // Two round factors (e.g. 20 × 30) leave one non-zero box that already equals the answer
+                    // No round factors: a multiple of 10 leaves a whole row or column of 0 boxes
+                    let a = R(11, diff >= 2 ? 50 : 30);
+                    while (a % 10 === 0) a = R(11, diff >= 2 ? 50 : 30);
                     let b = R(11, diff >= 2 ? 50 : 30);
-                    while (a % 10 === 0 && b % 10 === 0) b = R(11, diff >= 2 ? 50 : 30);
+                    while (b % 10 === 0) b = R(11, diff >= 2 ? 50 : 30);
                     const aTens = Math.floor(a / 10) * 10;
                     const aOnes = a % 10;
                     const bTens = Math.floor(b / 10) * 10;
@@ -85,7 +91,7 @@ const Multiply2Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `💃 Use the area model to find ${a} × ${b}!`,
+                        questionText: `${pick(['💃 Use the area model to find', '🪩 The dance floor is split into 4 parts. Use the area model for', '🎨 Fill in the area model to solve'])} ${a} × ${b}!`,
                         visual: `<div style="text-align:center;">
                             <div style="display:inline-grid;grid-template-columns:60px 90px 60px;gap:2px;">
                                 <div></div>
@@ -154,7 +160,7 @@ const Multiply2Digit4 = {
 
                     const result = {
                         type: 'input',
-                        questionText: `🕺 Solve: ${a} × ${b} = ?`,
+                        questionText: pick([`🕺 Solve: ${a} × ${b} = ?`, `🎤 Mic check! Multiply: ${a} × ${b} = ?`, `🎧 Beat drop! What is ${a} × ${b}?`]),
                         visual: `<div style="font-family:var(--font-display);font-size:1.6rem;text-align:right;line-height:1.8;color:var(--dance-gold);">
                             <div>${a}</div>
                             <div style="border-bottom:2px solid var(--dance-pink);padding-bottom:4px;">× ${b}</div>
@@ -214,7 +220,7 @@ const Multiply2Digit4 = {
 
                     const result = {
                         type: 'multiple-choice',
-                        questionText: `🎤 Estimate! Round each number to the nearest 10, then multiply.<br>${a} × ${b} ≈ ?`,
+                        questionText: `${pick(['🎤 Estimate!', '🎟️ About how many tickets?', '🪩 Quick estimate for the party planner!'])} Round each number to the nearest 10, then multiply.<br>${a} × ${b} ≈ ?`,
                         // Rounded values only in visual modality — elsewhere the rounding is the skill being practiced
                         visual: `<div style="display:flex;gap:12px;justify-content:center;align-items:center;font-size:1.2rem;">
                             <div style="text-align:center;color:var(--dance-pink);"><strong>${a}</strong>${modality === 'visual' ? `<br><span style="font-size:0.8rem;">≈ ${estA}</span>` : ''}</div>
@@ -274,7 +280,10 @@ const Multiply2Digit4 = {
                     const scenarios = [
                         `🪩 A dance hall has ${a} rows of ${b} seats. How many seats total?`,
                         `🎵 A playlist has ${a} albums, each with ${b} songs. Total songs?`,
-                        `💃 A dance troupe of ${a} dancers each performs ${b} shows. Total performances?`
+                        `💃 A dance troupe of ${a} dancers each performs ${b} shows. Total performances?`,
+                        `👟 A shoe store has ${a} shelves with ${b} pairs of dance shoes on each. How many pairs?`,
+                        `🎈 The party planner fills ${a} bags with ${b} balloons each. How many balloons?`,
+                        `🚌 ${a} buses each bring ${b} fans to the dance festival. How many fans arrive?`
                     ];
 
                     const result = {

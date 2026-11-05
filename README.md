@@ -9,7 +9,16 @@ A personalized, interactive math learning app for Valerie, aligned with **3rd an
 ## ✨ Features
 
 - **Two grade worlds** — 3rd Grade (Ocean, Dash & Craft World) and 4th Grade (Monster & Dance World)
-- **26 exercise units** covering the app's 3rd and 4th grade topic map
+- **26 exercise units** covering the app's 3rd and 4th grade topic map, with several story contexts per skill so practice doesn't repeat
+- **Boss battles** — every unit has a boss. Timed questions mixed from the whole unit: right answers hit the boss, fast answers are ⚡ critical hits, wrong answers or running out of time cost a heart. Beating a boss unlocks the next unit and records a best time to race on rematches
+- **Story & characters** — each world has a guide (Coral 🧜‍♀️ in 3rd grade, Fizz 🐲 in 4th) who tells the story, points to the next boss, and cheers during battles. Each boss win returns a collectible (🐚 Star Shells / 💎 Rhythm Gems) and unlocks a story chapter
+- **Fact Dash** — daily practice of all 300 single-digit facts (addition 0+0–9+9, subtraction within 20 like 15 − 7, multiplication 0×0–9×9), 10 minutes a day:
+  - Every fact is tracked on its own. It's *mastered* after 3 correct answers in under 3 seconds on at least 2 different days; a fact answered fast the first time is fast-tracked, so known facts clear quickly
+  - Rounds of 25 favor facts she's learning, starting with the 6s, 7s and 8s (`FOCUS` in `js/facts.js`); a missed fact shows the answer and a strategy tip, she retypes it, and it comes back a few questions later
+  - Answers check themselves as soon as enough digits are typed; a 3-second ⚡ bar shows the fluency target
+  - 60-second sprints with personal bests, one-number practice (e.g. only 7s), a fact boss (Chompy the Fact-a-saurus) that uses her weakest facts, and 10×10 fact maps that light up as facts are mastered
+  - The guide sends her to Fact Dash first each day until the 10 minutes are done
+- **Keyboard friendly** — type and press Enter, press 1–4 to pick a multiple-choice answer, T/F for true/false, Enter to continue
 - **Adaptive difficulty** — questions get harder or easier based on consecutive correct/wrong streaks
 - **Misconception detection** — identifies specific error patterns and shows targeted hints
 - **Star-based progress tracking** — earn up to 3 stars per round; complete 50% of a unit's rounds to unlock the next unit
@@ -34,6 +43,10 @@ valerie-math-app/
 └── js/
     ├── app.js              # App controller (screen routing, map rendering)
     ├── engine.js           # Exercise rendering engine (all question types)
+    ├── boss.js             # Boss battles: timer, HP/hearts, crits, results
+    ├── story.js            # Guides, villains, per-unit bosses and story chapters
+    ├── facts.js            # Fact Dash core: 300 facts, strategy tips, mastery, round builder
+    ├── fact-dash.js        # Fact Dash screens: rounds, sprint, fact maps, fact boss
     ├── adaptive.js         # Adaptive difficulty, mastery tracking, cloud sync
     ├── types.js            # Shared JSDoc contracts for editor/type checking
     ├── animations.js       # Confetti, particle effects, mascot animations
@@ -100,13 +113,16 @@ This app is intentionally framework-free, so there is no build step. Before chan
 npm run check
 ```
 
-The check script runs `node --check` across JavaScript files, then loads every unit file with a small `Engine.Utils` harness and generates questions across difficulty levels and modalities. It verifies that:
+The check script runs `node --check` across JavaScript files, then loads every unit file with a small `Engine.Utils` harness and generates ~13,000 questions (8 samples of every exercise × difficulty × modality). It verifies that:
 
 - Every generator terminates for each difficulty level
-- Multiple-choice options include the correct answer
-- Multiple-choice option values are unique
+- Multiple-choice options include the correct answer, are unique, and no other option is numerically equal to it (e.g. `1/2` and `2/4` both offered)
+- Every arithmetic statement in question text, hints, visuals, worked examples and targeted hints is true (`6 × 7 = 42`, `3/8 + 2/8 = 5/8`, `17 ÷ 5 = 3 R 2`)
+- Typed answers can actually be typed: finite, non-negative numbers without floating-point noise (`0.1 + 0.2` style)
+- True/false answers are booleans, click-to-build targets fit their grid, and custom `checkAnswer` functions accept the answer
 - Hint text and targeted misconception hints are complete and don't contain unresolved generated values
 - Declared `exerciseCount` values match the number of generated exercises
+- Fact Dash: all 300 facts have the right answer and a strategy tip whose arithmetic is true and reaches the answer; the mastery rules hold (fast-track, two-day rule, misses reset, slow answers don't count); rounds have 25 valid facts, no back-to-back repeats, start with 6s/7s/8s, and include the facts she's learning
 
 `npm test` runs the same checks.
 
@@ -173,7 +189,7 @@ Progress is saved in two places:
 1. **Cloud (Vercel KV)** — loaded first on every page visit, then debounced to avoid excessive writes. Works across any browser or device.
 2. **localStorage** — used as an offline fallback if the network is unavailable.
 
-Valerie's progress can also be exported from the world select screen as a JSON backup file and restored on another device. Backups include unit completion, stars, skill mastery, wrong-answer study notes, misconception counts, the weakness queue, and unlocked units. The per-visit session state is not included.
+Valerie's progress can also be exported from the "For grown-ups" page as a JSON backup file and restored on another device. Backups include unit completion, stars, skill mastery, wrong-answer study notes, misconception counts, the weakness queue, unlocked units, boss records (wins, best times), which story scenes she has seen, and Fact Dash progress (per-fact stats, daily minutes, sprint bests). The per-visit session state is not included.
 
 No user accounts or personal data are collected. All progress is stored under a single key for Valerie.
 
@@ -185,3 +201,4 @@ No user accounts or personal data are collected. All progress is stored under a 
 - **Modality switching** picks between standard input, multiple choice, and worked examples based on recent performance.
 - **Weakness queue** tracks skills the player has missed and surfaces them in the Practice Zone until they're mastered again.
 - **Hint escalation** — hint level persists across retries of the same question, so each subsequent attempt gets a more direct nudge.
+- **Boss battles feed the same model** — boss answers update skill mastery, difficulty, the weakness queue and the daily goal just like a normal round (timeouts don't count as a wrong answer).
